@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.npm-cache/
+
+# Build output
+dist/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Vite cache
+.vite/
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Claude Code
+.claude/
+
+# Screenshots (development only)
+*.png
+!public/*.png
+
+# Test/sample schema files (optional - remove if you want to include)
+# *.dtd
+# *.odd
+# *.rng
+
+# Project notes
+project_description

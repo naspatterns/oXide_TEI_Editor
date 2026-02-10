@@ -1,0 +1,125 @@
+.outline-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg);
+  border-left: 1px solid var(--color-border);
+}
+
+.outline-header {
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.outline-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 0;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, monospace;
+  font-size: 12px;
+}
+
+.outline-error {
+  padding: 16px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Tree node styles */
+.tree-node {
+  user-select: none;
+}
+
+.tree-node-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.1s;
+}
+
+.tree-node-header:hover {
+  background: var(--color-surface);
+}
+
+.tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.tree-toggle.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-toggle-placeholder {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.tree-node-name {
+  color: #22863a;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .tree-node-name {
+  color: #89d185;
+}
+
+.tree-node-attr {
+  color: #6f42c1;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+[data-theme="dark"] .tree-node-attr {
+  color: #c586c0;
+}
+
+.tree-node-text {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-style: italic;
+  margin-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.tree-node-children {
+  /* Children are indented via paddingLeft in JS */
+}
+
+/* Scrollbar styling */
+.outline-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.outline-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.outline-content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.outline-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}

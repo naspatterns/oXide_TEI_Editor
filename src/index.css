@@ -1,0 +1,145 @@
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f8f9fa;
+  --color-border: #dee2e6;
+  --color-text: #212529;
+  --color-text-secondary: #6c757d;
+  --color-primary: #4a6fa5;
+  --color-primary-hover: #3d5d8a;
+  --color-error: #dc3545;
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --toolbar-height: 44px;
+  --statusbar-height: 28px;
+  --cm-active-line: rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-theme="dark"] {
+  --color-bg: #1e1e1e;
+  --color-surface: #252526;
+  --color-border: #3c3c3c;
+  --color-text: #cccccc;
+  --color-text-secondary: #858585;
+  --color-primary: #569cd6;
+  --color-primary-hover: #6cb0e0;
+  --color-error: #f14c4c;
+  --color-success: #89d185;
+  --color-warning: #cca700;
+  --cm-active-line: rgba(255, 255, 255, 0.06);
+}
+
+/* Light theme: CodeMirror text colors */
+.cm-editor .cm-content,
+.cm-editor .cm-line {
+  color: #1a1a1a !important;  /* Dark text for light background */
+}
+
+/* Dark theme: override CodeMirror colors */
+[data-theme="dark"] .cm-editor {
+  background-color: #1e1e1e !important;  /* Dark background */
+}
+[data-theme="dark"] .cm-editor .cm-content,
+[data-theme="dark"] .cm-editor .cm-line {
+  color: #ffffff !important;  /* White text for dark background */
+}
+[data-theme="dark"] .cm-editor .cm-gutters {
+  background-color: #252526 !important;  /* Slightly lighter gutter */
+}
+[data-theme="dark"] .cm-editor .ͼb { color: #89d185 !important; } /* tags */
+[data-theme="dark"] .cm-editor .ͼd { color: #c586c0 !important; } /* attribute names */
+[data-theme="dark"] .cm-editor .ͼe { color: #ce9178 !important; } /* attribute values */
+[data-theme="dark"] .cm-editor .cm-processingInstruction { color: #808080 !important; font-style: italic; } /* processing instructions */
+[data-theme="dark"] .cm-editor .cm-comment { color: #6a9955 !important; font-style: italic; } /* comments */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 4px 12px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+button:hover {
+  background: var(--color-border);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+select {
+  font-family: inherit;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* ─── Responsive: tablet and smaller ─── */
+@media (max-width: 768px) {
+  :root {
+    --toolbar-height: 40px;
+    --statusbar-height: 24px;
+  }
+
+  .app-toolbar {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: var(--toolbar-height);
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  .toolbar-spacer {
+    display: none;
+  }
+
+  .split-pane {
+    flex-direction: column !important;
+  }
+
+  .split-divider {
+    width: 100% !important;
+    height: 5px !important;
+    cursor: row-resize !important;
+  }
+
+  .preview-content {
+    padding: 16px;
+  }
+}
+
+/* ─── Accessibility: reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

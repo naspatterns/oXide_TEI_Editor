@@ -1,0 +1,367 @@
+.preview-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
+.preview-header {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 32px;
+}
+
+/* ═══════════════════════════════════════════════
+   Academic typography for TEI rendered content
+   ═══════════════════════════════════════════════ */
+.tei-rendered {
+  font-family: 'Georgia', 'Garamond', 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--color-text);
+  max-width: 720px;
+}
+
+/* Header (metadata) — subtle display */
+.tei-header {
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.tei-header .tei-titleStmt {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+/* Headings */
+.tei-head {
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 1.2em 0 0.6em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.3;
+}
+
+/* Paragraphs */
+.tei-p {
+  margin-bottom: 0.8em;
+  text-indent: 1.5em;
+}
+
+.tei-p:first-child,
+.tei-opener + .tei-p,
+.tei-head + .tei-p {
+  text-indent: 0;
+}
+
+.tei-ab {
+  margin-bottom: 0.8em;
+}
+
+/* Divisions */
+.tei-div {
+  margin-bottom: 1.5em;
+}
+
+/* ─── Letter / Correspondence ─── */
+.tei-opener, .tei-closer {
+  margin: 1em 0;
+}
+
+.tei-salute { font-style: italic; }
+.tei-signed { text-align: right; margin-top: 0.5em; }
+.tei-dateline { color: var(--color-text-secondary); font-size: 0.9em; }
+.tei-byline { color: var(--color-text-secondary); font-size: 0.9em; }
+
+/* ─── Poetry ─── */
+.tei-lg {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.tei-l {
+  margin-bottom: 0.15em;
+}
+
+.tei-caesura {
+  display: inline-block;
+  width: 2em;
+}
+
+/* ─── Drama ─── */
+.tei-sp {
+  margin-bottom: 1em;
+}
+
+.tei-speaker {
+  display: block;
+  font-variant: small-caps;
+  font-weight: 700;
+  margin-bottom: 0.2em;
+  font-size: 0.95em;
+}
+
+.tei-stage {
+  display: block;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin: 0.3em 0;
+  padding-left: 1em;
+}
+
+.tei-castList {
+  margin: 1em 0;
+  padding-left: 1em;
+}
+
+.tei-castItem {
+  margin-bottom: 0.3em;
+}
+
+.tei-role { font-weight: 600; }
+.tei-roleDesc { color: var(--color-text-secondary); font-style: italic; }
+
+/* ─── Inline styling ─── */
+.tei-hi { font-weight: bold; }
+.tei-emph { font-style: italic; }
+.tei-foreign { font-style: italic; }
+.tei-title { font-style: italic; }
+.tei-term { font-weight: 600; }
+.tei-gloss { color: var(--color-text-secondary); }
+.tei-mentioned { font-style: italic; }
+
+/* ─── Named entities (distinctive colors) ─── */
+.tei-persName {
+  color: #1a73e8;
+  border-bottom: 1px dotted #1a73e8;
+  cursor: help;
+}
+
+.tei-placeName, .tei-settlement, .tei-region, .tei-country {
+  color: #c5221f;
+  border-bottom: 1px dotted #c5221f;
+  cursor: help;
+}
+
+.tei-orgName {
+  color: #188038;
+  border-bottom: 1px dotted #188038;
+  cursor: help;
+}
+
+.tei-date {
+  font-variant-numeric: oldstyle-nums;
+  color: #8430ce;
+}
+
+.tei-num, .tei-measure {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Notes ─── */
+.tei-note {
+  font-size: 0.85em;
+  color: var(--color-text-secondary);
+  border-left: 3px solid var(--color-primary);
+  padding: 4px 12px;
+  margin: 0.5em 0;
+  background: var(--color-surface);
+  border-radius: 0 4px 4px 0;
+}
+
+.tei-note-marker {
+  color: var(--color-primary);
+  font-size: 0.75em;
+  cursor: help;
+}
+
+/* ─── Quotation ─── */
+.tei-quote {
+  border-left: 3px solid var(--color-border);
+  padding: 0.5em 1em;
+  margin: 0.8em 0;
+  font-style: italic;
+}
+
+.tei-q::before { content: '\201C'; }
+.tei-q::after { content: '\201D'; }
+
+.tei-cit {
+  margin: 1em 0;
+}
+
+.tei-bibl {
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Editorial interventions ─── */
+.tei-add {
+  color: #188038;
+  text-decoration: none;
+}
+
+.tei-del {
+  color: var(--color-error);
+  text-decoration: line-through;
+}
+
+.tei-supplied {
+  color: var(--color-text-secondary);
+}
+
+.tei-supplied::before { content: '['; }
+.tei-supplied::after { content: ']'; }
+
+.tei-unclear {
+  text-decoration: underline dotted var(--color-warning);
+  cursor: help;
+}
+
+.tei-gap {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.tei-sic::after {
+  content: ' [sic]';
+  font-size: 0.8em;
+  color: var(--color-error);
+  font-style: italic;
+}
+
+.tei-choice {
+  cursor: help;
+  border-bottom: 1px dashed var(--color-text-secondary);
+}
+
+/* ─── Lists ─── */
+.tei-list {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.tei-item {
+  margin-bottom: 0.3em;
+}
+
+.tei-label {
+  font-weight: 600;
+  margin-right: 0.5em;
+}
+
+/* ─── Tables ─── */
+.tei-table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  font-size: 0.95em;
+}
+
+.tei-row { border-bottom: 1px solid var(--color-border); }
+.tei-cell { padding: 6px 12px; text-align: left; vertical-align: top; }
+.tei-row:first-child .tei-cell { font-weight: 600; }
+
+/* ─── Figures ─── */
+.tei-figure {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+.tei-graphic {
+  max-width: 100%;
+  height: auto;
+}
+
+.tei-figDesc {
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
+  margin-top: 0.5em;
+  font-style: italic;
+}
+
+/* ─── Milestones ─── */
+.tei-pb {
+  border: none;
+  border-top: 1px dashed var(--color-border);
+  margin: 1em 0;
+  position: relative;
+}
+
+.tei-pb[data-n]::after {
+  content: 'p. ' attr(data-n);
+  position: absolute;
+  right: 0;
+  top: -0.7em;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  padding: 0 4px;
+}
+
+.tei-cb {
+  color: var(--color-text-secondary);
+  font-size: 0.8em;
+}
+
+/* ─── Critical apparatus ─── */
+.tei-app {
+  border-bottom: 1px dashed var(--color-warning);
+}
+
+.tei-lem { font-weight: 600; }
+
+.tei-rdg {
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
+}
+
+/* ─── @rend CSS mappings ─── */
+.rend-italic { font-style: italic; }
+.rend-bold { font-weight: bold; }
+.rend-underline { text-decoration: underline; }
+.rend-strikethrough { text-decoration: line-through; }
+.rend-sup { vertical-align: super; font-size: 0.8em; }
+.rend-sub { vertical-align: sub; font-size: 0.8em; }
+.rend-smallcaps { font-variant: small-caps; }
+.rend-center { text-align: center; display: block; }
+.rend-right { text-align: right; display: block; }
+.rend-indent { padding-left: 2em; }
+
+/* ─── Epigraph ─── */
+.tei-epigraph {
+  font-style: italic;
+  border-left: 3px solid var(--color-border);
+  padding: 0.5em 1em;
+  margin: 1em 2em;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Error display ─── */
+.preview-error {
+  color: var(--color-error);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 16px;
+  white-space: pre-wrap;
+  background: var(--color-surface);
+  border-radius: 6px;
+  border: 1px solid var(--color-error);
+}
