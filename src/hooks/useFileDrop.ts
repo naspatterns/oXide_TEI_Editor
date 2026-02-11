@@ -96,8 +96,15 @@ export function useFileDrop() {
     }
   }, [openFileAsTab, toast]);
 
+  // Reset drag state manually (used when CodeMirror intercepts the drop)
+  const resetDragState = useCallback(() => {
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
+  }, []);
+
   return {
     isDragOver,
+    resetDragState,
     dragProps: {
       onDragEnter: handleDragEnter,
       onDragLeave: handleDragLeave,

@@ -4,7 +4,9 @@ import type { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEditor } from '../../store/EditorContext';
 import { useSchema } from '../../store/SchemaContext';
 import { useFileDrop } from '../../hooks/useFileDrop';
-import { createEditorExtensions } from './extensions';
+import { useToast } from '../../components/Toast/Toast';
+import { createEditorExtensions, FILE_DROP_EVENT } from './extensions';
+import { isValidXmlFile, getDragData } from '../../utils/dragDropUtils';
 
 // Subscribe to theme changes via MutationObserver
 function subscribeToTheme(callback: () => void) {
@@ -31,9 +33,11 @@ export function XmlEditor() {
     setErrors,
     editorViewRef,
     wrapSelection,
+    openFileAsTab,
   } = useEditor();
   const { schema } = useSchema();
-  const { isDragOver, dragProps } = useFileDrop();
+  const { isDragOver, resetDragState, dragProps } = useFileDrop();
+  const toast = useToast();
 
   // Subscribe to theme changes to update syntax highlighting
   const isDarkMode = useSyncExternalStore(subscribeToTheme, getThemeSnapshot);
@@ -80,6 +84,74 @@ export function XmlEditor() {
       }
     };
   }, [editorViewRef]);
+
+  // Listen for custom file drop events from CodeMirror extension
+  // This bridges CodeMirror's drop handling to React's file open logic
+  useEffect(() => {
+    const handleFileDrop = async (e: Event) => {
+      // Reset drag state immediately (CodeMirror stops propagation, so parent handlers won't run)
+      resetDragState();
+
+      const customEvent = e as CustomEvent<{
+        files?: File[];
+        internalDragId?: string;
+      }>;
+      const { files, internalDragId } = customEvent.detail;
+
+      // Handle internal drag (from FileExplorer)
+      if (internalDragId) {
+        const dragData = getDragData(internalDragId);
+        if (dragData) {
+          try {
+            const file = await dragData.fileHandle.getFile();
+            const content = await file.text();
+            openFileAsTab(content, dragData.fileName, dragData.fileHandle, dragData.filePath);
+            toast.success(`Opened ${dragData.fileName}`);
+          } catch {
+            toast.error(`Failed to open ${dragData.fileName}`);
+          }
+        }
+        return;
+      }
+
+      // Handle external file drop (from OS)
+      if (files && files.length > 0) {
+        let openedCount = 0;
+        let skippedCount = 0;
+        let lastOpenedName = '';
+
+        for (const file of files) {
+          if (!isValidXmlFile(file.name)) {
+            skippedCount++;
+            continue;
+          }
+          try {
+            const content = await file.text();
+            openFileAsTab(content, file.name, null, null);
+            openedCount++;
+            lastOpenedName = file.name;
+          } catch {
+            toast.error(`Failed to open ${file.name}`);
+          }
+        }
+
+        // Show toast
+        if (openedCount === 1) {
+          toast.success(`Opened ${lastOpenedName}`);
+        } else if (openedCount > 1) {
+          toast.success(`Opened ${openedCount} files`);
+        }
+
+        if (skippedCount > 0) {
+          toast.warning(`Skipped ${skippedCount} non-XML file${skippedCount > 1 ? 's' : ''}`);
+        }
+      }
+    };
+
+    // Listen on document to catch events bubbling from CodeMirror
+    document.addEventListener(FILE_DROP_EVENT, handleFileDrop);
+    return () => document.removeEventListener(FILE_DROP_EVENT, handleFileDrop);
+  }, [openFileAsTab, toast, resetDragState]);
 
   const extensions = useMemo(
     () => createEditorExtensions(schema, setErrors, isDarkMode),
