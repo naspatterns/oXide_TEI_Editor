@@ -3,6 +3,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import type { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEditor } from '../../store/EditorContext';
 import { useSchema } from '../../store/SchemaContext';
+import { useFileDrop } from '../../hooks/useFileDrop';
 import { createEditorExtensions } from './extensions';
 
 // Subscribe to theme changes via MutationObserver
@@ -32,6 +33,7 @@ export function XmlEditor() {
     wrapSelection,
   } = useEditor();
   const { schema } = useSchema();
+  const { isDragOver, dragProps } = useFileDrop();
 
   // Subscribe to theme changes to update syntax highlighting
   const isDarkMode = useSyncExternalStore(subscribeToTheme, getThemeSnapshot);
@@ -185,12 +187,23 @@ export function XmlEditor() {
   // No active document - show empty state
   if (!activeDoc) {
     return (
-      <div className="xml-editor xml-editor-empty">
+      <div
+        className={`xml-editor xml-editor-empty ${isDragOver ? 'drag-over' : ''}`}
+        {...dragProps}
+      >
         <div className="empty-state">
           <div className="empty-icon">📄</div>
           <p>No document open</p>
-          <p className="empty-hint">Press Ctrl+N to create a new document<br />or Ctrl+O to open a file</p>
+          <p className="empty-hint">Press Ctrl+N to create a new document<br />or Ctrl+O to open a file<br />or drag XML files here</p>
         </div>
+        {isDragOver && (
+          <div className="drop-overlay">
+            <div className="drop-overlay-content">
+              <span className="drop-icon">📄</span>
+              <span className="drop-text">Drop XML file to open</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -199,7 +212,11 @@ export function XmlEditor() {
   const editorKey = `editor-${activeDoc.id}-${activeDoc.documentVersion}`;
 
   return (
-    <div className="xml-editor" style={{ '--editor-font-size': `${multiTabState.editorFontSize}px` } as React.CSSProperties}>
+    <div
+      className={`xml-editor ${isDragOver ? 'drag-over' : ''}`}
+      style={{ '--editor-font-size': `${multiTabState.editorFontSize}px` } as React.CSSProperties}
+      {...dragProps}
+    >
       <CodeMirror
         key={editorKey}
         value={activeDoc.content}
@@ -228,6 +245,16 @@ export function XmlEditor() {
         onSelectTag={handleQuickTagSelect}
         onClose={handleMenuClose}
       />
+
+      {/* Drop overlay - appears when dragging files over editor */}
+      {isDragOver && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-content">
+            <span className="drop-icon">📄</span>
+            <span className="drop-text">Drop XML file to open</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

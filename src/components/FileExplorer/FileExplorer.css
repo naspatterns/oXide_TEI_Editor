@@ -233,6 +233,17 @@
 
 .file-tree-item.file {
   font-weight: normal;
+  cursor: grab;
+}
+
+.file-tree-item.file:active {
+  cursor: grabbing;
+}
+
+/* Dragging state */
+.file-tree-item.file.dragging {
+  opacity: 0.5;
+  background: var(--bg-secondary);
 }
 
 /* Chevron for folders */

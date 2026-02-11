@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useEditor } from '../../store/EditorContext';
+import { useFileDrop } from '../../hooks/useFileDrop';
 import { ContextMenu, useContextMenu, MenuItem, MenuDivider } from '../ContextMenu/ContextMenu';
 import { ConfirmDialog } from '../FileDialog/ConfirmDialog';
 import './EditorTabBar.css';
@@ -11,6 +12,7 @@ const FONT_STEP = 2;
 export function EditorTabBar() {
   const { multiTabState, setActiveTab, closeTab, getDocument, setEditorFontSize } = useEditor();
   const { tabOrder, activeDocumentId } = multiTabState;
+  const { isDragOver, dragProps } = useFileDrop();
 
   // Context menu state
   const contextMenu = useContextMenu();
@@ -126,7 +128,10 @@ export function EditorTabBar() {
   }
 
   return (
-    <div className="editor-tab-bar">
+    <div
+      className={`editor-tab-bar ${isDragOver ? 'drag-over' : ''}`}
+      {...dragProps}
+    >
       <div className="editor-tabs">
         {tabOrder.map(id => {
           const doc = getDocument(id);

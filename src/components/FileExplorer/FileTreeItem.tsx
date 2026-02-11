@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useWorkspace } from '../../store/WorkspaceContext';
 import type { FileTreeNode } from '../../types/workspace';
+import { setDragData, INTERNAL_DRAG_TYPE } from '../../utils/dragDropUtils';
 
 interface FileTreeItemProps {
   node: FileTreeNode;
@@ -26,6 +27,7 @@ function getFileIcon(fileName: string): string {
 
 export function FileTreeItem({ node, depth, onFileClick, onContextMenu }: FileTreeItemProps) {
   const { toggleDirectory } = useWorkspace();
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleClick = useCallback(() => {
     if (node.type === 'directory') {
@@ -44,6 +46,33 @@ export function FileTreeItem({ node, depth, onFileClick, onContextMenu }: FileTr
     [node, onContextMenu],
   );
 
+  // ─── Drag Handlers (only for files) ───
+
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      if (node.type === 'directory') {
+        e.preventDefault();
+        return;
+      }
+
+      // Store drag data and get ID
+      const dragId = setDragData({
+        filePath: node.path,
+        fileHandle: node.handle as FileSystemFileHandle,
+        fileName: node.name,
+      });
+
+      e.dataTransfer.setData(INTERNAL_DRAG_TYPE, dragId);
+      e.dataTransfer.effectAllowed = 'copy';
+      setIsDragging(true);
+    },
+    [node],
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   const isFolder = node.type === 'directory';
   const icon = isFolder
     ? node.isExpanded ? '📂' : '📁'
@@ -52,11 +81,14 @@ export function FileTreeItem({ node, depth, onFileClick, onContextMenu }: FileTr
   return (
     <div className="file-tree-item-container">
       <div
-        className={`file-tree-item ${isFolder ? 'folder' : 'file'}`}
+        className={`file-tree-item ${isFolder ? 'folder' : 'file'} ${isDragging ? 'dragging' : ''}`}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         title={node.path}
+        draggable={!isFolder}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
         {isFolder && (
           <span className={`tree-chevron ${node.isExpanded ? 'expanded' : ''}`}>

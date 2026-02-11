@@ -108,3 +108,79 @@
 .has-selection .cm-activeLineGutter {
   background: transparent !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Drag and Drop Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Editor container needs relative positioning for overlay */
+.xml-editor {
+  position: relative;
+}
+
+/* Drag-over visual state */
+.xml-editor.drag-over {
+  /* Subtle highlight on the border */
+}
+
+/* Drop overlay - covers the entire editor area */
+.xml-editor .drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+  border: 3px dashed var(--accent-color);
+  border-radius: 8px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: dropOverlayFadeIn 0.15s ease-out;
+}
+
+@keyframes dropOverlayFadeIn {
+  from {
+    opacity: 0;
+    border-color: transparent;
+  }
+  to {
+    opacity: 1;
+    border-color: var(--accent-color);
+  }
+}
+
+.xml-editor .drop-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 32px;
+  background: var(--color-surface, var(--bg-primary));
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.xml-editor .drop-icon {
+  font-size: 32px;
+  animation: dropIconBounce 0.5s ease-out;
+}
+
+@keyframes dropIconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.xml-editor .drop-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent-color);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .xml-editor .drop-overlay {
+  background: color-mix(in srgb, var(--accent-color) 15%, transparent);
+}
+
+[data-theme="dark"] .xml-editor .drop-overlay-content {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
