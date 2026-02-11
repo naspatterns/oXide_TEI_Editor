@@ -6,7 +6,7 @@
 
 ### 현재 상태
 - **버전**: v1.0.0-beta.1
-- **Git**: 커밋 완료 (`82580dd` - Sessions 1-8)
+- **Git**: 커밋 완료 (`41b8aec` - Session 9: 드래그앤드롭 버그 수정)
 - **빌드**: ✅ 성공 (`npm run build`)
 - **배포 준비**: ✅ 완료 (GitHub Actions, PWA 아이콘)
 
@@ -1037,6 +1037,68 @@ dist/icon-512.png           31.79 kB
 3. **자동 배포 확인:**
    - Actions 탭에서 워크플로우 실행 확인
    - `https://<username>.github.io/<repo-name>/` 접속
+
+---
+
+### 오늘 완료한 작업 - Session 9 (2026-02-11) - 드래그앤드롭 버그 수정
+
+#### 🎯 문제 현상
+
+파일을 에디터에 드롭하면 새 탭으로 열리는 대신, **파일 내용이 현재 에디터에 텍스트로 붙여넣기** 됨.
+
+#### 🔍 원인 분석
+
+```
+드롭 이벤트 발생 위치: .cm-content (CodeMirror 내부)
+    ↓
+CodeMirror 내부 핸들러: 파일 내용을 텍스트로 삽입 ← 여기서 처리됨!
+    ↓
+(이벤트가 .xml-editor까지 버블링되기 전에 이미 처리됨)
+```
+
+- **DOM 구조 문제**: `dragProps`가 `.xml-editor`(부모)에 붙어있지만, 실제 드롭은 CodeMirror 내부 요소에서 발생
+- **이벤트 페이즈 문제**: React 핸들러는 bubble phase에 등록 → CodeMirror가 먼저 처리
+
+#### 🔧 해결 방안
+
+CodeMirror Extension으로 파일 드롭을 가로채고, CustomEvent를 통해 React로 전달:
+
+```
+파일 드롭 → CodeMirror's .cm-content
+    ↓
+createFileDropExtension() (drop handler)
+    ├── event.preventDefault() → CodeMirror 기본 동작 방지
+    ├── event.stopPropagation()
+    └── dispatch CustomEvent('oxide-file-drop')
+    ↓
+XmlEditor useEffect 리스너
+    ├── resetDragState() ← 드래그 상태 초기화
+    └── openFileAsTab() → 새 탭으로 파일 열기
+```
+
+#### 📁 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/Editor/extensions.ts` | `createFileDropExtension()` 함수 추가 - CodeMirror 레벨에서 파일 드롭 가로채기 |
+| `src/components/Editor/XmlEditor.tsx` | 커스텀 이벤트 리스너 추가 - 파일 열기 로직 실행 |
+| `src/hooks/useFileDrop.ts` | `resetDragState()` 함수 추가 - 드래그 상태 초기화 |
+
+#### 💡 기술적 인사이트
+
+- **`EditorView.domEventHandlers()`**: CodeMirror 6에서 DOM 이벤트를 가로채는 표준 방법. `return true`를 반환하면 기본 처리 방지.
+- **CustomEvent 브릿지 패턴**: CodeMirror extension은 React state에 직접 접근 불가 → CustomEvent로 데이터 전달
+- **stopPropagation 부작용**: 부모 요소의 핸들러가 실행되지 않아 `isDragOver` 상태가 리셋 안 됨 → `resetDragState()` 함수로 해결
+
+#### 📊 빌드 결과 (Session 9)
+
+```
+dist/index.html                       1.48 kB │ gzip:   0.75 kB
+dist/assets/index.css                62.50 kB │ gzip:  10.75 kB
+dist/assets/index.js                420.28 kB │ gzip: 104.85 kB
+dist/assets/react.js                134.67 kB │ gzip:  43.22 kB
+dist/assets/codemirror.js           444.43 kB │ gzip: 145.84 kB
+```
 
 ---
 
