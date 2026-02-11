@@ -1,5 +1,46 @@
 # oXide TEI Editor - Project Guide
 
+---
+
+## 🚨 다음 세션 빠른 시작 (2026-02-11 기준)
+
+### 현재 상태
+- **버전**: v1.0.0-beta.1
+- **Git**: 커밋 완료 (`82580dd` - Sessions 1-8)
+- **빌드**: ✅ 성공 (`npm run build`)
+- **배포 준비**: ✅ 완료 (GitHub Actions, PWA 아이콘)
+
+### 즉시 실행 명령어
+```bash
+npm install          # 의존성 설치 (폴더 이동 후 필수)
+npm run dev          # 개발 서버 (localhost:5173)
+npm run build        # 프로덕션 빌드
+```
+
+### 다음 할 일 (우선순위순)
+1. **GitHub 배포** - 리포지토리 생성 및 푸시
+   ```bash
+   gh repo create oXide-TEI-Editor --public --source=. --push
+   ```
+   - Settings → Pages → Source: GitHub Actions
+
+2. **AI 백엔드** (선택) - OAuth + API 프록시 서버
+
+### 핵심 파일 위치
+| 용도 | 경로 |
+|------|------|
+| 에디터 코어 | `src/components/Editor/XmlEditor.tsx` |
+| 스키마 정의 | `src/schema/teiStaticSchema.ts` (367개 요소) |
+| AI 모듈 | `src/ai/` (Mock 모드) |
+| 배포 설정 | `.github/workflows/deploy.yml` |
+
+### ⚠️ 주의사항
+- CodeMirror는 **uncontrolled 모드**로 동작 (Critical Design Decisions #1 참조)
+- 스키마 변경 시 **remount 없음** - extensions만 동적 업데이트
+- Private Mode 호환성 적용됨 (localStorage/IndexedDB try-catch)
+
+---
+
 ## Overview
 
 **oXide TEI Editor** — 브라우저 기반 TEI(Text Encoding Initiative) XML 에디터. 디지털 인문학(DH) 연구자를 위해 스키마 인식 자동완성, 실시간 검증, XML Outline 트리 뷰를 제공한다. oXygen XML Editor($200+)의 무료 경량 대안.
