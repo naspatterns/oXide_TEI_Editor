@@ -14,6 +14,12 @@
   --color-success: #28a745;
   --color-warning: #ffc107;
 
+  /* Editor cursor */
+  --cm-cursor-color: #4a6fa5;
+
+  /* Editor selection background */
+  --cm-selection-bg: rgba(74, 111, 165, 0.2);
+
   /* Interactive states (previously missing) */
   --color-hover: rgba(0, 0, 0, 0.06);
   --color-active: rgba(0, 0, 0, 0.1);
@@ -59,6 +65,12 @@
   --color-error: #f14c4c;
   --color-success: #89d185;
   --color-warning: #cca700;
+
+  /* Editor cursor */
+  --cm-cursor-color: #ffffff;
+
+  /* Editor selection background */
+  --cm-selection-bg: rgba(86, 156, 214, 0.4);
 
   /* Interactive states */
   --color-hover: rgba(255, 255, 255, 0.08);

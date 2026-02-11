@@ -84,11 +84,11 @@ const baseTheme = EditorView.theme({
     background: 'var(--cm-active-line, rgba(0, 0, 0, 0.04))',
   },
   '.cm-cursor': {
-    borderLeftColor: 'var(--color-primary)',
+    borderLeftColor: 'var(--cm-cursor-color, var(--color-primary))',
     borderLeftWidth: '2px',
   },
   '.cm-selectionBackground': {
-    background: 'rgba(74, 111, 165, 0.2) !important',
+    background: 'var(--cm-selection-bg, rgba(74, 111, 165, 0.2)) !important',
   },
   '.cm-matchingBracket': {
     background: 'rgba(74, 111, 165, 0.3)',
