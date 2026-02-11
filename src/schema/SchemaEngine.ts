@@ -1,5 +1,5 @@
 import type { SchemaInfo, ElementSpec } from '../types/schema';
-import { TEI_LITE_ELEMENTS, TEI_ALL_EXTRA_ELEMENTS } from './teiStaticSchema';
+import { TEI_LITE_ELEMENTS, getTeiAllElements, getElementCounts } from './teiStaticSchema';
 import { parseRng } from './rngParser';
 
 /**
@@ -16,19 +16,27 @@ export class SchemaEngine {
   /** Load a built-in schema by ID */
   async loadBuiltin(id: string): Promise<SchemaInfo> {
     let elements: ElementSpec[];
+    let name: string;
 
     switch (id) {
       case 'tei_lite':
         elements = TEI_LITE_ELEMENTS;
+        name = 'TEI Lite';
         break;
       case 'tei_all':
-        elements = [...TEI_LITE_ELEMENTS, ...TEI_ALL_EXTRA_ELEMENTS];
+        elements = getTeiAllElements();
+        name = 'TEI All';
+        // Log element counts for diagnostics (dev mode only)
+        if (import.meta.env.DEV) {
+          console.log('[SchemaEngine] TEI All element counts:', getElementCounts());
+          console.log(`[SchemaEngine] Total unique elements: ${elements.length}`);
+        }
         break;
       default:
         throw new Error(`Unknown builtin schema: ${id}`);
     }
 
-    return this.buildSchemaInfo(id, id === 'tei_lite' ? 'TEI Lite' : 'TEI All', elements);
+    return this.buildSchemaInfo(id, name, elements);
   }
 
   /** Load a custom schema from RNG XML string */

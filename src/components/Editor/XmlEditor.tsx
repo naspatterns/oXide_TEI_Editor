@@ -1,64 +1,215 @@
-import { useCallback, useMemo, useState, useRef } from 'react';
+import { useCallback, useMemo, useRef, useEffect, useState, useSyncExternalStore } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
-import type { ViewUpdate } from '@codemirror/view';
+import type { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEditor } from '../../store/EditorContext';
 import { useSchema } from '../../store/SchemaContext';
 import { createEditorExtensions } from './extensions';
+
+// Subscribe to theme changes via MutationObserver
+function subscribeToTheme(callback: () => void) {
+  const observer = new MutationObserver(callback);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+  return () => observer.disconnect();
+}
+
+function getThemeSnapshot() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+import { QuickTagMenu } from './QuickTagMenu';
 import './XmlEditor.css';
 
 export function XmlEditor() {
-  const { state, setContent, setCursor, setErrors } = useEditor();
+  const {
+    multiTabState,
+    getActiveDocument,
+    setCursor,
+    updateContentAndCursor,
+    setErrors,
+    editorViewRef,
+    wrapSelection,
+  } = useEditor();
   const { schema } = useSchema();
 
-  // Capture content at mount time. This value never changes during the
-  // component's lifetime — the `key` prop forces a full remount only when
-  // documentVersion changes (new/open file), at which point a fresh
-  // `initialContent` is captured from the (updated) state.
-  const [initialContent] = useState(() => state.content);
+  // Subscribe to theme changes to update syntax highlighting
+  const isDarkMode = useSyncExternalStore(subscribeToTheme, getThemeSnapshot);
 
-  // Use a ref to track dirty/content for the status bar cursor updates
-  // without causing CodeMirror to re-render with stale value props.
-  const contentRef = useRef(state.content);
+  // Get the active document
+  const activeDoc = getActiveDocument();
+
+  // Use a ref to track content without causing re-renders
+  const contentRef = useRef(activeDoc?.content ?? '');
+
+  // Local ref for capturing EditorView from CodeMirror
+  const localViewRef = useRef<EditorView | null>(null);
+
+  // Quick tag menu state
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const selectionTimeoutRef = useRef<number | null>(null);
+  // Suppress menu after wrap operation (prevents menu from reappearing)
+  const suppressMenuUntilRef = useRef<number>(0);
+
+  // Update content ref when active document changes
+  useEffect(() => {
+    if (activeDoc) {
+      contentRef.current = activeDoc.content;
+    }
+  }, [activeDoc?.id, activeDoc?.content]);
+
+  // Register EditorView with the context when it changes
+  const handleCreateEditor = useCallback((view: EditorView) => {
+    localViewRef.current = view;
+    editorViewRef.current = view;
+  }, [editorViewRef]);
+
+  // Cleanup on unmount: EditorView 참조 + 타임아웃 정리
+  useEffect(() => {
+    return () => {
+      // EditorView 참조 정리
+      if (editorViewRef.current === localViewRef.current) {
+        editorViewRef.current = null;
+      }
+      // 대기 중인 선택 타임아웃 정리 (메모리 누수 방지)
+      if (selectionTimeoutRef.current) {
+        clearTimeout(selectionTimeoutRef.current);
+      }
+    };
+  }, [editorViewRef]);
 
   const extensions = useMemo(
-    () => createEditorExtensions(schema, setErrors),
-    [schema, setErrors],
+    () => createEditorExtensions(schema, setErrors, isDarkMode),
+    [schema, setErrors, isDarkMode],
   );
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 성능 최적화 핵심 로직
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // CodeMirror는 "uncontrolled" 모드로 동작:
+  // - controlled mode (value={state.content})를 사용하면 React 재렌더링 시
+  //   stale content가 CodeMirror로 전달되어 타이핑한 문자가 삭제되는 버그 발생
+  // - 따라서 onChange에서는 contentRef만 업데이트하고, React state는
+  //   handleUpdate에서 UPDATE_CONTENT_AND_CURSOR로 한 번에 업데이트
+  //
+  // 최적화 결과:
+  // - dispatch 2회 → 1회로 감소 (content + cursor 통합)
+  // - React 재렌더링 1회 감소 → 타이핑 반응성 향상
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // onChange: contentRef만 업데이트 (React state 업데이트 없음)
   const handleChange = useCallback(
     (value: string) => {
       contentRef.current = value;
-      setContent(value);
     },
-    [setContent],
+    [],
   );
 
+  // handleUpdate: docChanged와 selectionSet을 한 번에 처리 (dispatch 1회)
   const handleUpdate = useCallback(
     (update: ViewUpdate) => {
+      const pos = update.state.selection.main.head;
+      const line = update.state.doc.lineAt(pos);
+      const cursorLine = line.number;
+      const cursorColumn = pos - line.from + 1;
+
+      // 문서 내용 변경 시: content와 cursor를 한 번에 업데이트 (dispatch 1회)
+      if (update.docChanged) {
+        const content = update.state.doc.toString();
+        contentRef.current = content;
+        updateContentAndCursor(content, cursorLine, cursorColumn);
+      } else if (update.selectionSet) {
+        // 커서/선택만 변경 시: cursor만 업데이트
+        setCursor(cursorLine, cursorColumn);
+      }
+
+      // Toggle 'has-selection' class based on selection state
+      // This allows CSS to hide activeLine highlight when text is selected
+      const { from, to } = update.state.selection.main;
+      const hasSelection = from !== to;
+      update.view.dom.classList.toggle('has-selection', hasSelection);
+
+      // Check for text selection to show quick tag menu
       if (update.selectionSet) {
-        const pos = update.state.selection.main.head;
-        const line = update.state.doc.lineAt(pos);
-        setCursor(line.number, pos - line.from + 1);
+        const selection = update.state.doc.sliceString(from, to);
+
+        // Clear any pending timeout
+        if (selectionTimeoutRef.current) {
+          clearTimeout(selectionTimeoutRef.current);
+        }
+
+        // Only show menu for meaningful selections (not just cursor movement)
+        // Also check if menu is suppressed (after wrap operation)
+        const isSuppressed = Date.now() < suppressMenuUntilRef.current;
+        if (!isSuppressed && selection.length >= 1 && selection.length <= 500 && !selection.includes('\n')) {
+          // Delay to avoid showing on quick selections during editing
+          selectionTimeoutRef.current = window.setTimeout(() => {
+            // Double-check suppression in case it was set during delay
+            if (Date.now() < suppressMenuUntilRef.current) return;
+
+            const view = update.view;
+            // Get coordinates at the end of selection
+            const coords = view.coordsAtPos(to);
+            if (coords) {
+              setSelectedText(selection);
+              setMenuPosition({ x: coords.left, y: coords.bottom });
+            }
+          }, 300); // 300ms delay for intentional selections
+        } else {
+          // Hide menu if selection is cleared or too long
+          setMenuPosition(null);
+          setSelectedText('');
+        }
       }
     },
-    [setCursor],
+    [setCursor, updateContentAndCursor],
   );
 
-  // Only use documentVersion for key - schema changes should NOT cause remount
-  // as that would lose unsaved content. Instead, extensions update dynamically.
-  const editorKey = `editor-${state.documentVersion}`;
+  // Handle tag selection from quick menu
+  const handleQuickTagSelect = useCallback((tagName: string) => {
+    // Suppress menu for 500ms to prevent it from reappearing after wrap
+    suppressMenuUntilRef.current = Date.now() + 500;
+    wrapSelection(tagName);
+    setMenuPosition(null);
+    setSelectedText('');
+  }, [wrapSelection]);
+
+  // Close quick tag menu
+  const handleMenuClose = useCallback(() => {
+    setMenuPosition(null);
+    setSelectedText('');
+  }, []);
+
+  // No active document - show empty state
+  if (!activeDoc) {
+    return (
+      <div className="xml-editor xml-editor-empty">
+        <div className="empty-state">
+          <div className="empty-icon">📄</div>
+          <p>No document open</p>
+          <p className="empty-hint">Press Ctrl+N to create a new document<br />or Ctrl+O to open a file</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Key includes document ID and version - remount on tab switch or document reload
+  const editorKey = `editor-${activeDoc.id}-${activeDoc.documentVersion}`;
 
   return (
-    <div className="xml-editor">
+    <div className="xml-editor" style={{ '--editor-font-size': `${multiTabState.editorFontSize}px` } as React.CSSProperties}>
       <CodeMirror
         key={editorKey}
-        value={initialContent}
+        value={activeDoc.content}
         height="100%"
         extensions={extensions}
         onChange={handleChange}
         onUpdate={handleUpdate}
+        onCreateEditor={handleCreateEditor}
         basicSetup={{
-          lineNumbers: true,
+          lineNumbers: false,  // Disabled - using custom visual line numbers
           highlightActiveLineGutter: true,
           highlightActiveLine: true,
           foldGutter: true,
@@ -68,6 +219,14 @@ export function XmlEditor() {
           history: true,
           searchKeymap: true,
         }}
+      />
+
+      {/* Quick tag menu - appears when text is selected */}
+      <QuickTagMenu
+        position={menuPosition}
+        selectedText={selectedText}
+        onSelectTag={handleQuickTagSelect}
+        onClose={handleMenuClose}
       />
     </div>
   );

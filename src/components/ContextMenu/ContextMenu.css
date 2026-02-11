@@ -1,0 +1,115 @@
+/* ═══════════════════════════════════════════════════════════
+   Context Menu
+   - Right-click menu for various components
+   - VS Code style with keyboard navigation
+   ═══════════════════════════════════════════════════════════ */
+
+.context-menu {
+  position: fixed;
+  min-width: 180px;
+  max-width: 280px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 2000;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  animation: contextMenuFadeIn 0.12s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Menu Item ─── */
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.1s);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.context-menu-item:hover,
+.context-menu-item.selected {
+  background: var(--color-hover);
+}
+
+.context-menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.context-menu-item.disabled:hover,
+.context-menu-item.disabled.selected {
+  background: transparent;
+}
+
+.context-menu-item.danger {
+  color: var(--color-error);
+}
+
+.context-menu-item.danger:hover,
+.context-menu-item.danger.selected {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+/* ─── Menu Item Parts ─── */
+.context-menu-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.context-menu-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-menu-shortcut {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', Monaco, monospace;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Divider ─── */
+.context-menu-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 8px;
+}
+
+/* ─── Dark Theme ─── */
+[data-theme="dark"] .context-menu {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .context-menu {
+    animation: none;
+  }
+}

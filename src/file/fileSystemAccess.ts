@@ -3,7 +3,8 @@
  * Falls back to legacy methods when unavailable.
  */
 
-import { hasFileSystemAccess } from '../utils/browserCompat';
+import { hasFileSystemAccess, hasDirectoryPicker } from '../utils/browserCompat';
+import type { FileTreeNode } from '../types/workspace';
 
 const XML_FILE_TYPES = [
   {
@@ -11,6 +12,9 @@ const XML_FILE_TYPES = [
     accept: { 'application/xml': ['.xml', '.tei', '.rng'] },
   },
 ];
+
+/** File extensions to include in file tree */
+const XML_EXTENSIONS = ['.xml', '.tei', '.rng'];
 
 /** Open an XML file using the best available API */
 export async function openFile(): Promise<{
@@ -137,4 +141,142 @@ function saveWithDownload(
 
   URL.revokeObjectURL(url);
   return Promise.resolve({ fileName, fileHandle: null });
+}
+
+// ─── Directory operations ───
+
+/** Check if directory picker is supported */
+export function supportsDirectoryPicker(): boolean {
+  return hasDirectoryPicker();
+}
+
+/** Error thrown when directory picker is not supported */
+export class DirectoryPickerNotSupportedError extends Error {
+  constructor() {
+    super(
+      'Folder opening requires Chrome or Edge browser. ' +
+      'In Firefox or Safari, you can still open individual XML files.'
+    );
+    this.name = 'DirectoryPickerNotSupportedError';
+  }
+}
+
+/** Open a directory using the Directory Picker API */
+export async function openDirectory(): Promise<{
+  handle: FileSystemDirectoryHandle;
+  name: string;
+}> {
+  if (!hasDirectoryPicker()) {
+    throw new DirectoryPickerNotSupportedError();
+  }
+
+  const handle = await window.showDirectoryPicker({
+    mode: 'readwrite',
+  });
+
+  return { handle, name: handle.name };
+}
+
+/**
+ * Build a file tree from a directory handle.
+ * Only includes XML files and directories containing XML files.
+ *
+ * @param dirHandle - The directory handle to scan
+ * @param basePath - Base path for relative paths (empty for root)
+ * @param maxDepth - Maximum depth to scan (default 10)
+ */
+export async function buildFileTree(
+  dirHandle: FileSystemDirectoryHandle,
+  basePath: string = '',
+  maxDepth: number = 10,
+): Promise<FileTreeNode[]> {
+  if (maxDepth <= 0) return [];
+
+  const nodes: FileTreeNode[] = [];
+
+  try {
+    for await (const [name, handle] of dirHandle.entries()) {
+      // Skip hidden files/folders (starting with .)
+      if (name.startsWith('.')) continue;
+
+      const path = basePath ? `${basePath}/${name}` : name;
+
+      if (handle.kind === 'directory') {
+        // Recursively scan subdirectory
+        const children = await buildFileTree(
+          handle as FileSystemDirectoryHandle,
+          path,
+          maxDepth - 1,
+        );
+
+        // Only include directories that have XML files (directly or nested)
+        if (children.length > 0) {
+          nodes.push({
+            name,
+            path,
+            type: 'directory',
+            handle,
+            children,
+            isExpanded: false,
+          });
+        }
+      } else {
+        // Check if it's an XML file
+        const ext = name.toLowerCase().slice(name.lastIndexOf('.'));
+        if (XML_EXTENSIONS.includes(ext)) {
+          nodes.push({
+            name,
+            path,
+            type: 'file',
+            handle,
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Error scanning directory:', error);
+  }
+
+  // Sort: directories first, then files, both alphabetically
+  return nodes.sort((a, b) => {
+    if (a.type !== b.type) {
+      return a.type === 'directory' ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
+
+/**
+ * Read file content from a file handle.
+ */
+export async function readFileContent(
+  handle: FileSystemFileHandle,
+): Promise<string> {
+  const file = await handle.getFile();
+  return file.text();
+}
+
+/**
+ * Save content to a file handle within a workspace.
+ */
+export async function saveToHandle(
+  handle: FileSystemFileHandle,
+  content: string,
+): Promise<void> {
+  const writable = await handle.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+/**
+ * Create a new file in a directory.
+ */
+export async function createFileInDirectory(
+  dirHandle: FileSystemDirectoryHandle,
+  fileName: string,
+  content: string,
+): Promise<FileSystemFileHandle> {
+  const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+  await saveToHandle(fileHandle, content);
+  return fileHandle;
 }

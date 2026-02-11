@@ -1,3 +1,27 @@
+/* Toolbar 3-section layout */
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-left {
+  /* Left section: fixed width for file menu */
+}
+
+.toolbar-center {
+  /* Center section: flexible, contains schema and edit tools */
+  flex: 1;
+  justify-content: center;
+}
+
+.toolbar-right {
+  /* Right section: view mode and settings */
+}
+
+/* Toolbar group */
+
 .toolbar-group {
   display: flex;
   align-items: center;
@@ -15,8 +39,70 @@
   flex: 1;
 }
 
+/* Active button state */
+
 .toolbar-btn-active {
   background: var(--color-primary) !important;
   color: #fff !important;
   border-color: var(--color-primary) !important;
+}
+
+/* Help button */
+
+.toolbar-help-btn {
+  font-weight: 600;
+  font-size: 14px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* ─── Schema selector emphasis ─── */
+
+.schema-group {
+  background: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: 6px;
+  padding: 4px 8px;
+  gap: 8px;
+  box-shadow: 0 0 0 1px rgba(var(--color-primary-rgb, 59, 130, 246), 0.1);
+}
+
+.schema-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.schema-group select {
+  min-width: 140px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.schema-group select:focus {
+  outline: none;
+}
+
+/* Dark mode adjustments */
+
+[data-theme="dark"] .schema-group {
+  border-color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb, 59, 130, 246), 0.1);
+}
+
+[data-theme="dark"] .schema-group select {
+  color: var(--color-text);
 }

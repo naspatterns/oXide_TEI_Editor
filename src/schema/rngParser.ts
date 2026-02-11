@@ -1,4 +1,4 @@
-import type { ElementSpec, AttrSpec } from '../types/schema';
+import type { ElementSpec, AttrSpec, ContentModel, ContentItem } from '../types/schema';
 
 /**
  * Parse a RelaxNG (.rng) XML document and extract ElementSpec[] and AttrSpec[].
@@ -10,6 +10,8 @@ import type { ElementSpec, AttrSpec } from '../types/schema';
  *
  * TEI's RNG files heavily use <define> and <ref> for modularity.
  * This parser resolves refs to build a flat element list.
+ *
+ * Phase 2: Now also extracts structured ContentModel for accurate validation.
  */
 
 const RNG_NS = 'http://relaxng.org/ns/structure/1.0';
@@ -70,13 +72,241 @@ function extractElementSpec(
   const children = extractChildElements(elementNode, defines, visited);
   const documentation = extractDocumentation(elementNode);
 
+  // Phase 2: Extract structured content model
+  const contentModel = parseContentModel(elementNode, defines, new Set());
+
   return {
     name,
     ns: ns !== TEI_NS ? ns : undefined,
     documentation,
     children,
     attributes,
+    contentModel,
   };
+}
+
+// ============================================================================
+// Phase 2: Content Model Parsing
+// ============================================================================
+
+/**
+ * Parse RNG content into a structured ContentModel.
+ * Handles sequence, choice, interleave, and cardinality (zeroOrMore, oneOrMore, optional).
+ */
+function parseContentModel(
+  node: Element,
+  defines: Map<string, DefineNode>,
+  visited: Set<string>,
+): ContentModel | undefined {
+  // Find the content children (skip attributes)
+  const contentChildren: Element[] = [];
+
+  for (let i = 0; i < node.children.length; i++) {
+    const child = node.children[i];
+    if (child.namespaceURI !== RNG_NS) continue;
+
+    const localName = child.localName;
+    // Skip attribute-related elements
+    if (localName === 'attribute' || localName === 'documentation' || localName === 'desc') {
+      continue;
+    }
+    contentChildren.push(child);
+  }
+
+  if (contentChildren.length === 0) {
+    return { type: 'empty', minOccurs: 0, maxOccurs: 0 };
+  }
+
+  // If single child, parse it directly
+  if (contentChildren.length === 1) {
+    return parseContentNode(contentChildren[0], defines, visited);
+  }
+
+  // Multiple children default to sequence
+  const items: ContentItem[] = [];
+  for (const child of contentChildren) {
+    const item = contentNodeToItem(child, defines, visited);
+    if (item) items.push(item);
+  }
+
+  return {
+    type: 'sequence',
+    items,
+    minOccurs: 1,
+    maxOccurs: 1,
+  };
+}
+
+/**
+ * Parse a single RNG content node into a ContentModel.
+ */
+function parseContentNode(
+  node: Element,
+  defines: Map<string, DefineNode>,
+  visited: Set<string>,
+): ContentModel | undefined {
+  const localName = node.localName;
+
+  switch (localName) {
+    case 'element': {
+      const elName = node.getAttribute('name');
+      return {
+        type: 'element',
+        items: elName ? [{ kind: 'element', name: elName, minOccurs: 1, maxOccurs: 1 }] : undefined,
+        minOccurs: 1,
+        maxOccurs: 1,
+      };
+    }
+
+    case 'text':
+      return { type: 'text', minOccurs: 0, maxOccurs: Infinity };
+
+    case 'empty':
+      return { type: 'empty', minOccurs: 0, maxOccurs: 0 };
+
+    case 'choice':
+    case 'interleave':
+    case 'group': {
+      const items: ContentItem[] = [];
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        if (child.namespaceURI !== RNG_NS) continue;
+        const item = contentNodeToItem(child, defines, visited);
+        if (item) items.push(item);
+      }
+      return {
+        type: localName as 'choice' | 'interleave' | 'group',
+        items,
+        minOccurs: 1,
+        maxOccurs: 1,
+      };
+    }
+
+    case 'optional': {
+      const inner = parseContentModel(node, defines, visited);
+      if (inner) {
+        return { ...inner, minOccurs: 0, maxOccurs: inner.maxOccurs === Infinity ? Infinity : 1 };
+      }
+      return undefined;
+    }
+
+    case 'zeroOrMore': {
+      const inner = parseContentModel(node, defines, visited);
+      if (inner) {
+        return { ...inner, minOccurs: 0, maxOccurs: Infinity };
+      }
+      return undefined;
+    }
+
+    case 'oneOrMore': {
+      const inner = parseContentModel(node, defines, visited);
+      if (inner) {
+        return { ...inner, minOccurs: 1, maxOccurs: Infinity };
+      }
+      return undefined;
+    }
+
+    case 'ref': {
+      const refName = node.getAttribute('name');
+      if (refName && !visited.has(refName)) {
+        const def = defines.get(refName);
+        if (def) {
+          visited.add(refName);
+          const result = parseContentModel(def.node, defines, visited);
+          visited.delete(refName);
+          return result;
+        }
+      }
+      // Unresolved ref - return as model reference
+      return {
+        type: 'group',
+        items: refName ? [{ kind: 'model', name: refName, minOccurs: 1, maxOccurs: 1 }] : undefined,
+        minOccurs: 1,
+        maxOccurs: 1,
+      };
+    }
+
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Convert a content node to a ContentItem.
+ */
+function contentNodeToItem(
+  node: Element,
+  defines: Map<string, DefineNode>,
+  visited: Set<string>,
+): ContentItem | undefined {
+  const localName = node.localName;
+
+  switch (localName) {
+    case 'element': {
+      const elName = node.getAttribute('name');
+      if (elName) {
+        return { kind: 'element', name: elName, minOccurs: 1, maxOccurs: 1 };
+      }
+      return undefined;
+    }
+
+    case 'text':
+      return { kind: 'text', minOccurs: 0, maxOccurs: Infinity };
+
+    case 'ref': {
+      const refName = node.getAttribute('name');
+      if (refName && !visited.has(refName)) {
+        const def = defines.get(refName);
+        if (def) {
+          visited.add(refName);
+          const content = parseContentModel(def.node, defines, visited);
+          visited.delete(refName);
+          if (content) {
+            return { kind: 'group', content, minOccurs: content.minOccurs, maxOccurs: content.maxOccurs };
+          }
+        }
+      }
+      // Unresolved ref
+      return refName ? { kind: 'model', name: refName, minOccurs: 1, maxOccurs: 1 } : undefined;
+    }
+
+    case 'optional': {
+      const content = parseContentModel(node, defines, visited);
+      if (content) {
+        return { kind: 'group', content, minOccurs: 0, maxOccurs: 1 };
+      }
+      return undefined;
+    }
+
+    case 'zeroOrMore': {
+      const content = parseContentModel(node, defines, visited);
+      if (content) {
+        return { kind: 'group', content, minOccurs: 0, maxOccurs: Infinity };
+      }
+      return undefined;
+    }
+
+    case 'oneOrMore': {
+      const content = parseContentModel(node, defines, visited);
+      if (content) {
+        return { kind: 'group', content, minOccurs: 1, maxOccurs: Infinity };
+      }
+      return undefined;
+    }
+
+    case 'choice':
+    case 'interleave':
+    case 'group': {
+      const content = parseContentNode(node, defines, visited);
+      if (content) {
+        return { kind: 'group', content, minOccurs: 1, maxOccurs: 1 };
+      }
+      return undefined;
+    }
+
+    default:
+      return undefined;
+  }
 }
 
 function extractAttributes(

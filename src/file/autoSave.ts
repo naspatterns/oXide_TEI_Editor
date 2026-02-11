@@ -32,23 +32,37 @@ export function stopAutoSave() {
   }
 }
 
-/** Save current state to IndexedDB */
+/** Save current state to IndexedDB (handles Private Mode gracefully) */
 export async function saveToIDB(content: string, fileName: string | null): Promise<void> {
-  const data: AutosaveData = {
-    content,
-    fileName,
-    timestamp: Date.now(),
-  };
-  await set(AUTOSAVE_KEY, data);
+  try {
+    const data: AutosaveData = {
+      content,
+      fileName,
+      timestamp: Date.now(),
+    };
+    await set(AUTOSAVE_KEY, data);
+  } catch (error) {
+    // IndexedDB unavailable (Private Mode) — autosave disabled silently
+    console.warn('Autosave unavailable (IndexedDB error):', error);
+  }
 }
 
-/** Retrieve autosaved state (if any) */
+/** Retrieve autosaved state (if any, handles Private Mode) */
 export async function loadFromIDB(): Promise<AutosaveData | null> {
-  const data = await get<AutosaveData>(AUTOSAVE_KEY);
-  return data ?? null;
+  try {
+    const data = await get<AutosaveData>(AUTOSAVE_KEY);
+    return data ?? null;
+  } catch (error) {
+    console.warn('Autosave recovery unavailable (IndexedDB error):', error);
+    return null;
+  }
 }
 
-/** Clear autosaved state */
+/** Clear autosaved state (handles Private Mode) */
 export async function clearAutoSave(): Promise<void> {
-  await del(AUTOSAVE_KEY);
+  try {
+    await del(AUTOSAVE_KEY);
+  } catch {
+    // Ignore — no data to clear in Private Mode
+  }
 }

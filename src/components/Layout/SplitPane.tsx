@@ -6,11 +6,11 @@ interface SplitPaneProps {
   right: ReactNode;
   /** 'split' | 'editor' | 'preview' */
   mode: 'split' | 'editor' | 'preview';
-  /** Initial split position as fraction (0-1), default 0.5 */
+  /** Initial split position as fraction (0-1), default 0.75 (3:1 ratio) */
   initialSplit?: number;
 }
 
-export function SplitPane({ left, right, mode, initialSplit = 0.5 }: SplitPaneProps) {
+export function SplitPane({ left, right, mode, initialSplit = 0.75 }: SplitPaneProps) {
   const [splitFraction, setSplitFraction] = useState(initialSplit);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -58,7 +58,9 @@ export function SplitPane({ left, right, mode, initialSplit = 0.5 }: SplitPanePr
       <div className="split-panel" style={{ width: `${splitFraction * 100}%` }}>
         {left}
       </div>
-      <div className="split-divider" onMouseDown={handleMouseDown} />
+      <div className="split-divider" onMouseDown={handleMouseDown}>
+        <div className="split-handle" />
+      </div>
       <div className="split-panel" style={{ width: `${(1 - splitFraction) * 100}%` }}>
         {right}
       </div>

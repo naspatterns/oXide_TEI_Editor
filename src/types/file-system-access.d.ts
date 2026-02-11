@@ -1,10 +1,51 @@
 /** Type declarations for the File System Access API (Chrome/Edge 86+) */
 
-interface FileSystemFileHandle {
-  getFile(): Promise<File>;
-  createWritable(): Promise<FileSystemWritableFileStream>;
+/** Base interface for all file system handles */
+interface FileSystemHandle {
   readonly name: string;
+  readonly kind: 'file' | 'directory';
+  isSameEntry(other: FileSystemHandle): Promise<boolean>;
+  queryPermission(descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+  requestPermission(descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+}
+
+interface FileSystemHandlePermissionDescriptor {
+  mode?: 'read' | 'readwrite';
+}
+
+interface FileSystemFileHandle extends FileSystemHandle {
+  getFile(): Promise<File>;
+  createWritable(options?: FileSystemCreateWritableOptions): Promise<FileSystemWritableFileStream>;
   readonly kind: 'file';
+}
+
+interface FileSystemCreateWritableOptions {
+  keepExistingData?: boolean;
+}
+
+/** Directory handle for folder operations */
+interface FileSystemDirectoryHandle extends FileSystemHandle {
+  readonly kind: 'directory';
+  getFileHandle(name: string, options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle>;
+  getDirectoryHandle(name: string, options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle>;
+  removeEntry(name: string, options?: FileSystemRemoveOptions): Promise<void>;
+  resolve(possibleDescendant: FileSystemHandle): Promise<string[] | null>;
+  keys(): AsyncIterableIterator<string>;
+  values(): AsyncIterableIterator<FileSystemHandle>;
+  entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+  [Symbol.asyncIterator](): AsyncIterableIterator<[string, FileSystemHandle]>;
+}
+
+interface FileSystemGetFileOptions {
+  create?: boolean;
+}
+
+interface FileSystemGetDirectoryOptions {
+  create?: boolean;
+}
+
+interface FileSystemRemoveOptions {
+  recursive?: boolean;
 }
 
 interface FileSystemWritableFileStream extends WritableStream {
@@ -38,7 +79,14 @@ interface FilePickerAcceptType {
   accept: Record<string, string[]>;
 }
 
+interface DirectoryPickerOptions {
+  id?: string;
+  mode?: 'read' | 'readwrite';
+  startIn?: FileSystemHandle | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos';
+}
+
 interface Window {
   showOpenFilePicker(options?: OpenFilePickerOptions): Promise<FileSystemFileHandle[]>;
   showSaveFilePicker(options?: SaveFilePickerOptions): Promise<FileSystemFileHandle>;
+  showDirectoryPicker(options?: DirectoryPickerOptions): Promise<FileSystemDirectoryHandle>;
 }

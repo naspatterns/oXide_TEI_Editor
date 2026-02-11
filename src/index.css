@@ -1,56 +1,152 @@
 :root {
+  /* ═══════════════════════════════════════════════════════════
+     Core Color Variables
+     ═══════════════════════════════════════════════════════════ */
   --color-bg: #ffffff;
   --color-surface: #f8f9fa;
   --color-border: #dee2e6;
-  --color-text: #212529;
-  --color-text-secondary: #6c757d;
+  --color-text: #000000;
+  --color-text-secondary: #555555;
   --color-primary: #4a6fa5;
+  --color-primary-rgb: 74, 111, 165;
   --color-primary-hover: #3d5d8a;
   --color-error: #dc3545;
   --color-success: #28a745;
   --color-warning: #ffc107;
+
+  /* Interactive states (previously missing) */
+  --color-hover: rgba(0, 0, 0, 0.06);
+  --color-active: rgba(0, 0, 0, 0.1);
+  --color-focus-ring: rgba(74, 111, 165, 0.4);
+
+  /* Layout dimensions */
   --toolbar-height: 44px;
   --statusbar-height: 28px;
   --cm-active-line: rgba(0, 0, 0, 0.04);
+
+  /* Semantic aliases (mapped to core colors) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f3f3;
+  --bg-tertiary: #e5e5e5;
+  --text-primary: #000000;
+  --text-secondary: #555555;
+  --border-color: #dee2e6;
+  --accent-color: #4a6fa5;
+  --accent-hover: #3d5d8a;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a1a1a1;
+
+  /* Animation timing */
+  --transition-fast: 0.1s;
+  --transition-normal: 0.15s;
+  --transition-slow: 0.25s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 [data-theme="dark"] {
+  /* Core color variables */
   --color-bg: #1e1e1e;
   --color-surface: #252526;
   --color-border: #3c3c3c;
   --color-text: #cccccc;
   --color-text-secondary: #858585;
   --color-primary: #569cd6;
+  --color-primary-rgb: 86, 156, 214;
   --color-primary-hover: #6cb0e0;
   --color-error: #f14c4c;
   --color-success: #89d185;
   --color-warning: #cca700;
+
+  /* Interactive states */
+  --color-hover: rgba(255, 255, 255, 0.08);
+  --color-active: rgba(255, 255, 255, 0.12);
+  --color-focus-ring: rgba(86, 156, 214, 0.5);
+
+  /* Layout */
   --cm-active-line: rgba(255, 255, 255, 0.06);
+
+  /* Semantic aliases */
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #3c3c3c;
+  --text-primary: #cccccc;
+  --text-secondary: #858585;
+  --border-color: #3c3c3c;
+  --accent-color: #569cd6;
+  --accent-hover: #6cb0e0;
+  --scrollbar-thumb: #4a4a4a;
+  --scrollbar-thumb-hover: #5a5a5a;
 }
 
-/* Light theme: CodeMirror text colors */
-.cm-editor .cm-content,
+/* ═══════════════════════════════════════════════════════════
+   CodeMirror XML Syntax Highlighting
+   Using multiple selector patterns to ensure override
+   ═══════════════════════════════════════════════════════════ */
+
+/* Light theme - base text (force black for content between tags) */
 .cm-editor .cm-line {
-  color: #1a1a1a !important;  /* Dark text for light background */
+  color: #000000 !important;
 }
 
-/* Dark theme: override CodeMirror colors */
+/* Light theme - ensure all text nodes are black */
+.cm-editor .cm-content {
+  color: #000000 !important;
+}
+
+/* Dark theme - editor background */
 [data-theme="dark"] .cm-editor {
-  background-color: #1e1e1e !important;  /* Dark background */
+  background-color: #1e1e1e !important;
 }
-[data-theme="dark"] .cm-editor .cm-content,
-[data-theme="dark"] .cm-editor .cm-line {
-  color: #ffffff !important;  /* White text for dark background */
-}
+
 [data-theme="dark"] .cm-editor .cm-gutters {
-  background-color: #252526 !important;  /* Slightly lighter gutter */
+  background-color: #252526 !important;
 }
-[data-theme="dark"] .cm-editor .ͼb { color: #89d185 !important; } /* tags */
-[data-theme="dark"] .cm-editor .ͼd { color: #c586c0 !important; } /* attribute names */
-[data-theme="dark"] .cm-editor .ͼe { color: #ce9178 !important; } /* attribute values */
-[data-theme="dark"] .cm-editor .cm-processingInstruction { color: #808080 !important; font-style: italic; } /* processing instructions */
-[data-theme="dark"] .cm-editor .cm-comment { color: #6a9955 !important; font-style: italic; } /* comments */
+
+/* Dark theme - base text (content between tags) */
+[data-theme="dark"] .cm-editor .cm-line {
+  color: #d4d4d4 !important;
+}
+
+[data-theme="dark"] .cm-editor .cm-content {
+  color: #d4d4d4 !important;
+}
+
+/* ─── XML 구문 강조 색상 ─── */
+/* CodeMirror의 클래스 패턴에 맞춰 정의 */
+/* 참고: tok-* 클래스(Lezer 파서)와 cm-* 클래스(CodeMirror 기본) 두 가지만 유지 */
+
+/* tok-* 클래스: Lezer XML 파서가 생성하는 토큰 클래스 */
+.tok-tagName { color: #22863a !important; font-weight: 600 !important; }
+.tok-attributeName { color: #6f42c1 !important; }
+.tok-attributeValue { color: #032f62 !important; }
+.tok-angleBracket { color: #666666 !important; }
+.tok-comment { color: #6a737d !important; font-style: italic !important; }
+
+[data-theme="dark"] .tok-tagName { color: #569cd6 !important; font-weight: 600 !important; }
+[data-theme="dark"] .tok-attributeName { color: #9cdcfe !important; }
+[data-theme="dark"] .tok-attributeValue { color: #ce9178 !important; }
+[data-theme="dark"] .tok-angleBracket { color: #808080 !important; }
+[data-theme="dark"] .tok-comment { color: #6a9955 !important; font-style: italic !important; }
+
+/* cm-* 클래스: CodeMirror 기본 하이라이트 클래스 (폴백용) */
+.cm-tag { color: #22863a !important; font-weight: 600 !important; }
+.cm-bracket { color: #666666 !important; }
+.cm-attributeName { color: #6f42c1 !important; }
+.cm-attributeValue { color: #032f62 !important; }
+.cm-string { color: #032f62 !important; }
+.cm-comment { color: #6a737d !important; font-style: italic !important; }
+
+[data-theme="dark"] .cm-tag { color: #569cd6 !important; font-weight: 600 !important; }
+[data-theme="dark"] .cm-bracket { color: #808080 !important; }
+[data-theme="dark"] .cm-attributeName { color: #9cdcfe !important; }
+[data-theme="dark"] .cm-attributeValue { color: #ce9178 !important; }
+[data-theme="dark"] .cm-string { color: #ce9178 !important; }
+[data-theme="dark"] .cm-comment { color: #6a9955 !important; font-style: italic !important; }
+
+/* ═══════════════════════════════════════════════════════════ */
 
 * {
   margin: 0;
@@ -75,16 +171,24 @@ button {
   color: var(--color-text);
   padding: 4px 12px;
   border-radius: 4px;
-  transition: background 0.15s;
+  transition:
+    background var(--transition-normal),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 button:hover {
   background: var(--color-border);
 }
 
+button:active {
+  transform: scale(0.98);
+}
+
 button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--color-focus-ring);
 }
 
 select {
@@ -134,6 +238,21 @@ select:focus-visible {
   .preview-content {
     padding: 16px;
   }
+
+  /* Hide breadcrumb on mobile */
+  .breadcrumb-bar {
+    display: none;
+  }
+
+  /* Compact tabs on mobile */
+  .editor-tab {
+    min-width: 80px;
+    padding: 0 8px;
+  }
+
+  .editor-tab .tab-name {
+    font-size: 12px;
+  }
 }
 
 /* ─── Accessibility: reduced motion ─── */
@@ -142,4 +261,13 @@ select:focus-visible {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* ─── Editor container (tab bar + editor) ─── */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }

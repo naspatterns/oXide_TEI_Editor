@@ -28,12 +28,11 @@ export function SchemaSelector() {
       // Check for DTD files
       if (file.name.toLowerCase().endsWith('.dtd')) {
         alert(
-          '⚠️ DTD 스키마는 직접 지원되지 않습니다.\n\n' +
-          'RelaxNG (.rng) 스키마만 업로드할 수 있습니다.\n\n' +
-          'DTD를 RelaxNG로 변환하려면:\n' +
-          '• trang 도구 사용: java -jar trang.jar schema.dtd schema.rng\n' +
-          '• 온라인: https://relaxng.org/jclark/trang.html\n\n' +
-          'DTD not supported. Please convert to RelaxNG first.'
+          '⚠️ DTD schemas are not directly supported.\n\n' +
+          'Only RelaxNG (.rng) schemas can be uploaded.\n\n' +
+          'To convert DTD to RelaxNG:\n' +
+          '• Using trang: java -jar trang.jar schema.dtd schema.rng\n' +
+          '• Online: https://relaxng.org/jclark/trang.html'
         );
         e.target.value = '';
         return;

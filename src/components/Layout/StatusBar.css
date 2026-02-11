@@ -104,6 +104,23 @@
   border-radius: 4px;
   margin-bottom: 4px;
   font-size: 13px;
+  transition: background-color 0.15s ease;
+}
+
+.error-item-clickable {
+  cursor: pointer;
+}
+
+.error-item-clickable:hover {
+  background-color: var(--color-hover);
+}
+
+.error-item-error.error-item-clickable:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.error-item-warning.error-item-clickable:hover {
+  background: rgba(245, 158, 11, 0.2);
 }
 
 .error-item-error {

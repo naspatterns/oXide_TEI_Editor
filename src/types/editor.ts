@@ -25,4 +25,8 @@ export interface EditorState {
   viewMode: ViewMode;
   /** Incremented on LOAD_DOCUMENT to force editor remount */
   documentVersion: number;
+  /** Editor font size in pixels */
+  editorFontSize: number;
+  /** Outline panel font size in pixels */
+  outlineFontSize: number;
 }

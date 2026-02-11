@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════
+   Toast Notification System
+   - VS Code style notifications
+   - Smooth slide-up animations
+   - Hover to pause auto-dismiss
+   ═══════════════════════════════════════════════════════════ */
+
+.toast-container {
+  position: fixed;
+  bottom: calc(var(--statusbar-height) + 12px);
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+  max-width: 400px;
+}
+
+/* ─── Individual Toast ─── */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 400px;
+}
+
+/* Blur effect — with fallback for Firefox */
+@supports (backdrop-filter: blur(8px)) {
+  .toast {
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  }
+}
+
+/* ─── Toast Types ─── */
+.toast-success {
+  border-left: 3px solid var(--color-success);
+}
+
+.toast-success .toast-icon {
+  color: var(--color-success);
+}
+
+.toast-error {
+  border-left: 3px solid var(--color-error);
+}
+
+.toast-error .toast-icon {
+  color: var(--color-error);
+}
+
+.toast-warning {
+  border-left: 3px solid var(--color-warning);
+}
+
+.toast-warning .toast-icon {
+  color: var(--color-warning);
+}
+
+.toast-info {
+  border-left: 3px solid var(--color-primary);
+}
+
+.toast-info .toast-icon {
+  color: var(--color-primary);
+}
+
+/* ─── Toast Content ─── */
+.toast-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: bold;
+  width: 18px;
+  text-align: center;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.toast-action {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toast-action:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+}
+
+.toast-close:hover {
+  opacity: 1;
+  background: var(--color-border);
+}
+
+/* ─── Animations ─── */
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-exit {
+  animation: toastSlideOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Pause indicator - subtle pulse when paused */
+.toast-paused {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 0 0 2px rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* ─── Dark Theme Adjustments ─── */
+[data-theme="dark"] .toast {
+  background: var(--color-surface);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .toast-exit {
+    animation: none;
+  }
+
+  .toast-enter {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .toast-exit {
+    opacity: 0;
+  }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 480px) {
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+
+  .toast {
+    min-width: auto;
+    max-width: none;
+  }
+}

@@ -8,16 +8,56 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Critical: allows flex children to scroll properly */
 }
 
 .split-divider {
-  width: 5px;
+  width: 8px;
   background: var(--color-border);
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .split-divider:hover {
   background: var(--color-primary);
+}
+
+.split-divider:hover .split-handle {
+  background: #fff;
+}
+
+/* Drag handle - vertical dots pattern */
+.split-handle {
+  width: 4px;
+  height: 32px;
+  background: var(--color-text-secondary);
+  border-radius: 2px;
+  position: relative;
+  transition: background 0.15s;
+}
+
+/* Create grip pattern with pseudo-elements */
+.split-handle::before,
+.split-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: inherit;
+  border-radius: 50%;
+}
+
+.split-handle::before {
+  top: -8px;
+}
+
+.split-handle::after {
+  bottom: -8px;
 }

@@ -6,22 +6,29 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-icons": "npx tsx scripts/generateIcons.ts",
+    "generate-schema": "npx tsx scripts/generateTeiSchema.ts",
+    "generate-schema:download": "npx tsx scripts/generateTeiSchema.ts --download",
+    "generate-p5-schema": "npx tsx scripts/generateFromP5.ts",
+    "generate-p5-schema:download": "npx tsx scripts/generateFromP5.ts --download"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/lint": "^6.8.0",
     "@uiw/react-codemirror": "^4.23.0",
     "codemirror": "^6.0.0",
-    "idb-keyval": "^6.2.1"
+    "idb-keyval": "^6.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "sharp": "^0.34.5",
+    "tsx": "^4.19.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.0"
   }

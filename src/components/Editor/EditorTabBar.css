@@ -1,0 +1,174 @@
+/* Editor Tab Bar Styles */
+
+.editor-tab-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  min-height: 35px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.editor-tabs {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  gap: 0;
+}
+
+/* Hide scrollbar but allow scrolling */
+.editor-tabs::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+
+.editor-tabs {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Individual Tab */
+
+.editor-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  min-width: 100px;
+  max-width: 200px;
+  height: 35px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  user-select: none;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.editor-tab:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.editor-tab.active {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Active tab indicator (bottom border) */
+.editor-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-color);
+}
+
+/* Dirty indicator */
+
+.tab-dirty-indicator {
+  width: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Tab name */
+
+.tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Close button */
+
+.tab-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.editor-tab:hover .tab-close-btn {
+  opacity: 1;
+}
+
+.tab-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Show dirty indicator when close button is visible */
+.editor-tab:hover .tab-dirty-indicator {
+  visibility: hidden;
+}
+
+/* But keep showing dirty for non-hovered dirty tabs */
+.editor-tab:not(:hover) .tab-dirty-indicator {
+  visibility: visible;
+}
+
+/* Font Size Control */
+
+.editor-font-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  border-left: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.editor-font-control .font-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.editor-font-control .font-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.editor-font-control .font-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.editor-font-control .font-size-value {
+  min-width: 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}

@@ -2,6 +2,30 @@ import type { CompletionContext, CompletionResult, Completion } from '@codemirro
 import { snippetCompletion } from '@codemirror/autocomplete';
 import type { SchemaInfo, ElementSpec } from '../../types/schema';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 정규식 캐싱 (모듈 레벨)
+// 매 함수 호출마다 정규식을 생성하면 성능 저하 발생 → 한 번만 생성하여 재사용
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** 요소명 시작 패턴: <tagName */
+const ELEMENT_START_REGEX = /<([a-zA-Z_][\w.:_-]*)$/;
+/** 속성값 입력 패턴: <tag attr="value */
+const ATTR_VALUE_REGEX = /<([a-zA-Z_][\w.:_-]*)\s[^>]*?([a-zA-Z_][\w.:_-]*)="([^"]*)$/;
+/** 속성명 입력 패턴: <tag attr */
+const ATTR_NAME_REGEX = /<([a-zA-Z_][\w.:_-]*)\s[^>]*?([a-zA-Z_][\w.:_-]*)$/;
+/** 태그 내 스페이스 패턴: <tag space */
+const SPACE_IN_TAG_REGEX = /<([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s$/;
+/** 닫는 태그 입력 패턴: </tagName */
+const CLOSING_TAG_REGEX = /<\/([a-zA-Z_][\w.:_-]*)$/;
+/** 태그 매칭 패턴 (g 플래그 - lastIndex 리셋 필요) */
+const TAG_PARSE_REGEX = /<\/?([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s*\/?>/g;
+/** 열린 태그 패턴: <tag attrs... */
+const OPEN_TAG_REGEX = /<([a-zA-Z_][\w.:_-]*)(\s[^>]*)?$/;
+/** 속성 추출 패턴 (g 플래그 - lastIndex 리셋 필요) */
+const ATTR_EXTRACT_REGEX = /([a-zA-Z_][\w.:_-]*)\s*=/g;
+/** 등호 직후 패턴 */
+const AFTER_EQUALS_REGEX = /=\s*$/;
+
 /**
  * Creates a CodeMirror completion source with context-aware TEI suggestions.
  *
@@ -24,40 +48,40 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
     const parentName = elementStack.length > 0 ? elementStack[elementStack.length - 1] : null;
     const parentSpec = parentName ? schema.elementMap.get(parentName) : null;
 
-    // Check if we're typing an element name after '<'
-    const elementMatch = textBefore.match(/<([a-zA-Z_][\w.:_-]*)$/);
+    // 요소명 자동완성: '<' 뒤에서 요소명 타이핑 중
+    const elementMatch = textBefore.match(ELEMENT_START_REGEX);
     if (elementMatch) {
       return completeElementName(schema, elementMatch[1], pos - elementMatch[1].length, parentSpec);
     }
 
-    // Check if we just typed '<'
+    // 요소 시작: '<' 직후 (닫는 태그 제외)
     if (textBefore.endsWith('<') && !textBefore.endsWith('</')) {
       return completeElementName(schema, '', pos, parentSpec);
     }
 
-    // Check if we're typing an attribute value (after ="") — check before attribute name
-    const valueMatch = textBefore.match(/<([a-zA-Z_][\w.:_-]*)\s[^>]*?([a-zA-Z_][\w.:_-]*)="([^"]*)$/);
+    // 속성값 자동완성: attr="value 입력 중 (속성명보다 먼저 체크)
+    const valueMatch = textBefore.match(ATTR_VALUE_REGEX);
     if (valueMatch) {
       return completeAttributeValue(schema, valueMatch[1], valueMatch[2], valueMatch[3], pos - valueMatch[3].length);
     }
 
-    // Check if we're in an attribute context (inside an opening tag, after space)
-    const attrMatch = textBefore.match(/<([a-zA-Z_][\w.:_-]*)\s[^>]*?([a-zA-Z_][\w.:_-]*)$/);
+    // 속성명 자동완성: 여는 태그 내에서 속성명 타이핑 중
+    const attrMatch = textBefore.match(ATTR_NAME_REGEX);
     if (attrMatch) {
       const usedAttrs = getUsedAttributes(textBefore);
       return completeAttributeName(schema, attrMatch[1], attrMatch[2], pos - attrMatch[2].length, usedAttrs);
     }
 
-    // Check if we just typed space inside a tag (first space or after attribute)
-    const spaceInTagMatch = textBefore.match(/<([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s$/);
-    if (spaceInTagMatch && !textBefore.match(/=\s*$/)) {
-      // Don't trigger if we're right after '=' (waiting for value)
+    // 태그 내 스페이스: 첫 스페이스 또는 속성 후 스페이스
+    const spaceInTagMatch = textBefore.match(SPACE_IN_TAG_REGEX);
+    if (spaceInTagMatch && !AFTER_EQUALS_REGEX.test(textBefore)) {
+      // '=' 직후에는 트리거하지 않음 (값 입력 대기 중)
       const usedAttrs = getUsedAttributes(textBefore);
       return completeAttributeName(schema, spaceInTagMatch[1], '', pos, usedAttrs);
     }
 
-    // Check if we're typing a closing tag after '</'
-    const closingMatch = textBefore.match(/<\/([a-zA-Z_][\w.:_-]*)$/);
+    // 닫는 태그 자동완성: '</' 뒤에서 타이핑 중
+    const closingMatch = textBefore.match(CLOSING_TAG_REGEX);
     if (closingMatch) {
       return completeClosingTag(closingMatch[1], pos - closingMatch[1].length, elementStack);
     }
@@ -71,17 +95,19 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
 }
 
 /**
- * Extract attribute names already used in the current opening tag.
+ * 현재 열린 태그에서 이미 사용된 속성명 추출
+ * (중복 속성 제안 방지용)
  */
 function getUsedAttributes(text: string): Set<string> {
   const used = new Set<string>();
-  // Find the last opening tag that's not closed
-  const tagMatch = text.match(/<([a-zA-Z_][\w.:_-]*)(\s[^>]*)?$/);
+  // 닫히지 않은 마지막 여는 태그 찾기
+  const tagMatch = text.match(OPEN_TAG_REGEX);
   if (tagMatch && tagMatch[2]) {
     const attrString = tagMatch[2];
-    const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=/g;
+    // g 플래그 정규식은 재사용 전 lastIndex 리셋 필수
+    ATTR_EXTRACT_REGEX.lastIndex = 0;
     let m: RegExpExecArray | null;
-    while ((m = attrRegex.exec(attrString)) !== null) {
+    while ((m = ATTR_EXTRACT_REGEX.exec(attrString)) !== null) {
       used.add(m[1]);
     }
   }
@@ -89,15 +115,20 @@ function getUsedAttributes(text: string): Set<string> {
 }
 
 /**
- * Parse element stack from XML text, tracking open/close tags.
- * Returns the stack of currently open element names from root to cursor.
+ * XML 텍스트에서 요소 스택 파싱 (열린/닫힌 태그 추적)
+ * 루트부터 커서 위치까지 현재 열린 요소명 배열 반환
+ *
+ * 컨텍스트 인식 자동완성의 핵심 로직:
+ * - 스택을 통해 현재 부모 요소 파악
+ * - 부모 요소의 허용 자식만 제안하여 정확도 향상
  */
 function getElementStack(text: string): string[] {
   const stack: string[] = [];
-  const tagRegex = /<\/?([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s*\/?>/g;
+  // g 플래그 정규식은 재사용 전 lastIndex 리셋 필수
+  TAG_PARSE_REGEX.lastIndex = 0;
   let m: RegExpExecArray | null;
 
-  while ((m = tagRegex.exec(text)) !== null) {
+  while ((m = TAG_PARSE_REGEX.exec(text)) !== null) {
     const fullTag = m[0];
     const tagName = m[1];
 
@@ -105,11 +136,13 @@ function getElementStack(text: string): string[] {
     if (fullTag.startsWith('<!')) continue; // Comments/CDATA
 
     if (fullTag.startsWith('</')) {
-      // Closing tag — pop matching element
-      const idx = stack.lastIndexOf(tagName);
-      if (idx !== -1) stack.splice(idx, 1);
+      // 닫는 태그: 스택 top과 매칭되면 pop
+      // (잘못된 중첩 시 스택 유지 - 자동완성 정확도 향상)
+      if (stack[stack.length - 1] === tagName) {
+        stack.pop();
+      }
     } else if (!fullTag.endsWith('/>')) {
-      // Opening tag (not self-closing)
+      // 여는 태그 (self-closing 제외) → 스택에 push
       stack.push(tagName);
     }
   }
@@ -262,7 +295,10 @@ function completeClosingTag(
   return { from, options, validFor: /^[a-zA-Z_][\w.:_-]*$/ };
 }
 
-/** Boost common structural elements to top of list */
+/**
+ * 자주 사용되는 구조 요소에 높은 우선순위 부여
+ * (자동완성 목록에서 상위에 표시)
+ */
 function getElementBoost(name: string): number {
   const boosts: Record<string, number> = {
     p: 50, div: 45, head: 40, hi: 35, note: 30,

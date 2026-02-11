@@ -1,0 +1,91 @@
+.alert-dialog {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 24px;
+  width: 520px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.alert-content {
+  margin-bottom: 20px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.alert-section {
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.alert-section:first-child {
+  margin-top: 0;
+}
+
+.alert-line {
+  margin-left: 0;
+}
+
+.alert-list-item {
+  margin-left: 16px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.alert-spacer {
+  height: 12px;
+}
+
+/* Link styling within alert */
+.alert-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.alert-content a:hover {
+  text-decoration: none;
+}
+
+/* ─── Confirm Dialog Specific ─── */
+.confirm-dialog {
+  animation: dialogSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialogSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dialog-secondary {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+.dialog-secondary:hover {
+  background: var(--color-border) !important;
+}
+
+.dialog-danger {
+  background: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+}
+
+.dialog-danger:hover {
+  filter: brightness(1.1);
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog {
+    animation: none;
+  }
+}

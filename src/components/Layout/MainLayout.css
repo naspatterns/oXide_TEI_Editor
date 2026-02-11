@@ -1,0 +1,100 @@
+/* 3-panel VS Code-style layout */
+
+.main-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.main-layout-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-layout-left {
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+}
+
+.main-layout-center {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-primary);
+}
+
+.main-layout-right {
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+}
+
+/* Resizer */
+
+.main-layout-resizer {
+  flex-shrink: 0;
+  width: 8px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border-color);
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+
+.main-layout-resizer:hover {
+  background: var(--accent-color);
+}
+
+/* Drag handle - vertical bar with grip pattern */
+.main-layout-resizer-handle {
+  width: 4px;
+  height: 32px;
+  background: var(--text-secondary);
+  border-radius: 2px;
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.main-layout-resizer:hover .main-layout-resizer-handle {
+  background: #fff;
+}
+
+/* Create grip pattern with pseudo-elements */
+.main-layout-resizer-handle::before,
+.main-layout-resizer-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: inherit;
+  border-radius: 50%;
+}
+
+.main-layout-resizer-handle::before {
+  top: -8px;
+}
+
+.main-layout-resizer-handle::after {
+  bottom: -8px;
+}
+
+/* Responsive: hide side panels on small screens */
+
+@media (max-width: 768px) {
+  .main-layout-left,
+  .main-layout-right {
+    display: none;
+  }
+
+  .main-layout-resizer {
+    display: none;
+  }
+}

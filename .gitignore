@@ -52,3 +52,9 @@ temp/
 
 # Project notes
 project_description
+
+# User data files (not part of the project)
+data/
+*.xml
+!public/*.xml
+śāstra_network_analysis.*

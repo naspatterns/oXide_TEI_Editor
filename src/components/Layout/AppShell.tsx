@@ -9,9 +9,13 @@ interface AppShellProps {
 
 export function AppShell({ toolbar, children }: AppShellProps) {
   return (
-    <div className="app-shell">
-      <header className="app-toolbar">{toolbar}</header>
-      <main className="app-main">{children}</main>
+    <div className="app-shell" role="application" aria-label="oXide TEI Editor">
+      <header className="app-toolbar" role="toolbar" aria-label="Main toolbar">
+        {toolbar}
+      </header>
+      <main className="app-main" role="main" aria-label="Editor workspace">
+        {children}
+      </main>
       <StatusBar />
     </div>
   );
