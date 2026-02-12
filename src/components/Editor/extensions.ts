@@ -12,6 +12,7 @@ import { teiEditorTheme, teiEditorThemeLight } from './theme';
 import { visualLineNumbers } from './visualLineNumbers';
 import { paragraphIndentation } from './paragraphIndent';
 import { INTERNAL_DRAG_TYPE } from '../../utils/dragDropUtils';
+import { createTagSyncExtension } from './tagSync';
 
 /**
  * Custom event name for file drop operations.
@@ -125,5 +126,7 @@ export function createEditorExtensions(
     paragraphIndentation(),
     // File drop handling (prevent CodeMirror from inserting file content as text)
     createFileDropExtension(),
+    // Tag name synchronization (opening ↔ closing tag names sync)
+    createTagSyncExtension(),
   ];
 }

@@ -6,9 +6,9 @@
 
 ### 현재 상태
 - **버전**: v1.0.0-beta.1
-- **Git**: 커밋 완료 (`c3270eb` - Session 11: Context-aware Editing Function Added)
+- **Git**: 커밋 완료 (Session 13: Tag sync feature)
 - **빌드**: ✅ 성공 (`npm run build`)
-- **번들 크기**: 초기 로드 ~117KB gzipped (index.js), lazy loading 적용
+- **번들 크기**: 초기 로드 ~118KB gzipped (index.js), lazy loading 적용
 - **배포 준비**: ✅ 완료 (GitHub Actions, PWA 아이콘)
 
 ### 즉시 실행 명령어
@@ -31,6 +31,7 @@ npm run build        # 프로덕션 빌드
 | 용도 | 경로 |
 |------|------|
 | 에디터 코어 | `src/components/Editor/XmlEditor.tsx` |
+| 태그 동기화 | `src/components/Editor/tagSync.ts` (NEW) |
 | 스키마 정의 | `src/schema/teiStaticSchema.ts` (367개 요소) |
 | AI 모듈 | `src/ai/` (Mock 모드) |
 | 배포 설정 | `.github/workflows/deploy.yml` |
@@ -172,6 +173,7 @@ src/
 │   │   ├── extensions.ts      # CM6 확장 조립 (xml, lint, autocomplete, theme)
 │   │   ├── completionSource.ts  # 컨텍스트 인식 자동완성
 │   │   ├── validationLinter.ts  # CM6 linter → validateXml 브릿지
+│   │   ├── tagSync.ts         # Opening/Closing 태그 동기화 (NEW)
 │   │   └── theme.ts           # CSS 변수 기반 CM6 커스텀 테마
 │   ├── FileExplorer/          # 파일 탐색기 (NEW)
 │   │   ├── FileExplorer.tsx   # 폴더 트리 뷰 컴포넌트
@@ -379,7 +381,8 @@ allTags.sort((a, b) => getTagScore(b.name, usageData) - getTagScore(a.name, usag
 | 13 | UI 일관성 개선 (XPath 검색 스타일 통일) | Done |
 | 14 | TEI 어휘 인식 범위 대폭 확장 (148→367개 요소, 73% 커버리지) | Done |
 | 15 | GitHub Pages 배포 준비 (PWA 아이콘, Private Mode 호환, CI/CD) | Done |
-| **16** | **성능 최적화 및 코드 분할 (React.memo, lazy loading, 번들 -8.5KB)** | **Done** |
+| 16 | 성능 최적화 및 코드 분할 (React.memo, lazy loading, 번들 -8.5KB) | Done |
+| **17** | **Opening/Closing 태그 이름 연동 (실시간 동기화, 삭제 연동)** | **Done** |
 
 ## Potential Next Steps
 
@@ -1287,6 +1290,161 @@ Build: ✅ 성공
 - **엄격한 컨텍스트 인식**: 부모 요소의 `children` 배열에 없는 요소는 제안하지 않음
 - **하위 호환성**: 부모 요소가 스키마에 없거나 `children`이 비어있으면 기존처럼 모든 요소 제안
 - **필수 요소 표시**: 필수 자식 요소는 ★ 마크와 함께 최상단에 표시
+
+---
+
+### 오늘 완료한 작업 - Session 12 (2026-02-12) - TEI 스키마 병합 로직 버그 수정
+
+#### 🎯 문제 현상
+
+같은 XML 문서가 TEI Lite에서는 "Valid", TEI All에서는 에러 발생:
+- 예시: `<lg><lb/><trailer></trailer></lg>`
+- TEI Lite (106개 요소): Valid
+- TEI All (588개 요소): "2 errors: `<lb>` is not allowed inside `<lg>`"
+
+#### 🔍 근본 원인
+
+`getTeiAllElements()`의 병합 로직이 children 배열 **길이**로만 비교:
+
+```typescript
+// 버그가 있던 코드
+const mergedChildren = staticEl.children && staticEl.children.length > (p5El.children?.length ?? 0)
+  ? staticEl.children
+  : p5El.children;
+```
+
+| 소스 | `lg` children | `trailer` 포함 |
+|------|---------------|----------------|
+| TEI Lite (static) | 6개 | ✓ |
+| P5 Generated | 29개 | ✗ |
+| TEI All (병합) | P5 선택 (29개) | ✗ → 에러 |
+
+#### 🔧 해결 방안
+
+길이 비교 대신 **합집합(union)** 사용:
+
+```typescript
+// 수정된 로직
+function mergeArrays(a?: string[], b?: string[]): string[] | undefined {
+  if (!a && !b) return undefined;
+  if (!a) return b;
+  if (!b) return a;
+  return [...new Set([...a, ...b])]; // 중복 제거 합집합
+}
+
+const mergedChildren = mergeArrays(staticEl.children, p5El.children);
+```
+
+#### 📁 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/schema/teiStaticSchema.ts` | `mergeArrays()` 함수 추가, 병합 로직 수정 |
+| `tests/xmlValidator.test.ts` | 병합 검증 테스트 3개 추가 |
+
+#### ✅ 테스트 결과
+
+```
+Tests: 44 passed (기존 41 + 새 3개)
+Build: ✅ 성공
+Commit: 15c38a2
+```
+
+#### 💡 검증 체크리스트
+
+- [x] `npm run test:run` 통과
+- [x] `npm run build` 성공
+- [x] TEI Lite: `<lg><trailer>` Valid
+- [x] TEI All: `<lg><trailer>` Valid (버그 수정됨)
+
+---
+
+### 오늘 완료한 작업 - Session 13 (2026-02-12) - Opening/Closing 태그 동기화
+
+#### 🎯 목표
+
+Opening/Closing 태그 이름이 실시간으로 연동되도록 구현:
+- `<div>` → `<section>` 변경 시 `</div>` → `</section>` 자동 변경
+- 역방향도 동일하게 작동
+- 태그 삭제 시 매칭 태그도 삭제
+
+#### 📁 새로 추가된 파일
+
+| 파일 | 설명 |
+|------|------|
+| `src/components/Editor/tagSync.ts` | 태그 동기화 Extension (~443줄) |
+| `tests/tagSync.test.ts` | 유닛 테스트 (32개 케이스) |
+
+#### 🔧 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/Editor/extensions.ts` | `createTagSyncExtension()` import 및 등록 |
+
+#### 🚀 주요 기능
+
+| 기능 | 설명 |
+|------|------|
+| 태그 이름 동기화 | Opening tag 변경 → Closing tag 자동 업데이트 |
+| 역방향 동기화 | Closing tag 변경 → Opening tag 자동 업데이트 |
+| 삭제 연동 | `<div>` 삭제 시 `</div>`도 삭제 |
+| 중첩 태그 처리 | `<div><div>...</div></div>` 정확한 매칭 |
+| Self-closing 제외 | `<br/>` 같은 self-closing 태그는 동기화 대상 아님 |
+
+#### 🏗️ 아키텍처
+
+```
+User types in tag name
+    ↓
+EditorView.updateListener (docChanged)
+    ↓
+findTagAtPosition(doc, cursorPos)
+    ↓
+findMatchingTag(doc, tagInfo) ← depth counting for nested tags
+    ↓
+view.dispatch({ changes, annotations: syncAnnotation })
+    ↓
+Infinite loop prevention via syncAnnotation
+```
+
+#### 💡 핵심 구현 세부사항
+
+**1. 태그 위치 찾기 (`findTagAtPosition`)**
+```typescript
+// 커서 위치에서 < 와 > 를 찾아 태그 경계 파악
+// Comments, CDATA, PI는 무시
+// Self-closing, Opening, Closing 구분
+```
+
+**2. 매칭 태그 찾기 (`findMatchingTag`)**
+```typescript
+// Opening → Closing: depth counting (같은 이름 중첩 처리)
+// Closing → Opening: 역방향 스캔
+// Self-closing은 null 반환
+```
+
+**3. 무한 루프 방지**
+```typescript
+const syncAnnotation = Annotation.define<boolean>();
+// 동기화 트랜잭션에 annotation 추가 → 다음 listener에서 스킵
+```
+
+#### ✅ 테스트 결과
+
+```
+Tests: 76 passed (기존 44 + 새 32개)
+Build: ✅ 성공
+```
+
+#### 📊 빌드 결과 (Session 13)
+
+```
+dist/index.html                            1.48 kB │ gzip:   0.75 kB
+dist/assets/index-*.css                   46.78 kB │ gzip:   7.98 kB
+dist/assets/index-*.js                   683.79 kB │ gzip: 117.62 kB
+dist/assets/react-*.js                   134.41 kB │ gzip:  43.11 kB
+dist/assets/codemirror-*.js              443.42 kB │ gzip: 145.48 kB
+```
 
 ---
 
