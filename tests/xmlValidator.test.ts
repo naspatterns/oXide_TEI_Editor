@@ -2,7 +2,7 @@
  * XML Validator Tests
  *
  * Tests for ContentModel validation, choice violations, attribute value validation,
- * required children detection, and nesting rules.
+ * required children detection, nesting rules, and schema merging.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
@@ -10,6 +10,7 @@ import {
   validateContentModel,
   getRequiredChildren,
 } from '../src/schema/xmlValidator';
+import { getTeiAllElements } from '../src/schema/teiStaticSchema';
 import type { SchemaInfo, ElementSpec, ContentModel, ContentItem, AttrSpec } from '../src/types/schema';
 
 // ============================================================================
@@ -883,5 +884,110 @@ describe('validateContentModel Direct Tests', () => {
     ];
     const errors = validateContentModel(parentSpec, children);
     expect(errors.length).toBe(0);
+  });
+});
+
+// ============================================================================
+// Test Suite: TEI Schema Merging (getTeiAllElements)
+// ============================================================================
+
+describe('TEI Schema Merging', () => {
+  it('should include children from both static and P5 definitions', () => {
+    const teiAllElements = getTeiAllElements();
+    const elementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      elementMap.set(el.name, el);
+    }
+
+    const lgElement = elementMap.get('lg');
+    expect(lgElement).toBeDefined();
+    expect(lgElement!.children).toBeDefined();
+
+    // 'trailer' comes from static TEI Lite definition
+    expect(lgElement!.children).toContain('trailer');
+    // 'l' should be in both
+    expect(lgElement!.children).toContain('l');
+    // 'lg' (self-nesting) should be present
+    expect(lgElement!.children).toContain('lg');
+  });
+
+  it('should validate trailer inside lg in TEI All schema', () => {
+    // Build TEI All schema from merged elements
+    const teiAllElements = getTeiAllElements();
+    const elementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      elementMap.set(el.name, el);
+    }
+    const schema: SchemaInfo = {
+      id: 'tei_all',
+      name: 'TEI All',
+      elements: teiAllElements,
+      elementMap,
+      hasSalveGrammar: false,
+    };
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <lg>
+        <l>A line</l>
+        <trailer>The end</trailer>
+      </lg>
+    </body>
+  </text>
+</TEI>`;
+
+    const errors = validateXml(xml, schema);
+    const trailerError = errors.find(e =>
+      e.message.includes('trailer') && e.message.includes('not allowed')
+    );
+    expect(trailerError).toBeUndefined();
+  });
+
+  it('should validate lb inside lg in TEI All schema', () => {
+    // Build TEI All schema from merged elements
+    const teiAllElements = getTeiAllElements();
+    const elementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      elementMap.set(el.name, el);
+    }
+    const schema: SchemaInfo = {
+      id: 'tei_all',
+      name: 'TEI All',
+      elements: teiAllElements,
+      elementMap,
+      hasSalveGrammar: false,
+    };
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <lg>
+        <lb/>
+        <l>A line</l>
+      </lg>
+    </body>
+  </text>
+</TEI>`;
+
+    const errors = validateXml(xml, schema);
+    const lbError = errors.find(e =>
+      e.message.includes('lb') && e.message.includes('not allowed')
+    );
+    expect(lbError).toBeUndefined();
   });
 });

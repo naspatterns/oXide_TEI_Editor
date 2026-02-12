@@ -1207,10 +1207,9 @@ export function getTeiAllElements(): ElementSpec[] {
     for (const staticEl of arr) {
       const p5El = elementMap.get(staticEl.name);
       if (p5El) {
-        // Merge: use P5 attributes (more complete), but prefer static children if richer
-        const mergedChildren = staticEl.children && staticEl.children.length > (p5El.children?.length ?? 0)
-          ? staticEl.children
-          : p5El.children;
+        // Merge: union of children from both sources to include all valid children
+        // (length comparison was buggy - static may have elements P5 doesn't and vice versa)
+        const mergedChildren = mergeArrays(staticEl.children, p5El.children);
 
         // Merge attributes: P5 class-resolved attrs + static local attrs
         const mergedAttrs = mergeAttributes(p5El.attributes ?? [], staticEl.attributes ?? []);
@@ -1226,6 +1225,17 @@ export function getTeiAllElements(): ElementSpec[] {
   }
 
   return Array.from(elementMap.values());
+}
+
+/**
+ * Merge two string arrays into a union (deduplicated)
+ * Used for children arrays to include elements from both static and P5 definitions
+ */
+function mergeArrays(a?: string[], b?: string[]): string[] | undefined {
+  if (!a && !b) return undefined;
+  if (!a) return b;
+  if (!b) return a;
+  return [...new Set([...a, ...b])];
 }
 
 /**
