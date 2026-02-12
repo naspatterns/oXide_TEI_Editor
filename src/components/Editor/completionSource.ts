@@ -285,7 +285,7 @@ function completeElementName(
     const requiredSet = new Set(allowedInfo.filter(a => a.required).map(a => a.name));
 
     const allowed = schema.elements.filter((el) => allowedSet.has(el.name));
-    const others = schema.elements.filter((el) => !allowedSet.has(el.name));
+    // ✅ others 제거됨 - 허용되지 않는 요소는 제안하지 않음
 
     const options: Completion[] = [
       // Required elements: highest priority (+200)
@@ -298,10 +298,7 @@ function completeElementName(
         .filter((el) => !requiredSet.has(el.name))
         .filter((el) => el.name.toLowerCase().startsWith(partial.toLowerCase()))
         .map((el) => makeElementCompletion(el, getElementBoost(el.name) + 100, false)),
-      // Other elements: low priority (-50)
-      ...others
-        .filter((el) => el.name.toLowerCase().startsWith(partial.toLowerCase()))
-        .map((el) => makeElementCompletion(el, getElementBoost(el.name) - 50, false)),
+      // ✅ others 부분 삭제됨 - 부모에서 허용하지 않는 요소는 제안하지 않음
     ];
 
     return { from, options, validFor: /^[a-zA-Z_][\w.:_-]*$/ };

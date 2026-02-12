@@ -407,13 +407,9 @@ describe('Element Completion Context Awareness', () => {
     expect(fileDescOption).toBeDefined();
     expect(encodingDescOption).toBeDefined();
 
-    // p is not a direct child of teiHeader, should have lower priority
+    // p is not a direct child of teiHeader, should NOT be in the list at all
     const pOption = result!.options.find(o => o.label === 'p' || o.label === 'p/>');
-    // p might still be in list but with low boost
-    if (pOption) {
-      // p should have lower boost than fileDesc
-      expect((pOption as any).boost).toBeLessThan((fileDescOption as any).boost);
-    }
+    expect(pOption).toBeUndefined();  // p가 제안 목록에 없어야 함
   });
 
   it('should suggest all elements at root level', () => {
@@ -444,6 +440,54 @@ describe('Element Completion Context Awareness', () => {
 
     // Elements not starting with 'file' should not be in options
     // (validFor regex will filter them out in actual use)
+  });
+
+  it('should NOT suggest elements outside parent\'s children list', () => {
+    const doc = `<TEI>
+  <teiHeader>
+    <`;
+    const context = createMockContext(doc);
+    const result = completionSource(context);
+
+    expect(result).not.toBeNull();
+
+    // teiHeader의 자식만 제안되어야 함
+    const allowedLabels = ['fileDesc', 'encodingDesc', 'profileDesc', 'revisionDesc'];
+
+    // 허용된 요소는 있어야 함
+    for (const label of allowedLabels) {
+      const option = result!.options.find(o => o.label.includes(label));
+      expect(option).toBeDefined();
+    }
+
+    // 허용되지 않은 요소 (p, TEI, titleStmt 등)는 없어야 함
+    const disallowedLabels = ['p', 'TEI', 'titleStmt', 'author', 'editor'];
+    for (const label of disallowedLabels) {
+      const option = result!.options.find(o => o.label === label || o.label === `${label}/>`);
+      expect(option).toBeUndefined();
+    }
+  });
+
+  it('should handle unknown parent element gracefully', () => {
+    const doc = `<unknownElement><`;
+    const context = createMockContext(doc);
+    const result = completionSource(context);
+
+    expect(result).not.toBeNull();
+    // 알 수 없는 부모 → 제한 없이 모든 요소 제안
+    expect(result!.options.length).toBeGreaterThan(5);
+  });
+
+  it('should return empty options when no allowed element matches partial', () => {
+    const doc = `<TEI>
+  <teiHeader>
+    <xyz`;
+    const context = createMockContext(doc);
+    const result = completionSource(context);
+
+    expect(result).not.toBeNull();
+    // 'xyz'로 시작하는 허용된 요소가 없으므로 빈 결과
+    expect(result!.options.length).toBe(0);
   });
 });
 
