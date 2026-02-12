@@ -13,6 +13,8 @@ import { visualLineNumbers } from './visualLineNumbers';
 import { paragraphIndentation } from './paragraphIndent';
 import { INTERNAL_DRAG_TYPE } from '../../utils/dragDropUtils';
 import { createTagSyncExtension } from './tagSync';
+import { createScrollbarMarkersExtension } from './scrollbarMarkers';
+import './scrollbarMarkers.css';
 
 /**
  * Custom event name for file drop operations.
@@ -128,5 +130,7 @@ export function createEditorExtensions(
     createFileDropExtension(),
     // Tag name synchronization (opening ↔ closing tag names sync)
     createTagSyncExtension(),
+    // Scrollbar error markers (visual indicators for error positions)
+    createScrollbarMarkersExtension(),
   ];
 }

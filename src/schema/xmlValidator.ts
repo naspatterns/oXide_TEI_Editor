@@ -31,40 +31,316 @@ export function validateXml(
 }
 
 /**
- * Check XML well-formedness using DOMParser.
- * Parse the error message to extract line/column info.
+ * Check XML well-formedness using DOMParser + regex fallback.
+ * DOMParser only reports the first error, so we use regex to find additional issues.
+ *
+ * IMPORTANT: DOMParser's line numbers can be inaccurate, especially with:
+ * - Multi-byte characters (Unicode, Korean, etc.)
+ * - Different browser implementations
+ * For tag mismatch errors, we run our own detection to get accurate line numbers.
  */
 function checkWellFormedness(xmlStr: string): ValidationError[] {
+  const errors: ValidationError[] = [];
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlStr, 'application/xml');
   const errorNode = doc.querySelector('parsererror');
 
-  if (!errorNode) return [];
+  if (errorNode) {
+    const errorText = errorNode.textContent ?? 'XML is not well-formed';
 
-  const errorText = errorNode.textContent ?? 'XML is not well-formed';
+    // Try to extract line/column from browser error messages
+    // Chrome: "... error on line X at column Y: ..."
+    // Firefox: "XML Parsing Error: ... Location: ... Line Number X, Column Y:"
+    const lineMatch = errorText.match(/line\s*(?:number\s*)?(\d+)/i);
+    const colMatch = errorText.match(/column\s*(\d+)/i);
 
-  // Try to extract line/column from browser error messages
-  // Chrome: "... error on line X at column Y: ..."
-  // Firefox: "XML Parsing Error: ... Location: ... Line Number X, Column Y:"
-  const lineMatch = errorText.match(/line\s*(?:number\s*)?(\d+)/i);
-  const colMatch = errorText.match(/column\s*(\d+)/i);
+    let line = lineMatch ? parseInt(lineMatch[1], 10) : 1;
+    let column = colMatch ? parseInt(colMatch[1], 10) : 1;
 
-  const line = lineMatch ? parseInt(lineMatch[1], 10) : 1;
-  const column = colMatch ? parseInt(colMatch[1], 10) : 1;
+    // Clean up the error message - extract only the actual error description
+    // Chrome format: "This page contains the following errors:error on line X at column Y: StartTag: invalid element name\n\nBelow is..."
+    // Firefox format: "XML Parsing Error: ... Line Number X, Column Y:"
+    // We want just: "StartTag: invalid element name" or similar
+    let message = errorText
+      // Remove "Below is a rendering..." suffix
+      .replace(/\s*Below is a rendering[\s\S]*$/i, '')
+      // Extract the actual error message after "line X at column Y: " or "Column Y:"
+      .replace(/^[\s\S]*(?:at\s+column\s+\d+|Column\s+\d+)[:\s]+/i, '')
+      .trim();
 
-  // Clean up the error message
-  let message = errorText
-    .replace(/^[\s\S]*?error[:\s]*/i, '')
-    .replace(/\s*Below is a rendering[\s\S]*$/, '')
-    .trim();
-  if (!message) message = 'XML is not well-formed';
+    // Fallback: if message is empty or still contains noise, try another approach
+    if (!message || /^[:\s]*$/.test(message) || message.length < 3) {
+      // Try to find common error patterns
+      const patterns = [
+        /StartTag:\s*(.+)/i,
+        /EndTag:\s*(.+)/i,
+        /Opening and ending tag mismatch[:\s]*(.+)/i,
+        /expected\s+(.+)/i,
+        /not\s+well-?formed/i,
+      ];
+      for (const pattern of patterns) {
+        const match = errorText.match(pattern);
+        if (match) {
+          message = match[0].trim();
+          break;
+        }
+      }
+    }
 
-  return [{
-    message,
-    line,
-    column,
-    severity: 'error',
-  }];
+    if (!message) message = 'XML is not well-formed';
+
+    // DOMParser's line numbers are often inaccurate, especially with:
+    // - Multi-byte characters (Unicode, Korean, etc.)
+    // - Different browser implementations
+    // Always try our own detection first for more accurate line numbers.
+
+    // Try 1: Check for malformed tag starts (e.g., "<>" or "< " or "<123")
+    const malformedPos = findMalformedTagPosition(xmlStr);
+    if (malformedPos) {
+      line = malformedPos.line;
+      column = malformedPos.column;
+    } else {
+      // Try 2: Check for tag mismatch errors (unclosed/orphan tags)
+      const tagErrors = findTagMismatchErrors(xmlStr, -1);
+      if (tagErrors.length > 0) {
+        const firstTagError = tagErrors[0];
+        line = firstTagError.line;
+        column = firstTagError.column;
+        message = firstTagError.message;
+      }
+    }
+
+    errors.push({
+      message,
+      line,
+      column,
+      severity: 'error',
+    });
+
+    // DOMParser only reports first error - use regex to find more issues
+    const additionalErrors = findAdditionalWellFormednessErrors(xmlStr, line);
+    errors.push(...additionalErrors);
+  }
+
+  return errors;
+}
+
+/**
+ * Use regex to find additional well-formedness issues that DOMParser didn't report.
+ *
+ * This function detects:
+ * - Malformed tag starts: `<` followed by invalid characters (e.g., `< `, `<123`)
+ * - Orphan closing tags: `</tag>` without a matching opening tag
+ * - Unclosed opening tags: `<tag>` without a matching closing tag
+ *
+ * Note: These checks use simple heuristics and may have edge cases in complex
+ * malformed documents. DOMParser's first error is still the primary source.
+ */
+function findAdditionalWellFormednessErrors(xmlStr: string, firstErrorLine: number): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const lines = xmlStr.split('\n');
+
+  // Pattern: Malformed tag start (e.g., "< " or "<123")
+  // Only match < followed by invalid chars, but not <?, <!, </
+  const malformedTagStart = /<(?![?!/a-zA-Z_])/g;
+
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const lineNum = lineIdx + 1;
+    const line = lines[lineIdx];
+
+    // Skip the line where DOMParser already reported an error
+    if (lineNum === firstErrorLine) continue;
+
+    // Check for malformed tag starts
+    let match: RegExpExecArray | null;
+    malformedTagStart.lastIndex = 0;
+    while ((match = malformedTagStart.exec(line)) !== null) {
+      // Skip if inside a comment
+      const before = line.substring(0, match.index);
+      if (before.includes('<!--') && !before.includes('-->')) continue;
+
+      errors.push({
+        message: 'Invalid character after "<"',
+        line: lineNum,
+        column: match.index + 1,
+        severity: 'error',
+      });
+    }
+  }
+
+  // Check for orphan closing tags and unclosed opening tags
+  const tagMismatchErrors = findTagMismatchErrors(xmlStr, firstErrorLine);
+  errors.push(...tagMismatchErrors);
+
+  // Limit to 5 additional errors max (avoid noise)
+  return errors.slice(0, 5);
+}
+
+/**
+ * Find the position of a malformed tag start (e.g., "<>" or "< " or "<123").
+ * Returns the first occurrence's line and column.
+ */
+function findMalformedTagPosition(xmlStr: string): { line: number; column: number } | null {
+  const lines = xmlStr.split('\n');
+
+  // Pattern: Malformed tag start - < followed by invalid char (not ?, !, /, or valid name start)
+  // Valid XML name start: letter or underscore
+  // This catches: <>, < , <123, etc.
+  const malformedTagStart = /<(?![?!/a-zA-Z_\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD])/g;
+
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const lineNum = lineIdx + 1;
+    const line = lines[lineIdx];
+
+    malformedTagStart.lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = malformedTagStart.exec(line)) !== null) {
+      // Skip if inside a comment
+      const before = line.substring(0, match.index);
+      if (before.includes('<!--') && !before.includes('-->')) continue;
+
+      // Skip if inside CDATA
+      if (before.includes('<![CDATA[') && !before.includes(']]>')) continue;
+
+      return {
+        line: lineNum,
+        column: match.index + 1,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find orphan closing tags and unclosed opening tags.
+ * Uses a stack-based approach to accurately track which specific opening tags
+ * are unclosed (reports the FIRST unclosed tag, not the last).
+ */
+function findTagMismatchErrors(xmlStr: string, firstErrorLine: number): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const lines = xmlStr.split('\n');
+
+  // Stack-based tracking: each tag name maps to a stack of opening tag positions
+  // When a closing tag is found, we pop from the stack (LIFO matching)
+  // Remaining items in the stack are unclosed tags
+  const openingStacks = new Map<string, { line: number; column: number }[]>();
+
+  // First pass: collect all tags and their positions
+  interface TagOccurrence {
+    name: string;
+    type: 'opening' | 'closing';
+    line: number;
+    column: number;
+  }
+  const allTags: TagOccurrence[] = [];
+
+  // Regex to match tags (excluding self-closing, comments, CDATA, PIs)
+  // Use permissive pattern to match Unicode tag names (Korean, etc.)
+  // XML allows many Unicode characters in tag names beyond ASCII
+  const tagRegex = /<(\/?[^\s/>][^\s/>]*)(?:\s[^>]*)?\s*>/g;
+
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const lineNum = lineIdx + 1;
+    const line = lines[lineIdx];
+
+    tagRegex.lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = tagRegex.exec(line)) !== null) {
+      const fullMatch = match[0];
+      const tagWithSlash = match[1];
+
+      // Skip self-closing tags
+      if (fullMatch.endsWith('/>')) continue;
+
+      // Skip processing instructions
+      if (fullMatch.startsWith('<?')) continue;
+
+      // Skip inside comments (simple check)
+      const before = line.substring(0, match.index);
+      if (before.includes('<!--') && !before.includes('-->')) continue;
+
+      const isClosing = tagWithSlash.startsWith('/');
+      const tagName = isClosing ? tagWithSlash.slice(1) : tagWithSlash;
+      const column = match.index + 1;
+
+      allTags.push({
+        name: tagName,
+        type: isClosing ? 'closing' : 'opening',
+        line: lineNum,
+        column,
+      });
+
+      // Update stack
+      if (isClosing) {
+        // Closing tag: pop from stack (matches most recent opening tag)
+        const stack = openingStacks.get(tagName);
+        if (stack && stack.length > 0) {
+          stack.pop();
+        }
+        // Note: orphan closing tags (no matching opening) are handled in Second Pass
+      } else {
+        // Opening tag: push to stack
+        const stack = openingStacks.get(tagName) || [];
+        stack.push({ line: lineNum, column });
+        openingStacks.set(tagName, stack);
+      }
+    }
+  }
+
+  // Second pass: Find orphan closing tags (closing tags that appear before enough opening tags)
+  // This uses running balance to detect closing tags that appear before their opening tags
+  const runningBalance = new Map<string, number>();
+
+  for (const tag of allTags) {
+    const current = runningBalance.get(tag.name) || 0;
+
+    if (tag.type === 'opening') {
+      runningBalance.set(tag.name, current + 1);
+    } else {
+      // Closing tag
+      if (current <= 0) {
+        // Orphan closing tag - no matching opening tag before this point
+        // Skip if this is on the same line as DOMParser's first error
+        if (tag.line !== firstErrorLine) {
+          errors.push({
+            message: `Orphan closing tag </${tag.name}> without matching opening tag`,
+            line: tag.line,
+            column: tag.column,
+            severity: 'error',
+          });
+        }
+      } else {
+        runningBalance.set(tag.name, current - 1);
+      }
+    }
+  }
+
+  // Third pass: Check for unclosed opening tags using the stack
+  // The FIRST item in each stack is the FIRST unclosed tag (correct line number)
+  for (const [tagName, stack] of openingStacks.entries()) {
+    if (stack.length > 0) {
+      // Stack still has items = unclosed opening tags
+      // Report the FIRST one (stack[0]), not the last
+      const firstUnclosed = stack[0];
+      if (firstUnclosed.line !== firstErrorLine) {
+        // Only report if we haven't already reported errors for this tag
+        const hasOrphanError = errors.some(e => e.message.includes(`</${tagName}>`));
+        if (!hasOrphanError) {
+          errors.push({
+            message: `Unclosed tag <${tagName}>`,
+            line: firstUnclosed.line,
+            column: firstUnclosed.column,
+            severity: 'error',
+          });
+        }
+      }
+    }
+  }
+
+  return errors;
 }
 
 /**
@@ -110,19 +386,25 @@ function checkSchemaConformance(
     const lineNum = lineIdx + 1;
 
     // Find all tags in this line
-    const tagRegex = /<\/?([a-zA-Z_][\w.:_-]*)(\s[^>]*)?\s*\/?>/g;
+    // Use permissive pattern to match Unicode tag names (Korean, etc.)
+    // This matches: <tagName>, </tagName>, <tagName attr="val">, <tagName/>
+    const tagRegex = /<(\/?[^\s/>][^\s/>]*)(\s[^>]*)?\s*\/?>/g;
     let match: RegExpExecArray | null;
 
     while ((match = tagRegex.exec(line)) !== null) {
       const fullTag = match[0];
-      const tagName = match[1];
+      const tagWithSlash = match[1];  // May include leading / for closing tags
       const attrString = match[2] ?? '';
       const col = match.index + 1;
 
       // Skip processing instructions and XML declarations
       if (fullTag.startsWith('<?')) continue;
 
-      if (fullTag.startsWith('</')) {
+      // Determine if closing tag and extract clean tag name
+      const isClosingTag = tagWithSlash.startsWith('/');
+      const tagName = isClosingTag ? tagWithSlash.slice(1) : tagWithSlash;
+
+      if (isClosingTag) {
         // Closing tag
         if (stack.length > 0 && stack[stack.length - 1].name === tagName) {
           const closedElement = stack.pop()!;

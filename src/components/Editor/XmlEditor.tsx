@@ -6,6 +6,7 @@ import { useSchema } from '../../store/SchemaContext';
 import { useFileDrop } from '../../hooks/useFileDrop';
 import { useToast } from '../../components/Toast/Toast';
 import { createEditorExtensions, FILE_DROP_EVENT } from './extensions';
+import { validationErrorsCompartment, validationErrorsFacet } from './scrollbarMarkers';
 import { isValidXmlFile, getDragData } from '../../utils/dragDropUtils';
 
 // Subscribe to theme changes via MutationObserver
@@ -153,10 +154,34 @@ export function XmlEditor() {
     return () => document.removeEventListener(FILE_DROP_EVENT, handleFileDrop);
   }, [openFileAsTab, toast, resetDragState]);
 
+  // Extensions는 schema, isDarkMode 변경 시에만 재생성
+  // 에러 업데이트는 useEffect에서 Compartment.reconfigure()로 처리
   const extensions = useMemo(
     () => createEditorExtensions(schema, setErrors, isDarkMode),
     [schema, setErrors, isDarkMode],
   );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Scrollbar 에러 마커 동적 업데이트
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Compartment.reconfigure()를 사용하여 extensions 배열 재생성 없이
+  // 에러 데이터만 업데이트합니다. 이렇게 하면:
+  // - CodeMirror 내부 상태(자동완성, 커서 등)가 유지됩니다
+  // - 성능이 향상됩니다 (불필요한 extensions 재생성 방지)
+  // ═══════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    const view = editorViewRef.current;
+    if (!view) return;
+
+    const currentErrors = activeDoc?.errors ?? [];
+
+    // Compartment를 통해 facet 값만 동적으로 업데이트
+    view.dispatch({
+      effects: validationErrorsCompartment.reconfigure(
+        validationErrorsFacet.of(currentErrors)
+      ),
+    });
+  }, [activeDoc?.errors, editorViewRef]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 성능 최적화 핵심 로직

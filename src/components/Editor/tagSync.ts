@@ -347,7 +347,67 @@ export function createTagSyncExtension(): Extension {
       }
     }),
 
-    // Handle tag deletion
+    // Handle closing tag "/" deletion - when </tag> becomes <tag>
+    EditorView.updateListener.of((update) => {
+      if (!update.docChanged) return;
+
+      // Skip sync-triggered changes
+      if (update.transactions.some((tr) => tr.annotation(syncAnnotation))) {
+        return;
+      }
+
+      for (const tr of update.transactions) {
+        if (tr.annotation(syncAnnotation)) continue;
+
+        tr.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+          // Only check pure deletions (no insertion)
+          if (inserted.length !== 0) return;
+
+          const deletedText = update.startState.doc.sliceString(fromA, toA);
+
+          // Check if "/" was deleted
+          if (deletedText === '/') {
+            // Check if this was part of a closing tag "</"
+            const charBefore = fromA > 0 ? update.startState.doc.sliceString(fromA - 1, fromA) : '';
+
+            if (charBefore === '<') {
+              // "</" became "<" - a closing tag became an opening tag
+              // Find what the original closing tag was in the previous state
+              const originalClosingTag = findTagAtPosition(update.startState.doc, fromA + 1);
+
+              if (originalClosingTag && originalClosingTag.type === 'closing') {
+                // Find the matching opening tag that should be deleted
+                const matchingOpening = findMatchingTag(update.startState.doc, originalClosingTag);
+
+                if (matchingOpening) {
+                  // Calculate adjusted position after the "/" deletion
+                  let adjustedStart = matchingOpening.tagStart;
+                  let adjustedEnd = matchingOpening.tagEnd;
+
+                  // If matching opening tag is after the deletion point, adjust
+                  if (matchingOpening.tagStart > fromA) {
+                    adjustedStart -= 1; // "/" was 1 char
+                    adjustedEnd -= 1;
+                  }
+
+                  // Delete the matching opening tag
+                  update.view.dispatch({
+                    changes: {
+                      from: adjustedStart,
+                      to: adjustedEnd,
+                      insert: '',
+                    },
+                    annotations: syncAnnotation.of(true),
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+    }),
+
+    // Handle tag deletion - both complete tag deletion and progressive deletion
     EditorView.updateListener.of((update) => {
       if (!update.docChanged) return;
 
@@ -419,6 +479,86 @@ export function createTagSyncExtension(): Extension {
             annotations: syncAnnotation.of(true),
           });
         }
+      }
+    }),
+
+    // Handle progressive tag deletion - when a tag is deleted character by character
+    // Detect when a tag that existed before no longer exists after the edit
+    EditorView.updateListener.of((update) => {
+      if (!update.docChanged) return;
+
+      // Skip sync-triggered changes
+      if (update.transactions.some((tr) => tr.annotation(syncAnnotation))) {
+        return;
+      }
+
+      for (const tr of update.transactions) {
+        if (tr.annotation(syncAnnotation)) continue;
+
+        tr.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+          // Check if this is a deletion (can also be deletion + insertion)
+          if (toA <= fromA) return;
+
+          // Check if there was a tag at the deletion position in the original document
+          const originalTag = findTagAtPosition(update.startState.doc, fromA + 1);
+          if (!originalTag) return;
+
+          // Check if the tag still exists in the new document
+          // Need to adjust position based on change
+          const insertedLength = inserted.length;
+          const deletedLength = toA - fromA;
+          const adjustment = insertedLength - deletedLength;
+
+          // Calculate where the tag would be in the new document
+          let newPos = fromA;
+          if (originalTag.tagStart < fromA) {
+            // Tag started before deletion point
+            newPos = originalTag.tagStart + 1;
+          } else {
+            // Tag started at or after deletion point
+            newPos = Math.max(0, originalTag.tagStart + adjustment + 1);
+          }
+
+          // Check if a complete tag exists at the new position
+          const newTag = findTagAtPosition(update.state.doc, Math.min(newPos, update.state.doc.length));
+
+          // If no tag exists where there was one before, and the original tag had a match,
+          // we should delete the orphaned matching tag
+          if (!newTag || (newTag.type !== originalTag.type) || (newTag.name !== originalTag.name)) {
+            // The tag was destroyed - check if we need to clean up the matching tag
+            // But only if the original tag was complete (had a name)
+            if (originalTag.name && (originalTag.type === 'opening' || originalTag.type === 'closing')) {
+              const matchingTag = findMatchingTag(update.startState.doc, originalTag);
+
+              if (matchingTag) {
+                // Calculate adjusted position in the new document
+                let adjustedStart = matchingTag.tagStart;
+                let adjustedEnd = matchingTag.tagEnd;
+
+                if (matchingTag.tagStart > fromA) {
+                  adjustedStart += adjustment;
+                  adjustedEnd += adjustment;
+                }
+
+                // Verify the matching tag still exists at the adjusted position
+                const stillExists = findTagAtPosition(update.state.doc, adjustedStart + 1);
+                if (stillExists &&
+                    stillExists.name === matchingTag.name &&
+                    stillExists.type === matchingTag.type) {
+                  // Delete the orphaned matching tag
+                  update.view.dispatch({
+                    changes: {
+                      from: adjustedStart,
+                      to: adjustedEnd,
+                      insert: '',
+                    },
+                    annotations: syncAnnotation.of(true),
+                  });
+                }
+              }
+            }
+          }
+        });
       }
     }),
   ];

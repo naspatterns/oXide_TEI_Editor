@@ -1,0 +1,62 @@
+/**
+ * Scrollbar Error Markers Styles
+ *
+ * Markers are positioned on the right side of the editor scrollbar area,
+ * visually indicating error locations throughout the document.
+ */
+
+.cm-scrollbar-markers {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px; /* Match scrollbar width */
+  height: 100%;
+  pointer-events: none; /* Allow scrollbar interaction */
+  z-index: 10;
+  overflow: hidden;
+}
+
+.cm-scrollbar-marker {
+  position: absolute;
+  right: 2px;
+  width: 10px;
+  height: 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  pointer-events: auto; /* Allow marker clicks */
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.cm-scrollbar-marker:hover {
+  transform: scaleY(1.8) scaleX(1.2);
+  z-index: 11;
+}
+
+/* Error marker (red) */
+.cm-scrollbar-marker-error {
+  background-color: #dc2626;
+  box-shadow: 0 0 3px rgba(220, 38, 38, 0.5);
+}
+
+.cm-scrollbar-marker-error:hover {
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.8);
+}
+
+/* Warning marker (orange) */
+.cm-scrollbar-marker-warning {
+  background-color: #f59e0b;
+  box-shadow: 0 0 3px rgba(245, 158, 11, 0.5);
+}
+
+.cm-scrollbar-marker-warning:hover {
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .cm-scrollbar-marker-error {
+  background-color: #ef4444;
+}
+
+[data-theme="dark"] .cm-scrollbar-marker-warning {
+  background-color: #fbbf24;
+}

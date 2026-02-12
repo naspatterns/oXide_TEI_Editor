@@ -991,3 +991,197 @@ describe('TEI Schema Merging', () => {
     expect(lbError).toBeUndefined();
   });
 });
+
+// ============================================================================
+// Test Suite: Orphan/Unclosed Tag Detection
+// ============================================================================
+
+describe('Orphan and Unclosed Tag Detection', () => {
+  let schema: SchemaInfo;
+
+  beforeEach(() => {
+    schema = buildTestSchema(testElements);
+  });
+
+  describe('Orphan closing tag detection', () => {
+    it('should detect orphan closing tag without matching opening', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <p>text</date></p>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const orphanError = errors.find(e =>
+        e.message.includes('Orphan') && e.message.includes('</date>')
+      );
+      expect(orphanError).toBeDefined();
+      expect(orphanError!.severity).toBe('error');
+    });
+
+    it('should detect multiple orphan closing tags', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <p>text</persName></p>
+  <p>more</date></p>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const orphanErrors = errors.filter(e => e.message.includes('Orphan'));
+      expect(orphanErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should not report properly matched tags as orphans', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>P</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p><date>2024</date></p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const orphanError = errors.find(e => e.message.includes('Orphan'));
+      expect(orphanError).toBeUndefined();
+    });
+  });
+
+  describe('Unclosed tag detection', () => {
+    it('should detect unclosed opening tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <p><persName>text</p>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const unclosedError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('<persName>')
+      );
+      expect(unclosedError).toBeDefined();
+    });
+  });
+
+  describe('Self-closing tags', () => {
+    it('should not report self-closing tags as unclosed', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>P</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p>Line break here<lb/>and continues</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const lbUnclosedError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('lb')
+      );
+      expect(lbUnclosedError).toBeUndefined();
+    });
+  });
+
+  describe('Unclosed tag line number accuracy', () => {
+    it('should report FIRST unclosed tag, not last (stack-based tracking)', () => {
+      // Scenario from screenshot:
+      // Line 2: <p>First unclosed (this should be reported)
+      // Line 3: <p>Second</p> (properly closed)
+      // Line 4: <p>Third</p> (properly closed)
+      const xml = `<root>
+<p>First unclosed
+<p>Second</p>
+<p>Third</p>
+</root>`;
+      const errors = validateXml(xml, null);
+      const unclosedPError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('<p>')
+      );
+      expect(unclosedPError).toBeDefined();
+      // Should report line 2 (first unclosed), NOT line 4 (last <p> occurrence)
+      expect(unclosedPError!.line).toBe(2);
+    });
+
+    it('should handle multiple unclosed tags of the same name', () => {
+      // Two unclosed <p> tags - should report the first one
+      const xml = `<root>
+<p>First unclosed
+<p>Second also unclosed
+</root>`;
+      const errors = validateXml(xml, null);
+      const unclosedPError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('<p>')
+      );
+      expect(unclosedPError).toBeDefined();
+      // Should report line 2 (first unclosed)
+      expect(unclosedPError!.line).toBe(2);
+    });
+
+    it('should handle multiple unclosed tags of different names', () => {
+      const xml = `<root>
+<div>
+<p>Text
+</root>`;
+      const errors = validateXml(xml, null);
+
+      // Both <div> and <p> are unclosed
+      const divError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('<div>')
+      );
+      const pError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('<p>')
+      );
+
+      expect(divError).toBeDefined();
+      expect(pError).toBeDefined();
+      expect(divError!.line).toBe(2);
+      expect(pError!.line).toBe(3);
+    });
+
+    it('should correctly identify unclosed tag with nested same-name tags', () => {
+      // Complex nesting: outer <p> is unclosed, inner ones are closed
+      const xml = `<root>
+<p>Outer unclosed
+  <p>Inner 1</p>
+  <p>Inner 2</p>
+</root>`;
+      const errors = validateXml(xml, null);
+      const unclosedPError = errors.find(e =>
+        e.message.includes('Unclosed') && e.message.includes('<p>')
+      );
+      expect(unclosedPError).toBeDefined();
+      // Should report line 2 (the outer unclosed <p>)
+      expect(unclosedPError!.line).toBe(2);
+    });
+  });
+
+  describe('Malformed tag detection (invalid element name)', () => {
+    it('should find empty tag <> at correct line', () => {
+      const xml = `<root>
+<p>normal</p>
+<p>text<>more</p>
+</root>`;
+      const errors = validateXml(xml, null);
+      // The error should be on line 3 where <> appears
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].line).toBe(3);
+    });
+
+    it('should find malformed tag with space < > at correct line', () => {
+      const xml = `<root>
+<p>first</p>
+<p>second</p>
+<p>text< space</p>
+</root>`;
+      const errors = validateXml(xml, null);
+      expect(errors.length).toBeGreaterThan(0);
+      // Should be line 4 where "< " appears
+      expect(errors[0].line).toBe(4);
+    });
+  });
+});

@@ -1,5 +1,6 @@
 import { memo, useMemo, useState, useCallback, useDeferredValue } from 'react';
 import { useEditor } from '../../store/EditorContext';
+import type { ValidationError } from '../../types/schema';
 import './OutlinePanel.css';
 
 const MIN_FONT_SIZE = 10;
@@ -13,74 +14,225 @@ interface XmlNode {
   children: XmlNode[];
   line: number;  // Line number in source for navigation
   textContent?: string;  // Brief text preview
+  // Error display fields
+  hasError?: boolean;
+  hasWarning?: boolean;
+  errorMessages?: string[];
 }
 
-/** Parse XML string into tree structure */
-function parseXmlToTree(xmlStr: string): XmlNode | null {
+/** Parsing result interface */
+interface ParseResult {
+  root: XmlNode | null;
+  parseErrors: Array<{ line: number; message: string }>;
+}
+
+/** Parse attributes from a tag string */
+function parseAttributes(attrStr: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=\s*["']([^"']*)["']/g;
+  let match;
+  while ((match = attrRegex.exec(attrStr)) !== null) {
+    attrs[match[1]] = match[2];
+  }
+  return attrs;
+}
+
+/** Regex-based XML parsing (works even with malformed XML) */
+function parseXmlWithRegex(xmlStr: string): ParseResult {
+  const lines = xmlStr.split('\n');
+  const parseErrors: Array<{ line: number; message: string }> = [];
+
+  // Stack-based parsing
+  const stack: Array<{ node: XmlNode; expectedClosing: string }> = [];
+  const root: XmlNode = { name: '#root', attributes: {}, children: [], line: 0 };
+  let current = root;
+
+  // Tag matching regex
+  const tagRegex = /<\/?([a-zA-Z_][\w.:_-]*)(\s[^>]*)?\s*\/?>/g;
+
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const lineText = lines[lineIdx];
+    const lineNum = lineIdx + 1;
+
+    // Skip XML declaration, comments, CDATA
+    if (lineText.includes('<?') || lineText.includes('<!--') || lineText.includes('<![CDATA[')) continue;
+
+    tagRegex.lastIndex = 0; // Reset for each line
+    let match;
+
+    while ((match = tagRegex.exec(lineText)) !== null) {
+      const fullTag = match[0];
+      const tagName = match[1];
+      const attrStr = match[2] ?? '';
+
+      if (fullTag.startsWith('</')) {
+        // Closing tag
+        if (stack.length > 0) {
+          const expected = stack[stack.length - 1];
+          if (expected.expectedClosing !== tagName) {
+            parseErrors.push({
+              line: lineNum,
+              message: `Expected </${expected.expectedClosing}>, found </${tagName}>`
+            });
+            // Recovery: find matching tag and clean up stack
+            let found = false;
+            for (let i = stack.length - 1; i >= 0; i--) {
+              if (stack[i].expectedClosing === tagName) {
+                stack.splice(i);
+                current = stack.length > 0 ? stack[stack.length - 1].node : root;
+                found = true;
+                break;
+              }
+            }
+            if (!found) continue; // No match, ignore
+          } else {
+            stack.pop();
+            current = stack.length > 0 ? stack[stack.length - 1].node : root;
+          }
+        }
+      } else if (fullTag.endsWith('/>')) {
+        // Self-closing tag
+        const node: XmlNode = {
+          name: tagName,
+          attributes: parseAttributes(attrStr),
+          children: [],
+          line: lineNum,
+        };
+        current.children.push(node);
+      } else {
+        // Opening tag
+        const node: XmlNode = {
+          name: tagName,
+          attributes: parseAttributes(attrStr),
+          children: [],
+          line: lineNum,
+        };
+        current.children.push(node);
+        stack.push({ node, expectedClosing: tagName });
+        current = node;
+      }
+    }
+  }
+
+  // Report unclosed tags
+  for (const item of stack) {
+    parseErrors.push({
+      line: item.node.line,
+      message: `Unclosed tag <${item.expectedClosing}>`
+    });
+  }
+
+  return {
+    root: root.children[0] ?? null,
+    parseErrors,
+  };
+}
+
+/** Error-tolerant XML parsing: DOMParser first, regex fallback on failure */
+function parseXmlToTreeTolerant(xmlStr: string): ParseResult {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlStr, 'application/xml');
-
-    // Check for parse errors
     const errorNode = doc.querySelector('parsererror');
-    if (errorNode) return null;
 
-    // 소스에서 라인 번호 계산을 위해 라인 배열 생성
-    const lines = xmlStr.split('\n');
+    if (!errorNode) {
+      // Parse succeeded - use DOM-based conversion
+      const lines = xmlStr.split('\n');
 
-    function domToNode(element: Element, lineHint: number): XmlNode {
-      // Try to find actual line number
-      let line = lineHint;
-      for (let i = lineHint - 1; i < lines.length; i++) {
-        if (lines[i]?.includes(`<${element.tagName}`)) {
-          line = i + 1;
-          break;
-        }
-      }
-
-      // Get attributes
-      const attributes: Record<string, string> = {};
-      for (const attr of element.attributes) {
-        attributes[attr.name] = attr.value;
-      }
-
-      // Get direct text content (not from children)
-      let textContent = '';
-      for (const child of element.childNodes) {
-        if (child.nodeType === Node.TEXT_NODE) {
-          const text = child.textContent?.trim();
-          if (text) {
-            textContent = text.length > 30 ? text.slice(0, 30) + '...' : text;
+      function domToNode(element: Element, lineHint: number): XmlNode {
+        // Try to find actual line number
+        let line = lineHint;
+        for (let i = lineHint - 1; i < lines.length; i++) {
+          if (lines[i]?.includes(`<${element.tagName}`)) {
+            line = i + 1;
             break;
           }
         }
+
+        // Get attributes
+        const attributes: Record<string, string> = {};
+        for (const attr of element.attributes) {
+          attributes[attr.name] = attr.value;
+        }
+
+        // Get direct text content (not from children)
+        let textContent = '';
+        for (const child of element.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const text = child.textContent?.trim();
+            if (text) {
+              textContent = text.length > 30 ? text.slice(0, 30) + '...' : text;
+              break;
+            }
+          }
+        }
+
+        // Process child elements
+        const children: XmlNode[] = [];
+        let childLineHint = line;
+        for (const child of element.children) {
+          const childNode = domToNode(child, childLineHint);
+          children.push(childNode);
+          childLineHint = childNode.line + 1;
+        }
+
+        return {
+          name: element.tagName,
+          attributes,
+          children,
+          line,
+          textContent: textContent || undefined,
+        };
       }
 
-      // Process child elements
-      const children: XmlNode[] = [];
-      let childLineHint = line;
-      for (const child of element.children) {
-        const childNode = domToNode(child, childLineHint);
-        children.push(childNode);
-        childLineHint = childNode.line + 1;
-      }
+      const root = doc.documentElement
+        ? domToNode(doc.documentElement, 1)
+        : null;
 
-      return {
-        name: element.tagName,
-        attributes,
-        children,
-        line,
-        textContent: textContent || undefined,
-      };
+      return { root, parseErrors: [] };
     }
 
-    if (doc.documentElement) {
-      return domToNode(doc.documentElement, 1);
-    }
-    return null;
+    // DOMParser error - use regex fallback
+    return parseXmlWithRegex(xmlStr);
+
   } catch {
-    return null;
+    // Exception - try regex fallback
+    return parseXmlWithRegex(xmlStr);
   }
+}
+
+/** Annotate tree nodes with ValidationError information */
+function annotateTreeWithErrors(
+  node: XmlNode,
+  errors: ValidationError[]
+): XmlNode {
+  // Build line -> errors map
+  const errorMap = new Map<number, ValidationError[]>();
+  for (const err of errors) {
+    if (!errorMap.has(err.line)) {
+      errorMap.set(err.line, []);
+    }
+    errorMap.get(err.line)!.push(err);
+  }
+
+  // Recursively annotate nodes
+  function annotate(n: XmlNode): XmlNode {
+    const lineErrors = errorMap.get(n.line) ?? [];
+    const hasError = lineErrors.some(e => e.severity === 'error');
+    const hasWarning = lineErrors.some(e => e.severity === 'warning');
+
+    return {
+      ...n,
+      hasError: hasError || undefined,
+      hasWarning: (!hasError && hasWarning) || undefined,
+      errorMessages: lineErrors.length > 0
+        ? lineErrors.map(e => e.message)
+        : undefined,
+      children: n.children.map(annotate),
+    };
+  }
+
+  return annotate(node);
 }
 
 /** Tree node component with expand/collapse functionality */
@@ -113,14 +265,32 @@ const TreeNode = memo(function TreeNode({
     || node.attributes['type']
     || '';
 
+  // Compute node class based on error/warning state
+  const nodeClass = [
+    'tree-node-header',
+    node.hasError ? 'tree-node-error' : '',
+    node.hasWarning ? 'tree-node-warning' : '',
+  ].filter(Boolean).join(' ');
+
+  // Tooltip text (include error messages if present)
+  const tooltipText = node.errorMessages?.length
+    ? `Line ${node.line}: ${node.errorMessages.join(', ')}`
+    : `Line ${node.line}`;
+
   return (
     <div className="tree-node">
       <div
-        className="tree-node-header"
+        className={nodeClass}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}
         onClick={handleClick}
-        title={`Line ${node.line}`}
+        title={tooltipText}
       >
+        {/* Error/warning icon */}
+        {(node.hasError || node.hasWarning) && (
+          <span className={`tree-node-status-icon ${node.hasError ? 'error' : 'warning'}`}>
+            {node.hasError ? '⚠' : '⚡'}
+          </span>
+        )}
         {hasChildren ? (
           <span
             className={`tree-toggle ${expanded ? 'expanded' : ''}`}
@@ -172,7 +342,22 @@ export function OutlinePanel() {
   // 결과: 대용량 문서(2000줄+)에서도 부드러운 타이핑 경험 제공
   // ═══════════════════════════════════════════════════════════════════════════
   const deferredContent = useDeferredValue(state.content);
-  const tree = useMemo(() => parseXmlToTree(deferredContent), [deferredContent]);
+  const deferredErrors = useDeferredValue(state.errors);
+
+  // Parse XML and annotate with errors
+  const { tree, parseIssues } = useMemo(() => {
+    const result = parseXmlToTreeTolerant(deferredContent);
+
+    // Annotate tree nodes with ValidationError info
+    const annotatedTree = result.root
+      ? annotateTreeWithErrors(result.root, deferredErrors)
+      : null;
+
+    return {
+      tree: annotatedTree,
+      parseIssues: result.parseErrors,
+    };
+  }, [deferredContent, deferredErrors]);
 
   const handleNodeClick = useCallback((line: number) => {
     scrollToLine(line);
@@ -214,6 +399,29 @@ export function OutlinePanel() {
             defaultExpanded={true}
             onNodeClick={handleNodeClick}
           />
+        ) : parseIssues.length > 0 ? (
+          // Show parse issues list when no tree is available
+          <div className="outline-parse-issues">
+            <div className="parse-issues-header">
+              ⚠ Parse Issues ({parseIssues.length})
+            </div>
+            {parseIssues.slice(0, 10).map((issue, i) => (
+              <div
+                key={i}
+                className="parse-issue-item"
+                onClick={() => scrollToLine(issue.line)}
+                title={issue.message}
+              >
+                <span className="issue-line">Ln {issue.line}</span>
+                <span className="issue-message">{issue.message}</span>
+              </div>
+            ))}
+            {parseIssues.length > 10 && (
+              <div className="parse-issues-more">
+                +{parseIssues.length - 10} more issues...
+              </div>
+            )}
+          </div>
         ) : (
           <div className="outline-error">
             Unable to parse XML structure.
