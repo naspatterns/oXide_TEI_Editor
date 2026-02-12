@@ -153,6 +153,23 @@ interface ElementDef {
   localAttrs: AttrSpec[];
   children: string[];
   contentModelType?: 'sequence' | 'choice' | 'interleave' | 'mixed' | 'empty';
+  contentModel?: ContentModel;  // NEW: Full content model structure
+}
+
+// Import ContentModel types for output generation
+interface ContentModel {
+  type: 'sequence' | 'choice' | 'interleave' | 'group' | 'element' | 'text' | 'empty';
+  items?: ContentItem[];
+  minOccurs: number;
+  maxOccurs: number;
+}
+
+interface ContentItem {
+  kind: 'element' | 'text' | 'group' | 'model';
+  name?: string;
+  content?: ContentModel;
+  minOccurs: number;
+  maxOccurs: number;
 }
 
 interface AttrClassDef {
@@ -332,6 +349,213 @@ function getContentModelType(content: P5Content[] | undefined): ElementDef['cont
   return undefined;
 }
 
+// ============================================================================
+// Phase 1: Full ContentModel Extraction
+// ============================================================================
+
+/**
+ * Extract full ContentModel from P5Content array.
+ * Preserves minOccurs/maxOccurs information for accurate validation.
+ */
+function extractFullContentModel(
+  content: P5Content[] | undefined,
+  macros: Map<string, P5MacroSpec>,
+  modelClasses: Map<string, P5ClassSpec>,
+  elementsByModel: Map<string, string[]>,
+  visited: Set<string> = new Set()
+): ContentModel | undefined {
+  if (!content || content.length === 0) {
+    return { type: 'empty', minOccurs: 0, maxOccurs: 1 };
+  }
+
+  // Single item - convert directly
+  if (content.length === 1) {
+    return convertP5ContentToModel(content[0], macros, modelClasses, elementsByModel, visited);
+  }
+
+  // Multiple items - wrap in sequence
+  const items: ContentItem[] = [];
+  for (const item of content) {
+    const converted = convertP5ContentToItem(item, macros, modelClasses, elementsByModel, visited);
+    if (converted) items.push(converted);
+  }
+
+  if (items.length === 0) {
+    return { type: 'empty', minOccurs: 0, maxOccurs: 1 };
+  }
+
+  return {
+    type: 'sequence',
+    items,
+    minOccurs: 1,
+    maxOccurs: 1,
+  };
+}
+
+/**
+ * Convert a single P5Content item to a ContentModel.
+ */
+function convertP5ContentToModel(
+  item: P5Content,
+  macros: Map<string, P5MacroSpec>,
+  modelClasses: Map<string, P5ClassSpec>,
+  elementsByModel: Map<string, string[]>,
+  visited: Set<string>
+): ContentModel | undefined {
+  const minOccurs = item.minOccurs ? parseInt(item.minOccurs, 10) : 1;
+  const maxOccurs = item.maxOccurs === 'unbounded' ? Infinity :
+                    item.maxOccurs ? parseInt(item.maxOccurs, 10) : 1;
+
+  switch (item.type) {
+    case 'sequence':
+      return {
+        type: 'sequence',
+        items: item.content?.map(c => convertP5ContentToItem(c, macros, modelClasses, elementsByModel, visited)).filter((x): x is ContentItem => x !== undefined) ?? [],
+        minOccurs,
+        maxOccurs,
+      };
+
+    case 'alternate':
+      return {
+        type: 'choice',
+        items: item.content?.map(c => convertP5ContentToItem(c, macros, modelClasses, elementsByModel, visited)).filter((x): x is ContentItem => x !== undefined) ?? [],
+        minOccurs,
+        maxOccurs,
+      };
+
+    case 'interleave':
+      return {
+        type: 'interleave',
+        items: item.content?.map(c => convertP5ContentToItem(c, macros, modelClasses, elementsByModel, visited)).filter((x): x is ContentItem => x !== undefined) ?? [],
+        minOccurs,
+        maxOccurs,
+      };
+
+    case 'empty':
+      return { type: 'empty', minOccurs: 0, maxOccurs: 0 };
+
+    case 'textNode':
+      return { type: 'text', minOccurs, maxOccurs };
+
+    case 'elementRef':
+      if (item.key) {
+        return {
+          type: 'element',
+          items: [{ kind: 'element', name: item.key, minOccurs, maxOccurs }],
+          minOccurs,
+          maxOccurs,
+        };
+      }
+      return undefined;
+
+    case 'classRef':
+      // Expand model class to its member elements
+      if (item.key) {
+        const members = elementsByModel.get(item.key);
+        if (members && members.length > 0) {
+          return {
+            type: 'choice',
+            items: members.map(m => ({ kind: 'element' as const, name: m, minOccurs: 1, maxOccurs: 1 })),
+            minOccurs,
+            maxOccurs,
+          };
+        }
+      }
+      return undefined;
+
+    case 'macroRef':
+      // Expand macro (prevent circular references)
+      if (item.key && !visited.has(item.key)) {
+        visited.add(item.key);
+        const macro = macros.get(item.key);
+        if (macro?.content) {
+          const expanded = extractFullContentModel(macro.content, macros, modelClasses, elementsByModel, new Set(visited));
+          if (expanded) {
+            return {
+              ...expanded,
+              minOccurs,
+              maxOccurs,
+            };
+          }
+        }
+      }
+      return undefined;
+
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Convert a P5Content item to a ContentItem (for use within a parent model).
+ */
+function convertP5ContentToItem(
+  item: P5Content,
+  macros: Map<string, P5MacroSpec>,
+  modelClasses: Map<string, P5ClassSpec>,
+  elementsByModel: Map<string, string[]>,
+  visited: Set<string>
+): ContentItem | undefined {
+  const minOccurs = item.minOccurs ? parseInt(item.minOccurs, 10) : 1;
+  const maxOccurs = item.maxOccurs === 'unbounded' ? Infinity :
+                    item.maxOccurs ? parseInt(item.maxOccurs, 10) : 1;
+
+  switch (item.type) {
+    case 'elementRef':
+      return item.key ? { kind: 'element', name: item.key, minOccurs, maxOccurs } : undefined;
+
+    case 'classRef':
+      // Model class reference -> expand to member elements as choice
+      if (item.key) {
+        const members = elementsByModel.get(item.key);
+        if (members && members.length > 0) {
+          return {
+            kind: 'group',
+            content: {
+              type: 'choice',
+              items: members.map(m => ({ kind: 'element' as const, name: m, minOccurs: 1, maxOccurs: 1 })),
+              minOccurs: 1,
+              maxOccurs: 1,
+            },
+            minOccurs,
+            maxOccurs,
+          };
+        }
+      }
+      return undefined;
+
+    case 'macroRef':
+      // Expand macro (prevent circular references)
+      if (item.key && !visited.has(item.key)) {
+        visited.add(item.key);
+        const macro = macros.get(item.key);
+        if (macro?.content) {
+          const expanded = extractFullContentModel(macro.content, macros, modelClasses, elementsByModel, new Set(visited));
+          if (expanded) {
+            return { kind: 'group', content: expanded, minOccurs, maxOccurs };
+          }
+        }
+      }
+      return undefined;
+
+    case 'sequence':
+    case 'alternate':
+    case 'interleave': {
+      const nested = convertP5ContentToModel(item, macros, modelClasses, elementsByModel, visited);
+      if (nested) {
+        return { kind: 'group', content: nested, minOccurs, maxOccurs };
+      }
+      return undefined;
+    }
+
+    case 'textNode':
+      return { kind: 'text', minOccurs, maxOccurs };
+
+    default:
+      return undefined;
+  }
+}
+
 function parseP5(p5: P5Subset): {
   elements: ElementDef[];
   attrClasses: AttrClassDef[];
@@ -389,6 +613,10 @@ function parseP5(p5: P5Subset): {
         elSpec.content, macros, modelClasses, elementsByModel
       ).sort(),
       contentModelType: getContentModelType(elSpec.content),
+      // NEW: Extract full content model structure
+      contentModel: extractFullContentModel(
+        elSpec.content, macros, modelClasses, elementsByModel
+      ),
     };
     elements.push(element);
   }
@@ -409,6 +637,53 @@ function escapeString(s: string | undefined): string {
     .replace(/\s+/g, ' ')
     .trim()
     .substring(0, 200);
+}
+
+/**
+ * Serialize ContentModel to TypeScript object literal.
+ * Handles Infinity serialization and deep nesting.
+ */
+function serializeContentModel(model: ContentModel): string | null {
+  if (!model || model.type === 'empty') return null;
+
+  const parts: string[] = [];
+  parts.push(`type: '${model.type}'`);
+
+  if (model.items && model.items.length > 0) {
+    const itemStrs = model.items.map(item => serializeContentItem(item)).filter(Boolean);
+    if (itemStrs.length > 0) {
+      parts.push(`items: [${itemStrs.join(', ')}]`);
+    }
+  }
+
+  parts.push(`minOccurs: ${model.minOccurs}`);
+  parts.push(`maxOccurs: ${model.maxOccurs === Infinity ? 'Infinity' : model.maxOccurs}`);
+
+  return `{ ${parts.join(', ')} }`;
+}
+
+/**
+ * Serialize a ContentItem to TypeScript object literal.
+ */
+function serializeContentItem(item: ContentItem): string {
+  const parts: string[] = [];
+  parts.push(`kind: '${item.kind}'`);
+
+  if (item.name) {
+    parts.push(`name: '${item.name}'`);
+  }
+
+  if (item.content) {
+    const nested = serializeContentModel(item.content);
+    if (nested) {
+      parts.push(`content: ${nested}`);
+    }
+  }
+
+  parts.push(`minOccurs: ${item.minOccurs}`);
+  parts.push(`maxOccurs: ${item.maxOccurs === Infinity ? 'Infinity' : item.maxOccurs}`);
+
+  return `{ ${parts.join(', ')} }`;
 }
 
 function generateAttrSpecCode(attr: AttrSpec): string {
@@ -448,7 +723,7 @@ function generateTypeScript(
  * Run 'npm run generate-p5-schema' to regenerate
  */
 
-import type { AttrSpec } from '../types/schema';
+import type { AttrSpec, ContentModel } from '../types/schema';
 
 `);
 
@@ -513,6 +788,7 @@ import type { AttrSpec } from '../types/schema';
   lines.push('  children: string[];');
   lines.push('  localAttrs: AttrSpec[];');
   lines.push("  contentModelType?: 'sequence' | 'choice' | 'interleave' | 'mixed' | 'empty';");
+  lines.push('  contentModel?: ContentModel;  // Full content model structure for validation');
   lines.push('}');
   lines.push('');
   lines.push('export const TEI_P5_ELEMENTS: P5ElementDef[] = [');
@@ -552,6 +828,14 @@ import type { AttrSpec } from '../types/schema';
 
     if (el.contentModelType) {
       lines.push(`    contentModelType: '${el.contentModelType}',`);
+    }
+
+    // Output contentModel if present (serialized as JSON for complex structure)
+    if (el.contentModel && el.contentModel.type !== 'empty') {
+      const serialized = serializeContentModel(el.contentModel);
+      if (serialized) {
+        lines.push(`    contentModel: ${serialized},`);
+      }
     }
 
     lines.push('  },');

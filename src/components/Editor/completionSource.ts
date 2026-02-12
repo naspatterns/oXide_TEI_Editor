@@ -1,6 +1,7 @@
 import type { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
 import { snippetCompletion } from '@codemirror/autocomplete';
 import type { SchemaInfo, ElementSpec } from '../../types/schema';
+import { getRequiredChildren } from '../../schema/xmlValidator';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 정규식 캐싱 (모듈 레벨)
@@ -48,15 +49,18 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
     const parentName = elementStack.length > 0 ? elementStack[elementStack.length - 1] : null;
     const parentSpec = parentName ? schema.elementMap.get(parentName) : null;
 
+    // Get existing children for required element detection
+    const existingChildren = getExistingChildren(textBefore, parentName);
+
     // 요소명 자동완성: '<' 뒤에서 요소명 타이핑 중
     const elementMatch = textBefore.match(ELEMENT_START_REGEX);
     if (elementMatch) {
-      return completeElementName(schema, elementMatch[1], pos - elementMatch[1].length, parentSpec);
+      return completeElementName(schema, elementMatch[1], pos - elementMatch[1].length, parentSpec, existingChildren);
     }
 
     // 요소 시작: '<' 직후 (닫는 태그 제외)
     if (textBefore.endsWith('<') && !textBefore.endsWith('</')) {
-      return completeElementName(schema, '', pos, parentSpec);
+      return completeElementName(schema, '', pos, parentSpec, existingChildren);
     }
 
     // 속성값 자동완성: attr="value 입력 중 (속성명보다 먼저 체크)
@@ -150,8 +154,13 @@ function getElementStack(text: string): string[] {
   return stack;
 }
 
-/** Create a snippet completion for an element with cursor between tags */
-function makeElementCompletion(el: ElementSpec, boost: number): Completion {
+/**
+ * Create a snippet completion for an element with cursor between tags.
+ * @param el - Element specification
+ * @param boost - Priority boost for ordering
+ * @param isRequired - Whether this element is required in the parent context
+ */
+function makeElementCompletion(el: ElementSpec, boost: number, isRequired: boolean = false): Completion {
   // Check if this is an empty element (no children defined = self-closing)
   const isEmpty = !el.children || el.children.length === 0;
 
@@ -170,23 +179,96 @@ function makeElementCompletion(el: ElementSpec, boost: number): Completion {
   // The final cursor position (content area or after tag)
   const contentTabStop = `\${${tabIndex}}`;
 
+  // Label with required indicator
+  const label = isRequired ? `${el.name} ★` : el.name;
+  const detail = isRequired
+    ? `(required) ${el.documentation?.substring(0, 40) ?? ''}`
+    : el.documentation?.substring(0, 60);
+
   if (isEmpty) {
     // Self-closing tag: <tagName attr=""/>
     return snippetCompletion(`${el.name}${attrSnippet}/>`, {
-      label: el.name,
+      label,
       type: 'type',
-      detail: el.documentation?.substring(0, 60),
+      detail,
       boost,
     });
   }
 
   // Regular tag with content: <tagName attr="">$0</tagName>
   return snippetCompletion(`${el.name}${attrSnippet}>${contentTabStop}</${el.name}>`, {
-    label: el.name,
+    label,
     type: 'type',
-    detail: el.documentation?.substring(0, 60),
+    detail,
     boost,
   });
+}
+
+/**
+ * Get existing children of the current parent element from the text before cursor.
+ * Used to determine which required children are still missing.
+ */
+function getExistingChildren(text: string, parentName: string | null): string[] {
+  if (!parentName) return [];
+
+  const children: string[] = [];
+  const stack: string[] = [];
+  TAG_PARSE_REGEX.lastIndex = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = TAG_PARSE_REGEX.exec(text)) !== null) {
+    const fullTag = m[0];
+    const tagName = m[1];
+
+    if (fullTag.startsWith('<?') || fullTag.startsWith('<!')) continue;
+
+    if (fullTag.startsWith('</')) {
+      if (stack[stack.length - 1] === tagName) {
+        stack.pop();
+      }
+    } else if (!fullTag.endsWith('/>')) {
+      // If we're directly inside the parent, this is a child
+      if (stack.length > 0 && stack[stack.length - 1] === parentName) {
+        children.push(tagName);
+      }
+      stack.push(tagName);
+    } else {
+      // Self-closing: also a child if we're in the parent
+      if (stack.length > 0 && stack[stack.length - 1] === parentName) {
+        children.push(tagName);
+      }
+    }
+  }
+
+  return children;
+}
+
+/**
+ * Get allowed children with required status based on ContentModel.
+ */
+function getAllowedNextChildren(
+  parentSpec: ElementSpec | null | undefined,
+  existingChildren: string[],
+): { name: string; required: boolean }[] {
+  if (!parentSpec?.children) return [];
+
+  const result: { name: string; required: boolean }[] = [];
+  const existingSet = new Set(existingChildren);
+
+  // Get required children from content model
+  let requiredSet = new Set<string>();
+  if (parentSpec.contentModel) {
+    const required = getRequiredChildren(parentSpec.contentModel);
+    requiredSet = new Set(required);
+  }
+
+  for (const name of parentSpec.children) {
+    // A child is "required" if it's in the required set AND not yet present
+    const isRequired = requiredSet.has(name) && !existingSet.has(name);
+    result.push({ name, required: isRequired });
+  }
+
+  return result;
 }
 
 function completeElementName(
@@ -194,21 +276,32 @@ function completeElementName(
   partial: string,
   from: number,
   parentSpec: ElementSpec | null | undefined,
+  existingChildren: string[] = [],
 ): CompletionResult {
   // Use context-aware filtering: only suggest children valid in the parent
   if (parentSpec?.children && parentSpec.children.length > 0) {
-    const allowedSet = new Set(parentSpec.children);
-    // Show allowed children first, then all elements as a fallback
+    const allowedInfo = getAllowedNextChildren(parentSpec, existingChildren);
+    const allowedSet = new Set(allowedInfo.map(a => a.name));
+    const requiredSet = new Set(allowedInfo.filter(a => a.required).map(a => a.name));
+
     const allowed = schema.elements.filter((el) => allowedSet.has(el.name));
     const others = schema.elements.filter((el) => !allowedSet.has(el.name));
 
     const options: Completion[] = [
+      // Required elements: highest priority (+200)
       ...allowed
+        .filter((el) => requiredSet.has(el.name))
         .filter((el) => el.name.toLowerCase().startsWith(partial.toLowerCase()))
-        .map((el) => makeElementCompletion(el, getElementBoost(el.name) + 100)),
+        .map((el) => makeElementCompletion(el, getElementBoost(el.name) + 200, true)),
+      // Allowed but not required elements: medium priority (+100)
+      ...allowed
+        .filter((el) => !requiredSet.has(el.name))
+        .filter((el) => el.name.toLowerCase().startsWith(partial.toLowerCase()))
+        .map((el) => makeElementCompletion(el, getElementBoost(el.name) + 100, false)),
+      // Other elements: low priority (-50)
       ...others
         .filter((el) => el.name.toLowerCase().startsWith(partial.toLowerCase()))
-        .map((el) => makeElementCompletion(el, getElementBoost(el.name) - 50)),
+        .map((el) => makeElementCompletion(el, getElementBoost(el.name) - 50, false)),
     ];
 
     return { from, options, validFor: /^[a-zA-Z_][\w.:_-]*$/ };

@@ -7,7 +7,7 @@
  * Run 'npm run generate-p5-schema' to regenerate
  */
 
-import type { AttrSpec } from '../types/schema';
+import type { AttrSpec, ContentModel } from '../types/schema';
 
 
 // ============================================================================
@@ -1000,6 +1000,7 @@ export interface P5ElementDef {
   children: string[];
   localAttrs: AttrSpec[];
   contentModelType?: 'sequence' | 'choice' | 'interleave' | 'mixed' | 'empty';
+  contentModel?: ContentModel;  // Full content model structure for validation
 }
 
 export const TEI_P5_ELEMENTS: P5ElementDef[] = [
@@ -1026,6 +1027,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'table', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'accMat',
@@ -1066,6 +1068,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'adminInfo', 'listBibl', 'p', 'surrogates'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'adminInfo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surrogates', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'additions',
@@ -1085,6 +1088,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['addrLine', 'figure', 'metamark', 'notatedMusic', 'postBox', 'postCode', 'street'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'addrLine', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'postBox', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'postCode', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'street', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'addrLine',
@@ -1105,6 +1109,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['availability', 'custodialHist', 'note', 'noteGrp', 'recordHist'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'recordHist', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'availability', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'custodialHist', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'affiliation',
@@ -1140,6 +1145,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['alternate', 'anyElement', 'classRef', 'dataRef', 'elementRef', 'empty', 'macroRef', 'sequence', 'textNode', 'valList'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'valList', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'alternate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'anyElement', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'classRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'empty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sequence', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textNode', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'altGrp',
@@ -1149,6 +1155,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'mode', values: ['excl', 'incl'], documentation: 'states whether the alternations gathered in this collection are exclusive or inclusive.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'alt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'altIdent',
@@ -1165,6 +1172,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'country', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'district', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geogName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'placeName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'region', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'settlement', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'institution', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'repository', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'collection', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'am',
@@ -1175,6 +1183,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'add', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'corr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'damage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'del', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handShift', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mod', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orig', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'redo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'reg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'restore', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'retrace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'secl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'supplied', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surplus', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unclear', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'undo', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'analytic',
@@ -1185,6 +1194,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'date', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'availability', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'anchor',
@@ -1203,6 +1213,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'xml:id', required: true },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'revisionDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'licence', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'annotationBlock',
@@ -1210,6 +1221,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['incident', 'kinesic', 'pause', 'shift', 'spanGrp', 'u', 'vocal', 'writing'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'u', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'spanGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'incident', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'kinesic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pause', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'shift', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'vocal', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'writing', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'anyElement',
@@ -1232,12 +1244,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'loc', documentation: '(location) indicates the location of the variation, when the location-referenced method of apparatus markup is used.', datatype: 'teidata.word' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'lem', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'rdg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'witDetail', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'wit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rdgGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'appInfo',
     documentation: '(application information) records information about an application which has edited the TEI file.',
     children: ['application'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'application', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'application',
@@ -1248,6 +1262,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'version', required: true, documentation: 'supplies a version number for the application, independent of its identifier or display name.', datatype: 'teidata.versionNumber' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'arc',
@@ -1258,6 +1273,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'to', required: true, documentation: 'gives the identifier of the node which is adjacent to this arc.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 },
   },
   {
     name: 'argument',
@@ -1265,6 +1281,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'head', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'att',
@@ -1282,6 +1299,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'usage', values: ['req', 'rec', 'opt'], documentation: 'specifies the optionality of the attribute.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'datatype', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'defaultVal', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'valList', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'valDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'element', name: 'exemplum', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'attList',
@@ -1291,6 +1309,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'org', values: ['group', 'choice'], documentation: '(organization) specifies whether only one (choice) or all (group) of the attributes in the list are available.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'attRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'attDef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'attList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'attRef',
@@ -1322,6 +1341,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'status', values: ['free', 'unknown', 'restricted'], documentation: '(status) supplies a code identifying the current availability of the text.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'licence', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'back',
@@ -1334,6 +1354,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dateline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'table', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div1', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div1', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'closer', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'postscript', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'signed', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'trailer', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'closer', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'postscript', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'signed', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'trailer', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'bibl',
@@ -1345,6 +1366,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'c', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'cl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'm', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'phr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 's', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'w', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'availability', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'citedRange', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'edition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'explicit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'extent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'incipit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'objectIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'quote', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'relatedItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'series', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'biblFull',
@@ -1352,6 +1374,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['editionStmt', 'extent', 'fileDesc', 'notesStmt', 'profileDesc', 'publicationStmt', 'seriesStmt', 'sourceDesc', 'titleStmt'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'titleStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editionStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'extent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'publicationStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seriesStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notesStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sourceDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'fileDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'profileDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'biblScope',
@@ -1365,6 +1388,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['analytic', 'citedRange', 'listRef', 'monogr', 'note', 'noteGrp', 'ptr', 'ref', 'relatedItem', 'series'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'analytic', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'monogr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'series', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'relatedItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'citedRange', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'bicond',
@@ -1372,6 +1396,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['f', 'fs', 'iff'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'fs', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'iff', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'fs', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'binary',
@@ -1391,6 +1416,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'encoding', documentation: 'The encoding used to encode the binary data. If not specified, this is assumed to be Base64.', datatype: 'teidata.word' },
     ],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'binding',
@@ -1400,6 +1426,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'contemporary', documentation: '(contemporary) specifies whether or not the binding is contemporary with the majority of its contents.', datatype: 'teidata.xTruthValue' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'condition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'bindingDesc',
@@ -1407,6 +1434,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'binding', 'condition', 'decoNote', 'p'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'condition', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'element', name: 'binding', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'birth',
@@ -1428,6 +1456,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div', 'div1', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div1', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div1', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'broadcast',
@@ -1435,6 +1464,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'bibl', 'biblFull', 'biblStruct', 'listBibl', 'msDesc', 'p', 'recording'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'recording', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'byline',
@@ -1442,6 +1472,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['docAuthor', 'figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'c',
@@ -1461,12 +1492,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(calendar) describes a calendar or dating system used in a dating formula in the text.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'calendarDesc',
     documentation: '(calendar description) contains a description of the calendar system used in any dating expression found in the text.',
     children: ['calendar'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'calendar', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'camera',
@@ -1492,6 +1525,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castGroup', 'castItem', 'figure', 'head', 'metamark', 'notatedMusic', 'roleDesc', 'trailer'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'castGroup', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'roleDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'trailer', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'castItem',
@@ -1501,6 +1535,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['role', 'list'], documentation: 'characterizes the cast item.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'actor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'role', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'roleDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'castList',
@@ -1508,6 +1543,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castGroup', 'castItem', 'figure', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'castGroup', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'catchwords',
@@ -1521,6 +1557,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['textDesc'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'textDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'category',
@@ -1528,6 +1565,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['catDesc', 'category', 'desc', 'equiv', 'gloss'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'catDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'category', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'catRef',
@@ -1564,6 +1602,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'degree', documentation: 'indicates the degree of confidence assigned to the aspect of the markup named by the locus attribute.', datatype: 'teidata.probability' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'change',
@@ -1590,6 +1629,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'unicodeProp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unihanProp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'localProp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mapping', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'charDecl',
@@ -1597,6 +1637,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['char', 'desc', 'glyph'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'char', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'glyph', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'choice',
@@ -1607,6 +1648,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'abbr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'am', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'corr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ex', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'expan', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orig', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'reg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'supplied', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unclear', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'choice', minOccurs: 1, maxOccurs: 1 }], minOccurs: 2, maxOccurs: Infinity },
   },
   {
     name: 'cit',
@@ -1619,6 +1661,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'egXML', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'colloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hom', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hyph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pos', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pron', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'subc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'superEntry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'syll', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'floatingText', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'said', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'citeData',
@@ -1645,6 +1688,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'unit', values: ['book', 'chapter', 'entry', 'poem', 'letter', 'line', 'section', 'verse', 'volume'], documentation: '(unit) describes the structural unit indicated by the citeStructure.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'citeData', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'citeStructure', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'cl',
@@ -1665,6 +1709,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(classification declarations) contains one or more taxonomies defining any classificatory codes used elsewhere in the text.',
     children: ['taxonomy'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'taxonomy', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'classes',
@@ -1673,6 +1718,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'mode', values: ['change', 'replace'], documentation: 'specifies the effect of this declaration on its parent module.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'memberOf', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'classRef',
@@ -1695,6 +1741,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'generate', values: ['alternation', 'sequence', 'sequenceOptional', 'sequenceOptionalRepeatable', 'sequenceRepeatable'], documentation: 'indicates which alternation and sequence instantiations of a model class may be referenced. By default, all variations are permitted.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'classes', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'attList', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'exemplum', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'climate',
@@ -1705,6 +1752,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'climate', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'closer',
@@ -1712,6 +1760,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['byline', 'dateline', 'figure', 'g', 'metamark', 'notatedMusic', 'ruby', 'salute', 'signed'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'signed', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dateline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'salute', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'code',
@@ -1721,6 +1770,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'lang', documentation: '(formal language) a name identifying the formal language in which the code is expressed.', datatype: 'teidata.word' },
     ],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'collation',
@@ -1752,6 +1802,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['f', 'fs', 'then'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'fs', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'then', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'fs', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'condition',
@@ -1773,6 +1824,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'constraintDecl',
@@ -1783,6 +1835,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'queryBinding', values: ['exslt', 'stx', 'xslt', 'xslt2', 'xslt3', 'xpath', 'xpath2', 'xpath3', 'xpath31', 'xquery', 'xquery3', 'xquery31'], documentation: '(query language binding) specifies the query language binding for rule-based schema expressions in constraintSpec elements that have a matching scheme attribute', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'constraintSpec',
@@ -1793,6 +1846,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['deprecationWarning'], documentation: 'characterizes the constraintSpec element in some sense; used to indicate when a constraintSpec warns about a deprecated construct.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'constraint', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'content',
@@ -1802,6 +1856,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'autoPrefix', values: ['true', 'false'], documentation: 'controls whether or not pattern names generated in the corresponding RELAX NG schema source are automatically prefixed to avoid potential nameclashes.', datatype: 'teidata.truthValue' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'valList', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'alternate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'anyElement', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'classRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'empty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sequence', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textNode', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'conversion',
@@ -1827,6 +1882,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'status', values: ['high', 'medium', 'low', 'unknown'], documentation: 'indicates the degree of correction applied to the text.', datatype: 'teidata.enumerated' },
       { name: 'method', values: ['silent', 'markup'], documentation: 'indicates the method adopted to indicate corrections within the text.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'correspAction',
@@ -1836,12 +1892,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['sent', 'received', 'transmitted', 'redirected', 'forwarded'], documentation: 'describes the nature of the action.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'correspContext',
     documentation: '(correspondence context) provides references to preceding or following correspondence related to this piece of correspondence.',
     children: ['note', 'noteGrp'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'correspDesc',
@@ -1849,6 +1907,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'correspAction', 'correspContext', 'note', 'noteGrp', 'p'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'correspAction', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'correspContext', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'country',
@@ -1862,12 +1921,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['listChange'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listChange', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'cRefPattern',
     documentation: '(canonical reference pattern) specifies an expression and replacement pattern for transforming a canonical reference into a URI.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'custEvent',
@@ -1881,6 +1942,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'custEvent', 'p'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'custEvent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'damage',
@@ -1915,6 +1977,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'ref', documentation: 'a pointer to a datatype defined in some datatype library', datatype: 'teidata.pointer' },
       { name: 'restriction', documentation: 'supplies a string representing a regular expression providing additional constraints on the strings used to represent values of this datatype', datatype: 'teidata.pattern' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'dataFacet', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'dataSpec',
@@ -1922,6 +1985,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['altIdent', 'constraintSpec', 'content', 'desc', 'exemplum', 'listRef', 'remarks', 'valList'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'content', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'valList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'exemplum', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'datatype',
@@ -1932,6 +1996,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'maxOccurs', documentation: 'indicates the maximum number of times this datatype may occur in an instance of the attribute being defined.' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'dataRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'date',
@@ -1939,6 +2004,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'dateline',
@@ -1946,6 +2012,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['docDate', 'figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'death',
@@ -1961,6 +2028,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'decoNote', 'p', 'summary'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'decoNote',
@@ -1987,6 +2055,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'del',
@@ -2034,6 +2103,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'colloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hom', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hyph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pos', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pron', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'subc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'superEntry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'syll', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'case', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gram', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'iType', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mood', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'number', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'per', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tns', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'dim',
@@ -2049,6 +2119,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['leaves', 'ruled', 'pricked', 'written', 'miniatures', 'binding', 'box'], documentation: 'indicates which aspect of the object is being measured.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'dim', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'depth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'height', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'width', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'distinct',
@@ -2079,6 +2150,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div1',
@@ -2086,6 +2158,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div2', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div2', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div2', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div2',
@@ -2093,6 +2166,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div3', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div3', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div3', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div3',
@@ -2100,6 +2174,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div4', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div4', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div4', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div4',
@@ -2107,6 +2182,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div5', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div5', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div5', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div5',
@@ -2114,6 +2190,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div6', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div6', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div6', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div6',
@@ -2121,6 +2198,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['div7', 'divGen', 'figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div7', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div7', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'div7',
@@ -2128,6 +2206,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'q', 'schemaSpec'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'divGen',
@@ -2136,6 +2215,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'type', values: ['index', 'toc', 'figlist', 'tablist'], documentation: 'specifies what type of generated text division (e.g. index, table of contents, etc.) is to appear.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'docAuthor',
@@ -2161,6 +2241,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['docDate', 'figure', 'g', 'metamark', 'notatedMusic', 'pubPlace', 'publisher', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pubPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'publisher', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'docTitle',
@@ -2168,6 +2249,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'titlePart'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'domain',
@@ -2189,6 +2271,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'author', 'edition', 'editor', 'funder', 'meeting', 'p', 'principal', 'respStmt', 'sponsor'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'edition', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'funder', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'meeting', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'principal', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sponsor', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'editor',
@@ -2202,6 +2285,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'correction', 'hyphenation', 'interpretation', 'normalization', 'p', 'punctuation', 'quotation', 'segmentation', 'stdVals'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'correction', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hyphenation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'interpretation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'normalization', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'punctuation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'quotation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'segmentation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stdVals', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'education',
@@ -2225,6 +2309,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'valid', values: ['true', 'feasible', 'false'], documentation: 'indicates the intended validity of the example with respect to a schema.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'eLeaf',
@@ -2234,6 +2319,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'value', documentation: 'indicates the value of an embedding leaf, which is a feature structure or other analytic element.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'elementRef',
@@ -2255,6 +2341,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'prefix', documentation: 'specifies a default prefix which will be prepended to all patterns relating to the element, unless otherwise stated.', datatype: 'teidata.xmlName' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'classes', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'content', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'valList', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'attList', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'model', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'modelGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'modelSequence', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'exemplum', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'ellipsis',
@@ -2262,6 +2349,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'metamark', 'supplied'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'supplied', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'email',
@@ -2292,6 +2380,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'appInfo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'charDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'classDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constraintDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editorialDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fsdDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geoDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPrefixDef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'projectDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'refsDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'samplingDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'styleDefDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tagsDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'transcriptionDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unitDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'variantEncoding', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'entry',
@@ -2302,6 +2391,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'hom', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'cit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dictScrap', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'entry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'entryFree',
@@ -2314,6 +2404,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'colloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hom', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hyph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pos', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pron', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'subc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'superEntry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'syll', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'case', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gram', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'iType', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mood', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'number', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'per', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tns', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'epigraph',
@@ -2321,6 +2412,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'epilogue',
@@ -2328,12 +2420,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'equipment',
     documentation: '(equipment) provides technical details of the equipment and media used for an audio or video recording used as the source for a spoken text.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'equiv',
@@ -2354,6 +2448,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'value', documentation: 'provides the value of an embedding tree, which is a feature structure or other analytic element.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'triangle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'eLeaf', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'etym',
@@ -2364,6 +2459,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'event',
@@ -2376,6 +2472,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'eventName', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'linkGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'link', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'event', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'org', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'person', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'personGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'place', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'object', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'eventName',
@@ -2395,6 +2492,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'eg', 'egXML', 'p'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'egXML', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'eg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'expan',
@@ -2423,6 +2521,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'fVal', documentation: '(feature value) references any element which can be used to represent the value of a feature.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'facsimile',
@@ -2430,6 +2529,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['back', 'binaryObject', 'facsimile', 'formula', 'front', 'graphic', 'media', 'surface', 'surfaceGrp'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'front', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surface', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surfaceGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'element', name: 'facsimile', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'back', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'factuality',
@@ -2456,6 +2556,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'optional', documentation: 'indicates whether or not the value of this feature may be present.', datatype: 'teidata.truthValue' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'fDescr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'vRange', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'vDefault', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'fDescr',
@@ -2475,6 +2576,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['binaryObject', 'figDesc', 'figure', 'formula', 'graphic', 'head', 'media', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'figDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'fileDesc',
@@ -2482,6 +2584,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['editionStmt', 'extent', 'notesStmt', 'publicationStmt', 'seriesStmt', 'sourceDesc', 'titleStmt'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'titleStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editionStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'extent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'publicationStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seriesStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notesStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sourceDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'filiation',
@@ -2500,6 +2603,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(feature library) assembles a library of f (feature) elements.',
     children: ['f'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'floatingText',
@@ -2507,6 +2611,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['back', 'body', 'figure', 'front', 'group', 'metamark', 'notatedMusic'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'front', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'body', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'group', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'back', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'floruit',
@@ -2538,6 +2643,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['eTree', 'tree', 'triangle'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'tree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'triangle', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'form',
@@ -2550,6 +2656,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['simple', 'lemma', 'variant', 'compound', 'derivative', 'inflected', 'phrase'], documentation: 'classifies form as simple, compound, etc.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hyph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pron', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stress', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'syll', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'formula',
@@ -2557,6 +2664,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['binaryObject', 'formula', 'graphic', 'hi', 'media', 'q'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'hi', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'front',
@@ -2568,6 +2676,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dateline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div1', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div1', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'divGen', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'schemaSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'fs',
@@ -2577,6 +2686,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', documentation: 'specifies the type of the feature structure.', datatype: 'teidata.enumerated' },
       { name: 'feats', documentation: '(features) references the feature-value specifications making up this feature structure.', datatype: 'teidata.pointer' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'fsConstraints',
@@ -2584,12 +2694,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['bicond', 'cond'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'cond', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'bicond', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'fsdDecl',
     documentation: '(feature system declaration) provides a feature system declaration comprising one or more feature structure declarations or feature structure declaration links.',
     children: ['fLib', 'fsDecl', 'fsdLink', 'fvLib'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'fLib', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fsDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fsdLink', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fvLib', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'fsDecl',
@@ -2600,6 +2712,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'baseTypes', documentation: 'gives the name of one or more typed feature structures from which this type inherits feature specifications and constraints; if this type includes a feature specification with the same name as that of', datatype: 'teidata.name' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'fsDescr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fsConstraints', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'fsDescr',
@@ -2645,6 +2758,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'ref', documentation: 'points to a description of the character or glyph intended.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'gap',
@@ -2655,6 +2769,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'agent', values: ['rubbing', 'mildew', 'smoke'], documentation: '(agent) in the case of text omitted because of damage, categorizes the cause of the damage, if it can be identified.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'gb',
@@ -2689,6 +2804,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'geoDecl',
@@ -2733,6 +2849,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'unicodeProp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unihanProp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'localProp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mapping', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'gram',
@@ -2748,6 +2865,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castList', 'figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'graph',
@@ -2759,12 +2877,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'size', documentation: 'states the size of the graph, i.e., the number of its arcs.', datatype: 'teidata.count' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'node', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'arc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'arc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'node', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'graphic',
     documentation: '(graphic) indicates the location of a graphic or illustration, either forming part of a text, or providing an image of it.',
     children: ['desc'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'group',
@@ -2772,6 +2892,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'group', 'metamark', 'notatedMusic', 'text'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'group', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'group', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'handDesc',
@@ -2781,6 +2902,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'hands', documentation: '(hands) specifies the number of distinct hands identified within the manuscript.', datatype: 'teidata.count' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'handNote',
@@ -2793,6 +2915,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: 'contains one or more handNote elements documenting the different hands identified within the source texts.',
     children: ['handNote'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'handNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'handShift',
@@ -2809,6 +2932,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castList', 'figure', 'g', 'l', 'lg', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'headItem',
@@ -2846,6 +2970,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'acquisition', 'origin', 'p', 'provenance', 'summary'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'origin', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'provenance', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'acquisition', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'hom',
@@ -2856,6 +2981,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'cit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dictScrap', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'entry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'hyph',
@@ -2870,6 +2996,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'eol', values: ['all', 'some', 'hard', 'none'], documentation: '(end-of-line) indicates whether or not end-of-line hyphenation has been retained in a text.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'ident',
@@ -2877,6 +3004,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'idno',
@@ -2886,6 +3014,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['ISBN', 'ISSN', 'DOI', 'URI', 'VIAF', 'ESTC', 'OCLC'], documentation: 'categorizes the identifier, for example as an ISBN, Social Security number, etc.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'if',
@@ -2893,6 +3022,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['f', 'fs', 'then'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'fs', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'f', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'then', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'iff',
@@ -2916,12 +3046,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'classCode', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'catRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'biblScope', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'distributor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pubPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'publisher', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'date', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'time', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'incident',
     documentation: '(incident) marks any phenomenon or occurrence, not necessarily vocalized or communicative, for example incidental noises or other events affecting communication.',
     children: ['desc'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'incipit',
@@ -2937,6 +3069,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'indexName', documentation: 'a single word which follows the rules defining a legal XML name (see ), supplying a name to specify which index (of several) the index entry belongs to.', datatype: 'teidata.name' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'term', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'index', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'iNode',
@@ -2950,6 +3083,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'follow', documentation: 'provides the identifier of an element which this node follows.', datatype: 'teidata.pointer' },
       { name: 'outDegree', documentation: 'gives the out degree of an intermediate node, the number of its children.', datatype: 'teidata.count' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'institution',
@@ -2973,6 +3107,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['certainty', 'desc', 'g', 'precision', 'respons'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'interpGrp',
@@ -2980,12 +3115,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'interp'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'interp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'interpretation',
     documentation: '(interpretation) describes the scope of any analytic or interpretive information added to the text in addition to the transcription.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'item',
@@ -3010,6 +3147,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'scope', values: ['root', 'branches'], documentation: 'indicates whether the targets to be joined include the entire element indicated (the entire subtree including its root), or just the children of the target (the branches of the subtree).', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'joinGrp',
@@ -3019,6 +3157,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'result', documentation: 'supplies the default value for the result on each join included within the group.', datatype: 'teidata.name' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'join', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'keywords',
@@ -3028,6 +3167,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'scheme', documentation: 'identifies the controlled vocabulary within which the set of keywords concerned is defined, for example by a taxonomy element, or by some other resource.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'term', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'kinesic',
@@ -3036,6 +3176,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'iterated', documentation: 'indicates whether or not the phenomenon is repeated.', datatype: 'teidata.xTruthValue' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'l',
@@ -3043,6 +3184,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castList', 'figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'label',
@@ -3079,6 +3221,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'tags', documentation: 'supplies one or more valid language tags for the languages specified.', datatype: 'teidata.language' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'langKnown', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'langKnown',
@@ -3104,6 +3247,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'language', 'p'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'language', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'layout',
@@ -3122,6 +3266,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'layout', 'p', 'summary'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'layout', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'lb',
@@ -3147,6 +3292,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'parent', documentation: 'provides the identifier of parent of a leaf.', datatype: 'teidata.pointer' },
       { name: 'follow', documentation: 'provides an identifier of an element which this leaf follows.', datatype: 'teidata.pointer' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'lem',
@@ -3159,6 +3305,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'forest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listForest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'spGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tree', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'imprimatur', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epilogue', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'performance', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'prologue', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'set', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'lacunaEnd', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lacunaStart', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'wit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'witEnd', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'witStart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'lg',
@@ -3171,6 +3318,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'camera', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'caption', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'move', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sound', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tech', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'view', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'add', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'corr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'damage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'del', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handShift', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mod', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orig', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'redo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'reg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'restore', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'retrace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'secl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'supplied', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surplus', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unclear', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'undo', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'camera', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'caption', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'move', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sound', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tech', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'view', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'add', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'corr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'damage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'del', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handShift', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mod', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orig', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'redo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'reg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'restore', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'retrace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'secl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'supplied', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surplus', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unclear', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'undo', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'licence',
@@ -3188,6 +3336,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'add', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'c', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'choice', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'damage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'del', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handShift', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'line', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mod', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'path', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'redo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'restore', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'retrace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unclear', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'undo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'w', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'zone', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'link',
@@ -3202,6 +3351,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'link', 'ptr'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'link', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'list',
@@ -3211,6 +3361,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['gloss', 'index', 'instructions', 'litany', 'syllogism'], documentation: '(type) describes the nature of the items in the list.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'item', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'headLabel', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'headItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'item', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listAnnotation',
@@ -3218,6 +3369,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['annotation', 'annotationBlock', 'desc', 'head', 'label', 'listAnnotation', 'note'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'annotation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'annotationBlock', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listAnnotation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listApp',
@@ -3225,6 +3377,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['app', 'desc', 'head', 'listApp'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'app', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listBibl',
@@ -3235,6 +3388,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'anchor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'cb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fw', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'milestone', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pb', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'anchor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'cb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fw', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'milestone', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pb', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listChange',
@@ -3244,6 +3398,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'ordered', documentation: 'indicates whether the ordering of its child change elements is to be considered significant or not.', datatype: 'teidata.truthValue' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listChange', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'change', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listEvent',
@@ -3251,6 +3406,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'event', 'head', 'listEvent', 'listRelation', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'event', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listForest',
@@ -3260,6 +3416,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', documentation: 'identifies the type of the forest group.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'forest', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listNym',
@@ -3267,6 +3424,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'head', 'listNym', 'listRelation', 'nym', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'nym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listObject',
@@ -3274,6 +3432,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'head', 'listObject', 'listRelation', 'object', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'object', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listOrg',
@@ -3281,6 +3440,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'head', 'listOrg', 'listRelation', 'org', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'org', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listPerson',
@@ -3288,6 +3448,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'head', 'listPerson', 'listRelation', 'org', 'person', 'personGrp', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'org', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'person', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'personGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listPlace',
@@ -3295,6 +3456,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'head', 'listPlace', 'listRelation', 'place', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'place', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listPrefixDef',
@@ -3302,6 +3464,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'listPrefixDef', 'prefixDef'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'prefixDef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPrefixDef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listRef',
@@ -3309,6 +3472,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'listRef', 'ptr', 'ref'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listRelation',
@@ -3316,6 +3480,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'desc', 'head', 'listRelation', 'p', 'relation'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'relation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listTranspose',
@@ -3323,6 +3488,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'transpose'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'transpose', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'listWit',
@@ -3330,6 +3496,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'head', 'listWit', 'witness'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'witness', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'locale',
@@ -3355,6 +3522,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'country', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'district', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geogName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'placeName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'region', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'settlement', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'geogFeat', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'offset', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'depth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dim', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'height', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'measure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'measureGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'num', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'width', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'address', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'affiliation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'email', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'locus',
@@ -3366,6 +3534,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'to', documentation: '(to) specifies the end-point of the location in a normalized form, typically as a page number.', datatype: 'teidata.word' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hi', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'locus', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'locusGrp',
@@ -3374,6 +3543,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'scheme', documentation: '(scheme) identifies the foliation scheme in terms of which all the locations contained by the group are specified by pointing to some foliation element defining it, or to some other equivalent resourc', datatype: 'teidata.pointer' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'locus', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'm',
@@ -3383,6 +3553,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'baseForm', documentation: 'supplies the morpheme\'s base form.', datatype: 'teidata.word' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'hi', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'm', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'c', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'macroRef',
@@ -3399,6 +3570,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['altIdent', 'constraintSpec', 'content', 'desc', 'exemplum', 'listRef', 'remarks', 'valList'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'content', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'valList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'exemplum', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'mapping',
@@ -3429,6 +3601,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['depth', 'dim', 'g', 'geo', 'height', 'measure', 'measureGrp', 'num', 'unit', 'width'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'depth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dim', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'height', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'measure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'measureGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'num', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'width', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'media',
@@ -3437,6 +3610,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'mimeType', required: true },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'meeting',
@@ -3479,6 +3653,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'pattern', documentation: '(regular expression pattern) specifies a regular expression defining any value that is legal for this notation.', datatype: 'teidata.pattern' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'element', name: 'metSym', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'metSym',
@@ -3513,6 +3688,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'cssClass', documentation: 'the name of a CSS class which should be associated with this element', datatype: 'teidata.name' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'param', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'outputRendition', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'modelGrp',
@@ -3523,6 +3699,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'output', values: ['web', 'print', 'plaintext'], documentation: 'the intended output method.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'outputRendition', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'modelSequence', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'model', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'modelSequence',
@@ -3534,6 +3711,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'output', values: ['web', 'print', 'plaintext'], documentation: 'the intended output method.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'model', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'moduleRef',
@@ -3546,6 +3724,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'key', documentation: 'the name of a TEI module', datatype: 'teidata.xmlName' },
       { name: 'url', documentation: '(uniform resource locator) refers to a non-TEI module of RELAX NG code by external location', datatype: 'teidata.pointer' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'content', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'moduleSpec',
@@ -3553,6 +3732,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'equiv', 'exemplum', 'gloss', 'idno', 'listRef', 'remarks'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'exemplum', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'monogr',
@@ -3563,6 +3743,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'meeting', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'meeting', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'meeting', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'authority', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'element', name: 'availability', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'edition', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sponsor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'funder', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'imprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'imprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'extent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblScope', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'mood',
@@ -3587,6 +3768,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'msItem', 'msItemStruct', 'p', 'summary', 'textLang', 'titlePage'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'msItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msItemStruct', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'msDesc',
@@ -3594,6 +3776,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'additional', 'head', 'history', 'msContents', 'msFrag', 'msIdentifier', 'msPart', 'p', 'physDesc'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'msIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'msContents', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'physDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'history', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'additional', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msPart', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msFrag', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'msFrag',
@@ -3601,6 +3784,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'additional', 'altIdentifier', 'head', 'history', 'msContents', 'msIdentifier', 'p', 'physDesc'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msIdentifier', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'msContents', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'physDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'history', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'additional', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'msIdentifier',
@@ -3611,6 +3795,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'country', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'district', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geogName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'placeName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'region', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'settlement', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'institution', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'repository', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'collection', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'msName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'objectName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'altIdentifier', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'msItem',
@@ -3622,6 +3807,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'locus', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'locusGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'imprimatur', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'filiation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msItem', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msItemStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'msItemStruct',
@@ -3633,6 +3819,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'locus', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'locusGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rubric', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'incipit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msItemStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'explicit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'finalRubric', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'colophon', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'filiation', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'msName',
@@ -3640,6 +3827,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['g', 'name', 'rs'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rs', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'msPart',
@@ -3647,6 +3835,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'additional', 'head', 'history', 'msContents', 'msIdentifier', 'msPart', 'p', 'physDesc'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'msIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'msContents', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'physDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'history', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'additional', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msPart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'musicNotation',
@@ -3673,6 +3862,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'name', required: true, documentation: 'specifies the full formal name of the namespace concerned.', datatype: 'teidata.namespace' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'tagUsage', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'nationality',
@@ -3697,6 +3887,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'degree', documentation: 'gives the degree of the node, the number of arcs with which the node is incident.', datatype: 'teidata.count' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 },
   },
   {
     name: 'normalization',
@@ -3705,6 +3896,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'method', values: ['silent', 'markup'], documentation: 'indicates the method adopted to indicate normalizations within the text.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'notatedMusic',
@@ -3712,6 +3904,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['binaryObject', 'desc', 'graphic', 'label', 'listRef', 'ptr', 'ref', 'seg'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'note',
@@ -3725,6 +3918,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'note', 'noteGrp'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'notesStmt',
@@ -3732,6 +3926,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['note', 'noteGrp', 'relatedItem'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'relatedItem', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'num',
@@ -3771,6 +3966,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'parts', documentation: 'points to constituent nyms.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'colloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hom', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'hyph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pos', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pron', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'subc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'superEntry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'syll', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'nym', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'object',
@@ -3781,6 +3977,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'objectIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'msContents', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'physDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'history', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'additional', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'linkGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'link', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'object', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'objectDesc',
@@ -3790,6 +3987,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'form', documentation: '(form) a short project-specific name identifying the physical form of the carrier, for example as a codex, roll, fragment, partial leaf, cutting etc.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'supportDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'layoutDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'objectIdentifier',
@@ -3800,6 +3998,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'country', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'district', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geogName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'placeName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'region', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'settlement', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'institution', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'repository', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'collection', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'objectName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'altIdentifier', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'address', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'objectName',
@@ -3838,6 +4037,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dateline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'salute', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'signed', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'oRef',
@@ -3847,6 +4047,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['cap', 'noHyph'], documentation: 'indicates the kind of typographic modification made to the headword in the reference.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'oRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'org',
@@ -3861,6 +4062,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'role', documentation: 'specifies a primary role or classification for the organization.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eventName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lang', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'objectName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rs', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'place', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'anchor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'cb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fw', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'milestone', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pb', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'linkGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'link', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'org', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'person', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'personGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'orgName',
@@ -3880,6 +4082,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'origin',
@@ -3909,6 +4112,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'scope', values: ['first-line', 'first-letter', 'before', 'after'], documentation: 'provides a way of defining pseudo-elements, that is, styling rules applicable to specific sub-portions of an element.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'p',
@@ -3931,6 +4135,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: 'list of parameter specifications.',
     children: ['paramSpec'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'paramSpec', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'paramSpec',
@@ -3938,6 +4143,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'equiv', 'gloss'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'particDesc',
@@ -3945,6 +4151,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'listOrg', 'listPerson', 'org', 'p', 'person', 'personGrp'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'org', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'person', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'personGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'path',
@@ -3979,6 +4186,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'pre', documentation: 'indicates whether this punctuation mark precedes or follows the unit it delimits.', datatype: 'teidata.truthValue' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'c', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'per',
@@ -3992,6 +4200,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'persName',
@@ -4013,6 +4222,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'age', documentation: 'specifies an age group for the person.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'birth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'death', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'persona',
@@ -4025,6 +4235,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'age', documentation: 'specifies an age group for the persona.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'birth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'death', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'personGrp',
@@ -4038,6 +4249,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'size', documentation: 'describes informally the size or approximate size of the group for example by means of a number and an indication of accuracy e.g. approx 200.', datatype: 'teidata.word' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'birth', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'death', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'persPronouns',
@@ -4064,6 +4276,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'accMat', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'additions', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'bindingDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'musicNotation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'objectDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'scriptDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sealDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'typeDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'place',
@@ -4075,6 +4288,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'climate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'location', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'population', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'state', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'terrain', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'trait', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'event', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'linkGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'link', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'place', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'placeName',
@@ -4091,6 +4305,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'element', name: 'population', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'pos',
@@ -4110,6 +4325,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'replyTo', documentation: 'indicates to which previous post the current post replies or refers.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'opener', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'postBox',
@@ -4117,6 +4333,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'postCode',
@@ -4124,6 +4341,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'postscript',
@@ -4131,6 +4349,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['closer', 'figure', 'metamark', 'notatedMusic', 'opener', 'postscript', 'q', 'signed', 'trailer'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'opener', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'signed', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'closer', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'postscript', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'signed', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'trailer', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'precision',
@@ -4141,6 +4360,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'stdDeviation', documentation: 'supplies a standard deviation associated with the value in question.', datatype: 'teidata.numeric' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'pRef',
@@ -4148,6 +4368,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['g', 'pRef'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'prefixDef',
@@ -4156,6 +4377,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'ident', required: true, documentation: 'supplies a name which functions as the prefix for an abbreviated pointing scheme such as a private URI scheme. The prefix constitutes the text preceding the first colon.', datatype: 'teidata.prefix' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'preparedness',
@@ -4179,12 +4401,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       'textDesc',
     ],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'abstract', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'calendarDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'correspDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'creation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handNotes', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'langUsage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listTranspose', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'particDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'settingDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textClass', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'projectDesc',
     documentation: '(project description) describes in detail the aim or purpose for which an electronic file was encoded, together with any other relevant information concerning the process by which it was assembled or ',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'prologue',
@@ -4192,6 +4416,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'pron',
@@ -4218,6 +4443,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'address', 'authority', 'availability', 'date', 'distributor', 'idno', 'p', 'pubPlace', 'publisher'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'authority', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'distributor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'publisher', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'address', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'availability', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'date', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pubPlace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'publisher',
@@ -4239,6 +4465,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'marks', values: ['none', 'some', 'all'], documentation: 'indicates whether or not punctation marks have been retained as content within the text.', datatype: 'teidata.enumerated' },
       { name: 'placement', values: ['internal', 'external'], documentation: 'indicates the positioning of punctuation marks that are associated with marked up text as being encoded within the element surrounding the text or immediately before or after it.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'purpose',
@@ -4264,6 +4491,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'marks', values: ['none', 'some', 'all'], documentation: '(quotation marks) indicates whether or not quotation marks have been retained as content within the text.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'quote',
@@ -4288,6 +4516,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'div', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'forest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listForest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'spGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tree', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'imprimatur', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epilogue', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'performance', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'prologue', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'set', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'lacunaEnd', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lacunaStart', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'wit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'witEnd', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'witStart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'rdgGrp',
@@ -4295,6 +4524,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['lem', 'note', 'noteGrp', 'rdg', 'rdgGrp', 'wit', 'witDetail'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'lem', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'rdg', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'witDetail', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'wit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rdgGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 're',
@@ -4305,6 +4535,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'cit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dictScrap', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'entry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'recordHist',
@@ -4312,6 +4543,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'change', 'p', 'source'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'source', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'change', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'recording',
@@ -4321,6 +4553,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['audio', 'video'], documentation: 'the kind of recording.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'broadcast', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'equipment', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'recordingStmt',
@@ -4328,6 +4561,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'p', 'recording'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'recording', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'redo',
@@ -4350,6 +4584,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'cRefPattern', 'citeStructure', 'p', 'refState'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'citeStructure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'cRefPattern', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'refState', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'refState',
@@ -4381,6 +4616,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'target', documentation: 'points to the related bibliographic element by means of an absolute or relative URI reference.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 },
   },
   {
     name: 'relation',
@@ -4392,6 +4628,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'mutual', documentation: 'supplies a list of participants amongst all of whom the relationship holds equally.', datatype: 'teidata.pointer' },
       { name: 'passive', documentation: 'identifies the passive participants in a non-mutual relationship.', datatype: 'teidata.pointer' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'remarks',
@@ -4400,6 +4637,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'ident', documentation: 'supplies the identifier by which the remarks may be referenced.', datatype: 'teidata.name' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'rendition',
@@ -4438,6 +4676,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'locus', required: true, values: ['name', 'start', 'end', 'location', 'value'], documentation: 'indicates the specific aspect of the encoding (markup or content) for which responsibility is being assigned.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'respStmt',
@@ -4445,6 +4684,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['name', 'note', 'orgName', 'persName', 'resp'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'resp', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orgName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'persName', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orgName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'persName', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'resp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'restore',
@@ -4464,6 +4704,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['change', 'list', 'listChange'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listChange', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'change', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'rhyme',
@@ -4503,12 +4744,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'ord', documentation: '(ordered) indicates whether or not the root is ordered.', datatype: 'teidata.xTruthValue' },
       { name: 'outDegree', documentation: 'gives the out degree of the root, the number of its children.', datatype: 'teidata.count' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'row',
     documentation: '(row) contains one row of a table.',
     children: ['cell'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'cell', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'rs',
@@ -4538,6 +4781,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['rb', 'rt'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'rb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 's',
@@ -4565,6 +4809,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(sampling declaration) contains a prose description of the rationale and methods used in selecting texts, or parts of a text, for inclusion in the resource.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'schemaRef',
@@ -4573,6 +4818,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'key', documentation: 'the identifier used for the customization or schema.', datatype: 'teidata.xmlName' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'schemaSpec',
@@ -4589,6 +4835,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'defaultExceptions', documentation: '(default namespace exclusions) provides a list of namespaces and/or prefixed element names to be excluded by default from anyName in RELAX NG schemas.', datatype: 'teidata.namespaceOrName' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'constraintDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'classRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'moduleRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'classSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'moduleSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'outputRendition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'specGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'specGrpRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'scriptDesc',
@@ -4596,6 +4843,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'p', 'scriptNote', 'summary'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'scriptNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'scriptNote',
@@ -4609,6 +4857,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'bibl', 'biblFull', 'biblStruct', 'listBibl', 'msDesc', 'p'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'seal',
@@ -4618,6 +4867,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'contemporary', documentation: '(contemporary) specifies whether or not the seal is contemporary with the item to which it is affixed', datatype: 'teidata.xTruthValue' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'sealDesc',
@@ -4625,6 +4875,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'condition', 'decoNote', 'p', 'seal', 'summary'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'decoNote', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seal', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'condition', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'secFol',
@@ -4651,6 +4902,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(segmentation) describes the principles according to which the text has been segmented, for example into sentences, tone-units, graphemic strata, etc.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'sense',
@@ -4663,6 +4915,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'level', documentation: 'gives the nesting depth of this sense.', datatype: 'teidata.count' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sense', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'cit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'def', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dictScrap', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'entry', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'etym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gramGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 're', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'sequence',
@@ -4671,6 +4924,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'preserveOrder', documentation: 'if false, indicates that component elements of a sequence may occur in any order.', datatype: 'teidata.truthValue' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'alternate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'anyElement', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'classRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'empty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sequence', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textNode', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'series',
@@ -4681,6 +4935,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblScope', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'textLang', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'availability', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'seriesStmt',
@@ -4688,6 +4943,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'biblScope', 'editor', 'idno', 'p', 'respStmt', 'title'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'idno', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblScope', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'set',
@@ -4695,6 +4951,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'head', 'metamark', 'notatedMusic', 'q'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'setting',
@@ -4702,6 +4959,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'activity', 'date', 'locale', 'name', 'orgName', 'p', 'persName', 'placeName', 'time'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'name', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'orgName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'persName', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'date', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'time', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'activity', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'locale', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'placeName', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'settingDesc',
@@ -4709,6 +4967,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'listPlace', 'p', 'place', 'setting'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'setting', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'place', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'settlement',
@@ -4792,6 +5051,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'recordingStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'scriptStmt', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'table', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'sourceDoc',
@@ -4799,6 +5059,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['binaryObject', 'figure', 'formula', 'graphic', 'media', 'metamark', 'notatedMusic', 'surface', 'surfaceGrp'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surface', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surfaceGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'sp',
@@ -4810,6 +5071,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'camera', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'caption', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'move', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sound', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tech', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'view', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'speaker', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'table', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'floatingText', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'said', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'camera', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'caption', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'move', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sound', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tech', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'view', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'table', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'floatingText', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'said', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'list', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listApp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listEvent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listNym', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listOrg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPerson', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listPlace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRelation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listWit', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'table', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'floatingText', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'said', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'camera', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'caption', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'move', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sound', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tech', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'view', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'space',
@@ -4820,6 +5082,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'resp', documentation: '(responsible party) indicates the individual responsible for identifying and measuring the space.' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'span',
@@ -4836,6 +5099,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['desc', 'span'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'span', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'speaker',
@@ -4863,6 +5127,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'classSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constraintSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'moduleSpec', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'outputRendition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'specGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'specGrpRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'classRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dataRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'elementRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'macroRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'moduleRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'forest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listForest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'spGrp', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tree', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'specGrpRef',
@@ -4878,6 +5143,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(specification list) marks where a list of descriptions is to be inserted into the prose documentation.',
     children: ['specDesc'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'specDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'spGrp',
@@ -4888,6 +5154,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sp', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'camera', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'caption', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'move', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sound', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'stage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tech', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'view', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'sponsor',
@@ -4917,6 +5184,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       'xenoData', 'zone',
     ],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'forest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listAnnotation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listChange', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listForest', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'tree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'u', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xenoData', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'zone', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'state',
@@ -4927,12 +5195,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'state', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'stdVals',
     documentation: '(standard values) specifies the format used when standardized date or number values are supplied.',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'street',
@@ -4957,6 +5227,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(style definition language declaration) specifies the name of the formal language in which style or renditional information is supplied elsewhere in the document. The specific version of the scheme ma',
     children: ['ab', 'p'],
     localAttrs: [],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'subc',
@@ -4970,6 +5241,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['add', 'anchor', 'cb', 'del', 'fw', 'gb', 'lb', 'milestone', 'pb', 'surplus'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'add', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surplus', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'del', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'anchor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'cb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fw', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lb', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'milestone', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pb', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'substJoin',
@@ -4977,6 +5249,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['certainty', 'desc', 'precision', 'respons'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'certainty', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respons', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'summary',
@@ -4990,6 +5263,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['dictScrap', 'entry', 'form'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'form', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'entry', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'dictScrap', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'supplied',
@@ -5013,6 +5287,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'material', values: ['paper', 'parch', 'mixed'], documentation: '(material) a short project-defined name for the material composing the majority of the support.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'support', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'extent', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'foliation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'collation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'condition', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'surface',
@@ -5026,6 +5301,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'flipping', documentation: 'indicates whether the surface is attached and folded in such a way as to provide two writing surfaces.', datatype: 'teidata.truthValue' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'zone', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'line', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'path', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surface', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surfaceGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'surfaceGrp',
@@ -5033,6 +5309,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'metamark', 'notatedMusic', 'surface', 'surfaceGrp'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surface', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surfaceGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'surname',
@@ -5078,6 +5355,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'cols', documentation: '(columns) indicates the number of columns in each row of the table.', datatype: 'teidata.count' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'row', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'tag',
@@ -5088,6 +5366,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'scheme', values: ['TEI', 'DBK', 'XX', 'Schematron', 'HTML'], documentation: 'supplies the name of the schema in which this tag is defined.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'tagsDecl',
@@ -5097,6 +5376,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'partial', documentation: 'indicates whether the element types listed exhaustively include all those found within text, or represent only a subset.', datatype: 'teidata.truthValue' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'rendition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'namespace', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'tagUsage',
@@ -5114,6 +5394,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['bibl', 'biblFull', 'biblStruct', 'category', 'desc', 'equiv', 'gloss', 'listBibl', 'msDesc', 'taxonomy'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'category', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'taxonomy', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'equiv', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'gloss', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity }, minOccurs: 1, maxOccurs: Infinity }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'category', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'taxonomy', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'category', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'taxonomy', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'tech',
@@ -5132,6 +5413,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'version', documentation: 'specifies the version number of the TEI Guidelines against which this document is valid.', datatype: 'teidata.version' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'teiHeader', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'facsimile', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fsdDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sourceDoc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'standOff', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'text', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'TEI', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'TEI', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'teiCorpus',
@@ -5141,6 +5423,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'version', documentation: '(version) specifies the version number of the TEI Guidelines against which this document is valid.', datatype: 'teidata.version' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'teiHeader', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'facsimile', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'fsdDecl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sourceDoc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'standOff', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'text', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'TEI', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'teiCorpus', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'teiHeader',
@@ -5148,6 +5431,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['encodingDesc', 'fileDesc', 'profileDesc', 'revisionDesc', 'xenoData'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'fileDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'encodingDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'profileDesc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'xenoData', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'revisionDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'term',
@@ -5164,6 +5448,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'terrain', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'text',
@@ -5171,6 +5456,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['back', 'body', 'figure', 'front', 'group', 'metamark', 'notatedMusic'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'front', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'body', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'group', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'back', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'textClass',
@@ -5178,6 +5464,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['catRef', 'classCode', 'keywords'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'classCode', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'catRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'keywords', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'textDesc',
@@ -5185,6 +5472,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['channel', 'constitution', 'derivation', 'domain', 'factuality', 'interaction', 'preparedness', 'purpose'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'channel', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'constitution', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'derivation', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'domain', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'factuality', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'interaction', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'preparedness', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'purpose', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'textLang',
@@ -5215,6 +5503,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['figure', 'g', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'timeline',
@@ -5225,6 +5514,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'unit', values: ['d', 'h', 'min', 's', 'ms'], documentation: 'specifies the unit of time corresponding to the interval value of the timeline or of its constituent points in time.', datatype: 'teidata.enumerated' },
       { name: 'interval', documentation: 'specifies a time interval either as a positive integral value or using one of a set of predefined codes.', datatype: 'teidata.interval' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'when', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'title',
@@ -5246,6 +5536,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', documentation: 'classifies the title page according to any convenient typology.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'imprimatur', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'argument', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'byline', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docAuthor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docDate', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docEdition', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docImprint', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'docTitle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'epigraph', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'imprimatur', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'titlePart', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'titlePart',
@@ -5261,6 +5552,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['author', 'editor', 'funder', 'meeting', 'principal', 'respStmt', 'sponsor', 'title'],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'title', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'author', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'editor', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'funder', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'meeting', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'principal', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'respStmt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'sponsor', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'tns',
@@ -5274,6 +5566,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castList', 'figure', 'g', 'l', 'lg', 'metamark', 'notatedMusic', 'ruby'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lg', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'l', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'trait',
@@ -5284,6 +5577,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'precision', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'trait', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'head', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'noteGrp', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblFull', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'biblStruct', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'listBibl', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'msDesc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'transcriptionDesc',
@@ -5294,12 +5588,14 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'version', documentation: 'supplies a version number for the encoding conventions used, if any.', datatype: 'teidata.versionNumber' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'listRef', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'ref', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'transpose',
     documentation: 'describes a single textual transposition as an ordered list of at least two pointers specifying the order in which the elements indicated should be re-combined.',
     children: ['ptr'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'ptr', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'tree',
@@ -5311,6 +5607,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'order', documentation: 'gives the order of the tree, i.e., the number of its nodes.', datatype: 'teidata.count' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'leaf', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'iNode', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'root', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'leaf', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'iNode', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'triangle',
@@ -5320,6 +5617,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'value', documentation: 'supplies a value for the triangle, in the form of the identifier of a feature structure or other analytic element.', datatype: 'teidata.pointer' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'eTree', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'triangle', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'eLeaf', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'typeDesc',
@@ -5327,6 +5625,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['ab', 'p', 'summary', 'typeNote'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ab', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'p', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'element', name: 'summary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'typeNote', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'typeNote',
@@ -5391,6 +5690,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     documentation: '(unit declarations) provides information about units of measurement that are not members of the International System of Units.',
     children: ['unitDef'],
     localAttrs: [],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'unitDef', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'unitDef',
@@ -5401,6 +5701,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'label', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'bloc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'country', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'district', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'geogName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'placeName', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'region', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'settlement', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'conversion', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unit', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: Infinity },
   },
   {
     name: 'usg',
@@ -5416,6 +5717,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'mixed',
+    contentModel: { type: 'text', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'valDesc',
@@ -5431,6 +5733,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'ident', required: true, documentation: 'specifies the value concerned.', datatype: 'teidata.text' },
     ],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'sequence', items: [{ kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'altIdent', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity }, minOccurs: 0, maxOccurs: Infinity }, { kind: 'element', name: 'remarks', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: 1 }, minOccurs: 0, maxOccurs: 1 }, { kind: 'element', name: 'paramList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'valList',
@@ -5439,6 +5742,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'type', values: ['closed', 'semi', 'open'], documentation: 'specifies the extensibility of the list of values specified.', datatype: 'teidata.enumerated' },
     ],
+    contentModel: { type: 'element', items: [{ kind: 'element', name: 'valItem', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'vAlt',
@@ -5446,6 +5750,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'sequence',
+    contentModel: { type: 'sequence', minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'variantEncoding',
@@ -5465,6 +5770,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'org', values: ['set', 'bag', 'list'], documentation: '(organization) indicates organization of given value or values as set, bag or list.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'fs', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binary', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'default', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'numeric', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'string', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'symbol', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'vAlt', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'vLabel', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'vColl', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'vDefault',
@@ -5472,6 +5778,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['if'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'if', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'view',
@@ -5508,6 +5815,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     localAttrs: [
       { name: 'iterated', documentation: 'indicates whether or not the phenomenon is repeated.', datatype: 'teidata.xTruthValue' },
     ],
+    contentModel: { type: 'choice', items: [{ kind: 'element', name: 'desc', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'vRange',
@@ -5524,6 +5832,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     ],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'w', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'm', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'c', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'caesura', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'rhyme', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'hi', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'q', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'watermark',
@@ -5564,6 +5873,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', documentation: 'describes the type of information given about the witness.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'bibl', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'witEnd',
@@ -5578,6 +5888,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: ['castList', 'note', 'object'],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'note', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'object', minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'witStart',
@@ -5600,6 +5911,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
     children: [],
     localAttrs: [],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 },
   },
   {
     name: 'xr',
@@ -5609,6 +5921,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'type', values: ['syn', 'etym', 'cf', 'illus'], documentation: 'indicates the type of cross reference, using any convenient typology.', datatype: 'teidata.enumerated' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'ruby', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'castList', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'usg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'lbl', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
   {
     name: 'zone',
@@ -5622,6 +5935,7 @@ export const TEI_P5_ELEMENTS: P5ElementDef[] = [
       { name: 'rotate', documentation: 'indicates the amount by which this zone has been rotated clockwise, with respect to the normal orientation of the parent surface element as implied by the dimensions given in the msDesc element or by ', datatype: 'teidata.numeric' },
     ],
     contentModelType: 'choice',
+    contentModel: { type: 'choice', items: [{ kind: 'text', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'g', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'binaryObject', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'formula', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'graphic', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'media', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'figure', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'metamark', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'notatedMusic', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'surface', minOccurs: 1, maxOccurs: 1 }, { kind: 'group', content: { type: 'choice', items: [{ kind: 'element', name: 'add', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'c', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'choice', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'damage', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'del', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'handShift', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'line', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'mod', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'path', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'pc', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'redo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'restore', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'retrace', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'seg', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'unclear', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'undo', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'w', minOccurs: 1, maxOccurs: 1 }, { kind: 'element', name: 'zone', minOccurs: 1, maxOccurs: 1 }], minOccurs: 1, maxOccurs: 1 }, minOccurs: 1, maxOccurs: 1 }], minOccurs: 0, maxOccurs: Infinity },
   },
 ];
 
