@@ -58,3 +58,6 @@ data/
 *.xml
 !public/*.xml
 śāstra_network_analysis.*
+
+# Project documentation (private)
+CLAUDE.md
