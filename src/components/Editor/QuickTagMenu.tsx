@@ -101,9 +101,10 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose }: P
 
   // 사용 빈도 데이터 로드 (메뉴 표시될 때마다 갱신)
   // position이 null → 값으로 변경될 때 최신 데이터 로드
+  const isOpen = Boolean(position);
   const usageData = useMemo(
-    () => (position ? loadUsageData() : {}),
-    [position !== null]
+    () => (isOpen ? loadUsageData() : {}),
+    [isOpen]
   );
 
   // Build tag list from schema, sorted by usage

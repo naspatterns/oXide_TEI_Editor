@@ -201,9 +201,12 @@ export function XmlEditor() {
 
       // Toggle 'has-selection' class based on selection state
       // This allows CSS to hide activeLine highlight when text is selected
+      // Only update DOM class when selection actually changes (performance optimization)
       const { from, to } = update.state.selection.main;
       const hasSelection = from !== to;
-      update.view.dom.classList.toggle('has-selection', hasSelection);
+      if (update.selectionSet) {
+        update.view.dom.classList.toggle('has-selection', hasSelection);
+      }
 
       // Check for text selection to show quick tag menu
       if (update.selectionSet) {

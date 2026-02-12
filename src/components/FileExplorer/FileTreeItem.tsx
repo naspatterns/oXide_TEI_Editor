@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useWorkspace } from '../../store/WorkspaceContext';
 import type { FileTreeNode } from '../../types/workspace';
 import { setDragData, INTERNAL_DRAG_TYPE } from '../../utils/dragDropUtils';
@@ -25,7 +25,7 @@ function getFileIcon(fileName: string): string {
   }
 }
 
-export function FileTreeItem({ node, depth, onFileClick, onContextMenu }: FileTreeItemProps) {
+export const FileTreeItem = memo(function FileTreeItem({ node, depth, onFileClick, onContextMenu }: FileTreeItemProps) {
   const { toggleDirectory } = useWorkspace();
   const [isDragging, setIsDragging] = useState(false);
 
@@ -114,4 +114,4 @@ export function FileTreeItem({ node, depth, onFileClick, onContextMenu }: FileTr
       )}
     </div>
   );
-}
+});

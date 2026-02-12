@@ -85,6 +85,16 @@ function checkWellFormedness(xmlStr: string): ValidationError[] {
  * 실시간 편집 중 가장 흔한 오류를 빠르게 감지
  * ═══════════════════════════════════════════════════════════════════════════
  */
+/**
+ * Stack entry for tracking element nesting and children.
+ * Used for ContentModel-based validation.
+ */
+interface StackEntry {
+  name: string;
+  line: number;
+  children: { name: string; line: number }[];  // Track children for ContentModel validation
+}
+
 function checkSchemaConformance(
   xmlStr: string,
   schema: SchemaInfo,
@@ -93,7 +103,7 @@ function checkSchemaConformance(
   const lines = xmlStr.split('\n');
 
   // 중첩 검증을 위한 요소 스택 (부모-자식 관계 추적)
-  const stack: { name: string; line: number }[] = [];
+  const stack: StackEntry[] = [];
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx];
@@ -115,7 +125,29 @@ function checkSchemaConformance(
       if (fullTag.startsWith('</')) {
         // Closing tag
         if (stack.length > 0 && stack[stack.length - 1].name === tagName) {
-          stack.pop();
+          const closedElement = stack.pop()!;
+          const elSpec = schema.elementMap.get(tagName);
+
+          // Phase 2: ContentModel validation on element close
+          if (elSpec?.contentModel) {
+            errors.push(...validateContentModel(elSpec, closedElement.children));
+          }
+
+          // Check for required children
+          if (elSpec?.contentModel) {
+            const required = getRequiredChildren(elSpec.contentModel);
+            const actualNames = new Set(closedElement.children.map(c => c.name));
+            for (const reqChild of required) {
+              if (!actualNames.has(reqChild)) {
+                errors.push({
+                  message: `<${tagName}> requires <${reqChild}> child element`,
+                  line: closedElement.line,
+                  column: 1,
+                  severity: 'warning',  // Warning to avoid blocking valid partial edits
+                });
+              }
+            }
+          }
         }
         continue;
       }
@@ -151,7 +183,7 @@ function checkSchemaConformance(
 
       // Check 3: Are attributes valid for this element?
       if (elSpec) {
-        // Extract present attribute names
+        // Extract present attribute names and values
         const presentAttrs = new Set<string>();
         if (attrString) {
           const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=/g;
@@ -161,14 +193,28 @@ function checkSchemaConformance(
             presentAttrs.add(attrName);
             // Skip xmlns attributes for unknown check
             if (attrName === 'xmlns' || attrName.startsWith('xmlns:')) continue;
-            const known = elSpec.attributes?.some((a) => a.name === attrName);
-            if (!known) {
+
+            const attrSpec = elSpec.attributes?.find((a) => a.name === attrName);
+            if (!attrSpec) {
               errors.push({
                 message: `Unknown attribute "${attrName}" on <${tagName}>`,
                 line: lineNum,
                 column: col + match.index + attrMatch.index,
                 severity: 'warning',
               });
+            } else if (attrSpec.values && attrSpec.values.length > 0) {
+              // Check 3.5: Validate enum attribute values
+              const actualValue = extractAttributeValue(attrString, attrName);
+              if (actualValue && !attrSpec.values.includes(actualValue)) {
+                const allowedPreview = attrSpec.values.slice(0, 5).join(', ');
+                const suffix = attrSpec.values.length > 5 ? '...' : '';
+                errors.push({
+                  message: `Invalid value "${actualValue}" for @${attrName}. Allowed: ${allowedPreview}${suffix}`,
+                  line: lineNum,
+                  column: col + match.index + attrMatch.index,
+                  severity: 'warning',
+                });
+              }
             }
           }
         }
@@ -188,9 +234,27 @@ function checkSchemaConformance(
         }
       }
 
+      // Track as child of parent
+      if (stack.length > 0) {
+        stack[stack.length - 1].children.push({ name: tagName, line: lineNum });
+      }
+
       // Push to stack if not self-closing
       if (!fullTag.endsWith('/>')) {
-        stack.push({ name: tagName, line: lineNum });
+        stack.push({ name: tagName, line: lineNum, children: [] });
+      } else {
+        // Self-closing tag: validate empty constraint if applicable
+        if (elSpec?.contentModel && elSpec.contentModel.type !== 'empty') {
+          const required = getRequiredChildren(elSpec.contentModel);
+          if (required.length > 0) {
+            errors.push({
+              message: `<${tagName}/> is self-closing but requires children: ${required.slice(0, 3).join(', ')}${required.length > 3 ? '...' : ''}`,
+              line: lineNum,
+              column: col,
+              severity: 'warning',
+            });
+          }
+        }
       }
     }
   }
@@ -279,23 +343,22 @@ function validateChoice(
     }
   }
 
-  // Check which groups have been used
-  const usedGroups: number[] = [];
+  // Check which groups have been used (Set for O(1) lookup)
+  const usedGroups = new Set<number>();
   for (const child of actualChildren) {
     for (let i = 0; i < choiceGroups.length; i++) {
       if (choiceGroups[i].has(child.name)) {
-        if (!usedGroups.includes(i)) {
-          usedGroups.push(i);
-        }
+        usedGroups.add(i);
       }
     }
   }
 
   // If more than one group is used, it's a choice violation
-  if (usedGroups.length > 1) {
+  if (usedGroups.size > 1) {
     // Find the second usage to report
-    const firstGroupElements = choiceGroups[usedGroups[0]];
-    const secondGroupElements = choiceGroups[usedGroups[1]];
+    const usedGroupArray = Array.from(usedGroups);
+    const firstGroupElements = choiceGroups[usedGroupArray[0]];
+    const secondGroupElements = choiceGroups[usedGroupArray[1]];
 
     // Find first element from second group
     for (const child of actualChildren) {
@@ -414,4 +477,15 @@ export function getRequiredChildren(model: ContentModel): string[] {
   }
 
   return required;
+}
+
+/**
+ * Extract the value of a specific attribute from an attribute string.
+ * Handles both single and double quoted values.
+ */
+function extractAttributeValue(attrString: string, attrName: string): string | null {
+  // Match attrName="value" or attrName='value'
+  const regex = new RegExp(`${attrName}\\s*=\\s*["']([^"']*)["']`);
+  const match = attrString.match(regex);
+  return match ? match[1] : null;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { SchemaProvider } from './store/SchemaContext';
 import { EditorProvider, useEditor } from './store/EditorContext';
 import { WorkspaceProvider } from './store/WorkspaceContext';
@@ -12,15 +12,20 @@ import { EditorTabBar } from './components/Editor/EditorTabBar';
 import { BreadcrumbBar } from './components/Editor/BreadcrumbBar';
 import { XmlEditor } from './components/Editor/XmlEditor';
 import { RightPanel } from './components/Layout/RightPanel';
-import { PreviewPanel } from './components/Preview/PreviewPanel';
 import { NewDocumentDialog } from './components/FileDialog/NewDocumentDialog';
+
+// Lazy load PreviewPanel (only shown in preview mode)
+const PreviewPanel = lazy(() => import('./components/Preview/PreviewPanel').then(m => ({ default: m.PreviewPanel })));
 import { AlertDialog } from './components/FileDialog/AlertDialog';
 import { ConfirmDialog } from './components/FileDialog/ConfirmDialog';
 import { HelpDialog } from './components/Toolbar/HelpDialog';
-import { CommandPalette, Command } from './components/CommandPalette/CommandPalette';
+import type { Command } from './components/CommandPalette/CommandPalette';
 import { openFile, saveFile, saveAsFile } from './file/fileSystemAccess';
 import { startAutoSave, stopAutoSave, loadFromIDB } from './file/autoSave';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from './utils/schemaDetector';
+
+// Lazy load CommandPalette (only shown when user presses Ctrl+K)
+const CommandPalette = lazy(() => import('./components/CommandPalette/CommandPalette').then(m => ({ default: m.CommandPalette })));
 
 function EditorLayout() {
   const {
@@ -338,7 +343,11 @@ function EditorLayout() {
               <XmlEditor />
             </div>
           }
-          right={state.viewMode === 'preview' ? <PreviewPanel /> : <RightPanel />}
+          right={state.viewMode === 'preview' ? (
+            <Suspense fallback={<div className="panel-loader"><span className="loader-spinner" /><span>Loading...</span></div>}>
+              <PreviewPanel />
+            </Suspense>
+          ) : <RightPanel />}
           showLeft={showExplorer}
         />
       </AppShell>
@@ -359,11 +368,15 @@ function EditorLayout() {
         onConfirm={handleRecoverDocument}
         onCancel={handleDiscardRecovery}
       />
-      <CommandPalette
-        open={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        commands={commands}
-      />
+      {commandPaletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette
+            open={commandPaletteOpen}
+            onClose={() => setCommandPaletteOpen(false)}
+            commands={commands}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useDeferredValue } from 'react';
+import { memo, useMemo, useState, useCallback, useDeferredValue } from 'react';
 import { useEditor } from '../../store/EditorContext';
 import './OutlinePanel.css';
 
@@ -84,7 +84,7 @@ function parseXmlToTree(xmlStr: string): XmlNode | null {
 }
 
 /** Tree node component with expand/collapse functionality */
-function TreeNode({
+const TreeNode = memo(function TreeNode({
   node,
   depth = 0,
   defaultExpanded = true,
@@ -141,9 +141,9 @@ function TreeNode({
       </div>
       {hasChildren && expanded && (
         <div className="tree-node-children">
-          {node.children.map((child, idx) => (
+          {node.children.map((child) => (
             <TreeNode
-              key={`${child.name}-${child.line}-${idx}`}
+              key={`${child.line}_${child.name}`}
               node={child}
               depth={depth + 1}
               defaultExpanded={depth < 2}
@@ -154,7 +154,7 @@ function TreeNode({
       )}
     </div>
   );
-}
+});
 
 export function OutlinePanel() {
   const { state, scrollToLine, setOutlineFontSize } = useEditor();
