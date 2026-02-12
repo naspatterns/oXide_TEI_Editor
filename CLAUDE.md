@@ -6,7 +6,7 @@
 
 ### 현재 상태
 - **버전**: v1.0.0-beta.1
-- **Git**: 커밋 완료 (Session 13: Tag sync feature)
+- **Git**: 커밋 완료 (`af6e2fa` - Session 13: Tag sync feature)
 - **빌드**: ✅ 성공 (`npm run build`)
 - **번들 크기**: 초기 로드 ~118KB gzipped (index.js), lazy loading 적용
 - **배포 준비**: ✅ 완료 (GitHub Actions, PWA 아이콘)
