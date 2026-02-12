@@ -2,12 +2,13 @@
 
 ---
 
-## 🚨 다음 세션 빠른 시작 (2026-02-11 기준)
+## 🚨 다음 세션 빠른 시작 (2026-02-12 기준)
 
 ### 현재 상태
 - **버전**: v1.0.0-beta.1
-- **Git**: 커밋 완료 (`41b8aec` - Session 9: 드래그앤드롭 버그 수정)
+- **Git**: 커밋 완료 (`c5032f0` - Session 10: 성능 최적화 및 코드 분할)
 - **빌드**: ✅ 성공 (`npm run build`)
+- **번들 크기**: 초기 로드 ~117KB gzipped (index.js), lazy loading 적용
 - **배포 준비**: ✅ 완료 (GitHub Actions, PWA 아이콘)
 
 ### 즉시 실행 명령어
@@ -377,7 +378,8 @@ allTags.sort((a, b) => getTagScore(b.name, usageData) - getTagScore(a.name, usag
 | 12 | AI Assistant 통합 (Mock 모드, 채팅 UI, Quick Actions) | Done |
 | 13 | UI 일관성 개선 (XPath 검색 스타일 통일) | Done |
 | 14 | TEI 어휘 인식 범위 대폭 확장 (148→367개 요소, 73% 커버리지) | Done |
-| **15** | **GitHub Pages 배포 준비 (PWA 아이콘, Private Mode 호환, CI/CD)** | **Done** |
+| 15 | GitHub Pages 배포 준비 (PWA 아이콘, Private Mode 호환, CI/CD) | Done |
+| **16** | **성능 최적화 및 코드 분할 (React.memo, lazy loading, 번들 -8.5KB)** | **Done** |
 
 ## Potential Next Steps
 
@@ -1098,6 +1100,137 @@ dist/assets/index.css                62.50 kB │ gzip:  10.75 kB
 dist/assets/index.js                420.28 kB │ gzip: 104.85 kB
 dist/assets/react.js                134.67 kB │ gzip:  43.22 kB
 dist/assets/codemirror.js           444.43 kB │ gzip: 145.84 kB
+```
+
+---
+
+### 오늘 완료한 작업 - Session 10 (2026-02-12) - 성능 최적화 및 코드 분할
+
+#### 🎯 목표
+
+프로젝트 구조 검토 후 안전한 성능 최적화 적용:
+- 코드 품질 개선 (Quick Win)
+- 렌더링 성능 최적화 (React.memo)
+- 초기 로드 시간 단축 (코드 분할)
+- 빌드 최적화
+
+#### 📊 결과 요약
+
+| 항목 | Before | After | 변화 |
+|------|--------|-------|------|
+| index.js (gzip) | 122.43 KB | 116.68 KB | **-5.75 KB** |
+| index.css (gzip) | 10.77 KB | 7.98 KB | **-2.79 KB** |
+| 분리된 청크 | - | 7.95 KB | 지연 로드 |
+
+**분리된 청크:**
+- CommandPalette: 3.82 KB (gzip: 1.60 KB)
+- PreviewPanel: 8.29 KB (gzip: 2.40 KB)
+- AIPanel: 10.17 KB (gzip: 3.95 KB)
+
+#### 📁 수정된 파일
+
+| 파일 | Phase | 변경 내용 |
+|------|-------|----------|
+| `src/components/Editor/QuickTagMenu.tsx` | 1.1 | useMemo 의존성 버그 수정 |
+| `src/schema/xmlValidator.ts` | 1.2 | Array.includes → Set 최적화 |
+| `src/components/Editor/XmlEditor.tsx` | 1.3 | 조건부 class toggle |
+| `src/components/FileExplorer/FileTreeItem.tsx` | 2.1 | React.memo 래핑 |
+| `src/components/Outline/OutlinePanel.tsx` | 2.2, 2.3 | React.memo + key 개선 |
+| `src/App.tsx` | 3.1, 3.3 | PreviewPanel, CommandPalette 지연 로딩 |
+| `src/components/Layout/RightPanel.tsx` | 3.2 | PreviewPanel, AIPanel 지연 로딩 |
+| `src/components/Layout/RightPanel.css` | 3.2 | 로딩 스피너 스타일 |
+| `vite.config.ts` | 4.1 | esbuild drop console/debugger |
+
+#### 🔧 Phase 1: Quick Win
+
+**1.1 QuickTagMenu useMemo 버그 수정**
+```tsx
+// Before (버그: 항상 새 boolean 생성)
+const usageData = useMemo(() => ..., [position !== null]);
+
+// After (수정)
+const isOpen = Boolean(position);
+const usageData = useMemo(() => ..., [isOpen]);
+```
+
+**1.2 xmlValidator Set 최적화**
+```tsx
+// Before: O(n) 검색
+const usedGroups: number[] = [];
+if (!usedGroups.includes(i)) usedGroups.push(i);
+
+// After: O(1) 검색
+const usedGroups = new Set<number>();
+usedGroups.add(i);
+```
+
+**1.3 XmlEditor 조건부 class toggle**
+```tsx
+// Before: 모든 업데이트에서 실행
+update.view.dom.classList.toggle('has-selection', hasSelection);
+
+// After: selectionSet일 때만 실행
+if (update.selectionSet) {
+  update.view.dom.classList.toggle('has-selection', hasSelection);
+}
+```
+
+#### 🔧 Phase 2: React.memo
+
+```tsx
+// FileTreeItem.tsx
+export const FileTreeItem = memo(function FileTreeItem(...) { ... });
+
+// OutlinePanel.tsx
+const TreeNode = memo(function TreeNode(...) { ... });
+
+// TreeNode key 개선 (안티패턴 제거)
+// Before: key={`${child.name}-${child.line}-${idx}`}
+// After:  key={`${child.line}_${child.name}`}
+```
+
+#### 🔧 Phase 3: 코드 분할
+
+```tsx
+// App.tsx - PreviewPanel, CommandPalette 지연 로딩
+const PreviewPanel = lazy(() => import('./components/Preview/PreviewPanel')
+  .then(m => ({ default: m.PreviewPanel })));
+const CommandPalette = lazy(() => import('./components/CommandPalette/CommandPalette')
+  .then(m => ({ default: m.CommandPalette })));
+
+// RightPanel.tsx - PreviewPanel, AIPanel 지연 로딩
+const PreviewPanel = lazy(() => import('../Preview/PreviewPanel')
+  .then(m => ({ default: m.PreviewPanel })));
+const AIPanel = lazy(() => import('../AI/AIPanel')
+  .then(m => ({ default: m.AIPanel })));
+```
+
+#### 🔧 Phase 4: 빌드 최적화
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  esbuild: {
+    drop: ['console', 'debugger'],  // 프로덕션에서 제거
+  },
+  // ...
+});
+```
+
+#### 📊 빌드 결과 (Session 10)
+
+```
+dist/index.html                            1.48 kB │ gzip:   0.75 kB
+dist/assets/CommandPalette-BEc4jSRu.css    3.40 kB │ gzip:   1.10 kB
+dist/assets/PreviewPanel-BoXKXsr3.css      5.16 kB │ gzip:   1.53 kB
+dist/assets/AIPanel-DYFBwF4y.css           7.68 kB │ gzip:   1.81 kB
+dist/assets/index-D5Hhsbb-.css            46.78 kB │ gzip:   7.98 kB
+dist/assets/CommandPalette-B3frLkRi.js     3.82 kB │ gzip:   1.60 kB
+dist/assets/PreviewPanel-Cq9owLX1.js       8.29 kB │ gzip:   2.40 kB
+dist/assets/AIPanel-DAQLvdvr.js           10.17 kB │ gzip:   3.95 kB
+dist/assets/react-uB87F8hs.js            134.41 kB │ gzip:  43.11 kB
+dist/assets/codemirror-1HgdVVqN.js       443.41 kB │ gzip: 145.48 kB
+dist/assets/index-BEPx7M5m.js            680.79 kB │ gzip: 116.68 kB
 ```
 
 ---
