@@ -5,7 +5,7 @@ import { useEditor } from '../../store/EditorContext';
 import { useSchema } from '../../store/SchemaContext';
 import { useFileDrop } from '../../hooks/useFileDrop';
 import { useToast } from '../../components/Toast/Toast';
-import { createEditorExtensions, FILE_DROP_EVENT } from './extensions';
+import { createEditorExtensions, FILE_DROP_EVENT, QUICK_TAG_MENU_EVENT } from './extensions';
 import { validationErrorsCompartment, validationErrorsFacet } from './scrollbarMarkers';
 import { isValidXmlFile, getDragData } from '../../utils/dragDropUtils';
 
@@ -58,8 +58,6 @@ export function XmlEditor() {
   const selectionTimeoutRef = useRef<number | null>(null);
   // Suppress menu after wrap operation (prevents menu from reappearing)
   const suppressMenuUntilRef = useRef<number>(0);
-  // Track mouse button state for drag selection detection
-  const isMouseDownRef = useRef(false);
 
   // Update content ref when active document changes
   useEffect(() => {
@@ -89,66 +87,51 @@ export function XmlEditor() {
   }, [editorViewRef]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Mouse state tracking for drag selection detection
+  // QuickTagMenu event handling (from CodeMirror extension)
   // ═══════════════════════════════════════════════════════════════════════════
-  // When user drags to select text, we don't show the QuickTagMenu until mouseup.
-  // This prevents the menu from appearing while user is still selecting text.
+  // The mouseup handler is now in CodeMirror extension (createMouseUpExtension)
+  // which ensures the menu only appears when mouseup occurs inside the editor.
   // ═══════════════════════════════════════════════════════════════════════════
   useEffect(() => {
-    const handleMouseDown = () => {
-      isMouseDownRef.current = true;
-      // Cancel any pending menu display when starting a new selection
+    const handleQuickTagMenuEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        selection?: string;
+        x?: number;
+        y?: number;
+        cancel?: boolean;
+      }>;
+      const { selection, x, y, cancel } = customEvent.detail;
+
+      // Handle cancel event (mousedown started)
+      if (cancel) {
+        if (selectionTimeoutRef.current) {
+          clearTimeout(selectionTimeoutRef.current);
+          selectionTimeoutRef.current = null;
+        }
+        return;
+      }
+
+      // Check suppression timeout
+      if (Date.now() < suppressMenuUntilRef.current) return;
+
+      // Schedule menu display with delay
       if (selectionTimeoutRef.current) {
         clearTimeout(selectionTimeoutRef.current);
-        selectionTimeoutRef.current = null;
       }
-    };
 
-    const handleMouseUp = () => {
-      isMouseDownRef.current = false;
+      selectionTimeoutRef.current = window.setTimeout(() => {
+        if (Date.now() < suppressMenuUntilRef.current) return;
 
-      // After mouseup, wait a short moment for CodeMirror to finalize selection,
-      // then schedule menu display if there's a valid selection
-      setTimeout(() => {
-        const view = editorViewRef.current;
-        if (!view) return;
-
-        const { from, to } = view.state.selection.main;
-        const selection = view.state.doc.sliceString(from, to);
-
-        // Check if we have a valid selection for the menu
-        if (
-          selection.length >= 1 &&
-          selection.length <= 500 &&
-          !selection.includes('\n') &&
-          Date.now() >= suppressMenuUntilRef.current
-        ) {
-          // Cancel any existing timeout
-          if (selectionTimeoutRef.current) {
-            clearTimeout(selectionTimeoutRef.current);
-          }
-
-          // Schedule menu display with shorter delay (since we already waited 50ms)
-          selectionTimeoutRef.current = window.setTimeout(() => {
-            if (Date.now() < suppressMenuUntilRef.current) return;
-
-            const coords = view.coordsAtPos(to);
-            if (coords) {
-              setSelectedText(selection);
-              setMenuPosition({ x: coords.left, y: coords.bottom });
-            }
-          }, 200); // 200ms additional delay (total ~250ms from mouseup)
+        if (selection && x !== undefined && y !== undefined) {
+          setSelectedText(selection);
+          setMenuPosition({ x, y });
         }
-      }, 50); // 50ms for CodeMirror to update selection state
+      }, 200); // 200ms delay for menu display
     };
 
-    document.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [editorViewRef]);
+    document.addEventListener(QUICK_TAG_MENU_EVENT, handleQuickTagMenuEvent);
+    return () => document.removeEventListener(QUICK_TAG_MENU_EVENT, handleQuickTagMenuEvent);
+  }, []);
 
   // Listen for custom file drop events from CodeMirror extension
   // This bridges CodeMirror's drop handling to React's file open logic
@@ -297,44 +280,11 @@ export function XmlEditor() {
         update.view.dom.classList.toggle('has-selection', hasSelection);
       }
 
-      // Check for text selection to show quick tag menu
-      if (update.selectionSet) {
-        const selection = update.state.doc.sliceString(from, to);
-
-        // Clear any pending timeout
-        if (selectionTimeoutRef.current) {
-          clearTimeout(selectionTimeoutRef.current);
-          selectionTimeoutRef.current = null;
-        }
-
-        // Only show menu for meaningful selections (not just cursor movement)
-        // Also check if menu is suppressed (after wrap operation)
-        const isSuppressed = Date.now() < suppressMenuUntilRef.current;
-        if (!isSuppressed && selection.length >= 1 && selection.length <= 500 && !selection.includes('\n')) {
-          // If mouse is down (dragging), don't show menu yet - mouseup handler will trigger it
-          if (isMouseDownRef.current) {
-            return;
-          }
-
-          // For keyboard selections (Shift+Arrow) or other non-mouse selections,
-          // show menu after delay
-          selectionTimeoutRef.current = window.setTimeout(() => {
-            // Double-check suppression in case it was set during delay
-            if (Date.now() < suppressMenuUntilRef.current) return;
-
-            const view = update.view;
-            // Get coordinates at the end of selection
-            const coords = view.coordsAtPos(to);
-            if (coords) {
-              setSelectedText(selection);
-              setMenuPosition({ x: coords.left, y: coords.bottom });
-            }
-          }, 300); // 300ms delay for intentional selections
-        } else {
-          // Hide menu if selection is cleared or too long
-          setMenuPosition(null);
-          setSelectedText('');
-        }
+      // Close quick tag menu when selection is cleared
+      // Menu display is handled by mouseup handler only (not by selectionSet)
+      if (update.selectionSet && from === to) {
+        setMenuPosition(null);
+        setSelectedText('');
       }
     },
     [setCursor, updateContentAndCursor],

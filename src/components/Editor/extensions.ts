@@ -23,6 +23,58 @@ import './scrollbarMarkers.css';
 export const FILE_DROP_EVENT = 'oxide-file-drop';
 
 /**
+ * Custom event name for QuickTagMenu display.
+ * Used to bridge CodeMirror's mouseup handler to React's menu state.
+ */
+export const QUICK_TAG_MENU_EVENT = 'oxide-quick-tag-menu';
+
+/**
+ * Create an extension that handles mouseup events within the editor.
+ *
+ * Problem: When mouseup events are handled at the document level,
+ * the QuickTagMenu appears even when the mouse is released outside
+ * the editor area.
+ *
+ * Solution: Use EditorView.domEventHandlers() to register mouseup
+ * handler that only fires when mouseup occurs within the editor.
+ * Dispatches a custom event with selection info for React to handle.
+ */
+export function createMouseUpExtension(): Extension {
+  return EditorView.domEventHandlers({
+    mouseup: (_event, view) => {
+      // Wait a short moment for CodeMirror to finalize selection state
+      setTimeout(() => {
+        const { from, to } = view.state.selection.main;
+        if (from === to) return; // No selection
+
+        const selection = view.state.doc.sliceString(from, to);
+
+        // Validate selection: must be 1-500 chars, single line
+        if (selection.length >= 1 && selection.length <= 500 && !selection.includes('\n')) {
+          const coords = view.coordsAtPos(to);
+          if (coords) {
+            document.dispatchEvent(new CustomEvent(QUICK_TAG_MENU_EVENT, {
+              detail: { selection, x: coords.left, y: coords.bottom }
+            }));
+          }
+        }
+      }, 50); // 50ms for CodeMirror to update selection state
+
+      return false; // Let other handlers run
+    },
+
+    mousedown: () => {
+      // Cancel any pending menu display when starting a new selection
+      // This is signaled via a separate event
+      document.dispatchEvent(new CustomEvent(QUICK_TAG_MENU_EVENT, {
+        detail: { cancel: true }
+      }));
+      return false;
+    }
+  });
+}
+
+/**
  * Create an extension that intercepts file drops at the CodeMirror level.
  *
  * Problem: When files are dropped on CodeMirror, the default behavior is to
@@ -132,5 +184,7 @@ export function createEditorExtensions(
     createTagSyncExtension(),
     // Scrollbar error markers (visual indicators for error positions)
     createScrollbarMarkersExtension(),
+    // Mouseup handling (trigger QuickTagMenu only when mouseup is inside editor)
+    createMouseUpExtension(),
   ];
 }

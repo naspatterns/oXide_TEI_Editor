@@ -1161,10 +1161,29 @@ function getP5AllElements(): ElementSpec[] {
 // ============================================================================
 
 /**
- * Get all TEI Lite elements
+ * Get all TEI Lite elements with P5 attribute class resolution
+ * Merges static TEI_LITE_ELEMENTS with P5 attribute data
  */
 export function getTeiLiteElements(): ElementSpec[] {
-  return TEI_LITE_ELEMENTS;
+  const p5Elements = getP5AllElements();
+  const p5Map = new Map<string, ElementSpec>();
+  for (const el of p5Elements) {
+    p5Map.set(el.name, el);
+  }
+
+  // Merge: use static definition but enrich with P5 attributes
+  return TEI_LITE_ELEMENTS.map(staticEl => {
+    const p5El = p5Map.get(staticEl.name);
+    if (p5El) {
+      // Merge attributes: P5 class-resolved attrs + static local attrs
+      const mergedAttrs = mergeAttributes(p5El.attributes ?? [], staticEl.attributes ?? []);
+      return {
+        ...staticEl,
+        attributes: mergedAttrs,
+      };
+    }
+    return staticEl;
+  });
 }
 
 /**

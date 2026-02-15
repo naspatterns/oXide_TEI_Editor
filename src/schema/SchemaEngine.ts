@@ -1,5 +1,5 @@
 import type { SchemaInfo, ElementSpec } from '../types/schema';
-import { TEI_LITE_ELEMENTS, getTeiAllElements, getElementCounts } from './teiStaticSchema';
+import { getTeiLiteElements, getTeiAllElements, getElementCounts } from './teiStaticSchema';
 import { parseRng } from './rngParser';
 
 /**
@@ -20,7 +20,7 @@ export class SchemaEngine {
 
     switch (id) {
       case 'tei_lite':
-        elements = TEI_LITE_ELEMENTS;
+        elements = getTeiLiteElements();
         name = 'TEI Lite';
         break;
       case 'tei_all':
