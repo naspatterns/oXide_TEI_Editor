@@ -6,7 +6,7 @@
 
 ### 현재 상태
 - **버전**: v1.0.0-beta.1
-- **Git**: 커밋 완료 (Session 19: TEI Conformant RNG 테스트)
+- **Git**: 커밋 완료 (Session 20: 웹폰트 적용)
 - **빌드**: ✅ 성공 (`npm run build`)
 - **테스트**: ✅ 204개 통과 (was 152)
 - **번들 크기**: 초기 로드 ~121KB gzipped (index.js), lazy loading 적용
@@ -390,7 +390,8 @@ allTags.sort((a, b) => getTagScore(b.name, usageData) - getTagScore(a.name, usag
 | 18 | QuickTagMenu UX 개선 (Ctrl+C 복사, Esc 선택 해제) | Done |
 | 19 | QuickTagMenu 에디터 영역 내 mouseup에서만 표시 | Done |
 | 20 | TEI Lite 검증 테스트 스위트 (38개 테스트, 152개 총) | Done |
-| **21** | **커스텀 RNG 테스트 TEI Conformant로 리팩토링 (204개 테스트)** | **Done** |
+| 21 | 커스텀 RNG 테스트 TEI Conformant로 리팩토링 (204개 테스트) | Done |
+| **22** | **웹폰트 적용 (JetBrains Mono + Noto Sans, 오프라인 캐싱)** | **Done** |
 
 ## Potential Next Steps
 
@@ -1894,6 +1895,63 @@ Build: ✅ 성공
 dist/index.html                            1.48 kB │ gzip:   0.74 kB
 dist/assets/index-*.css                   48.78 kB │ gzip:   8.34 kB
 dist/assets/index-*.js                   693.08 kB │ gzip: 120.77 kB
+dist/assets/react-*.js                   134.41 kB │ gzip:  43.11 kB
+dist/assets/codemirror-*.js              443.45 kB │ gzip: 145.49 kB
+```
+
+---
+
+### 오늘 완료한 작업 - Session 20 (2026-02-15) - 웹폰트 적용
+
+#### 🎯 문제 현상
+
+- 에디터 폰트 스택: `'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace`
+- **문제**: JetBrains Mono가 로컬에 설치되어 있지 않으면 `Courier New`로 fallback
+- 다른 컴퓨터에서 산스크리트어 diacritics 렌더링 품질 저하
+
+#### 🔧 해결 방안
+
+Google Fonts에서 웹폰트 로드 + Service Worker 캐싱
+
+#### 📁 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `index.html` | Google Fonts `<link>` 추가 (JetBrains Mono + Noto Sans) |
+| `src/index.css` | UI 폰트를 Noto Sans로 변경 |
+| `public/sw.js` | Google Fonts 캐싱 지원 추가 |
+
+#### 🔧 적용된 폰트
+
+| 용도 | 폰트 | 설명 |
+|------|------|------|
+| **에디터 (monospace)** | JetBrains Mono | 리거처 지원, Unicode 완벽 |
+| **UI (sans-serif)** | Noto Sans | 모든 언어/diacritics 지원 |
+
+#### 📊 결과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| 폰트 로드 | 시스템 의존 | 웹폰트 보장 |
+| 다른 컴퓨터 | Courier New fallback | JetBrains Mono |
+| 초기 로드 | +0KB | +~150KB (캐시됨) |
+| 오프라인 | 미지원 | SW 캐시 지원 |
+| Diacritics | 불안정 | 일관됨 |
+
+#### ✅ 테스트 결과
+
+```
+Tests: 204 passed
+Build: ✅ 성공
+Commit: ce55673
+```
+
+#### 📊 빌드 결과 (Session 20)
+
+```
+dist/index.html                            1.85 kB │ gzip:   0.89 kB
+dist/assets/index-*.css                   48.79 kB │ gzip:   8.35 kB
+dist/assets/index-*.js                   693.08 kB │ gzip: 120.78 kB
 dist/assets/react-*.js                   134.41 kB │ gzip:  43.11 kB
 dist/assets/codemirror-*.js              443.45 kB │ gzip: 145.49 kB
 ```
