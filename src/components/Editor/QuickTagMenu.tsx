@@ -11,6 +11,8 @@ interface Props {
   onSelectTag: (tagName: string) => void;
   /** Called when menu should close */
   onClose: () => void;
+  /** Called when Escape is pressed - closes menu and deselects text */
+  onEscape?: () => void;
 }
 
 // localStorage key for usage tracking
@@ -91,7 +93,7 @@ function getTagScore(tagName: string, usageData: UsageData): number {
   return usage.count + recencyBonus;
 }
 
-export function QuickTagMenu({ position, selectedText, onSelectTag, onClose }: Props) {
+export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onEscape }: Props) {
   const { schema } = useSchema();
   const menuRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState('');
@@ -153,26 +155,61 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose }: P
       }
     };
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose]);
 
-  // Focus input when menu appears
+  // Handle keyboard shortcuts at document level
+  // - Escape: close menu and deselect text in editor
+  // - Ctrl+C/Cmd+C: allow default copy behavior (don't intercept)
+  // - Typing: focus input field to start filtering
   useEffect(() => {
-    if (position && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [position]);
+    if (!position) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape: close menu and deselect text
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (onEscape) {
+          onEscape();
+        } else {
+          onClose();
+        }
+        return;
+      }
+
+      // Allow Ctrl+C/Cmd+C to pass through for copy
+      // (Don't intercept - let browser handle it)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        return;
+      }
+
+      // If typing a regular character and input is not focused, focus it
+      // This allows users to start filtering without clicking the input
+      if (
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        inputRef.current &&
+        document.activeElement !== inputRef.current
+      ) {
+        inputRef.current.focus();
+        // Don't prevent default - let the character be typed
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [position, onClose, onEscape]);
+
+  // Note: We intentionally do NOT auto-focus the input when menu appears.
+  // This allows Ctrl+C to copy the editor's selected text instead of
+  // copying from the empty input field. Users can start typing to
+  // filter tags, and the document-level keydown handler will focus
+  // the input automatically.
 
   // Reset filter when menu closes
   useEffect(() => {
