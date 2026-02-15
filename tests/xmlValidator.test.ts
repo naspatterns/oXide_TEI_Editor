@@ -1184,4 +1184,80 @@ describe('Orphan and Unclosed Tag Detection', () => {
       expect(errors[0].line).toBe(4);
     });
   });
+
+  describe('TEI P5 Attribute Class Validation', () => {
+    // Build TEI All schema
+    const teiAllElements = getTeiAllElements();
+    const teiAllElementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      teiAllElementMap.set(el.name, el);
+    }
+    const teiAllSchema: SchemaInfo = {
+      id: 'tei_all',
+      name: 'TEI All',
+      elements: teiAllElements,
+      elementMap: teiAllElementMap,
+      hasSalveGrammar: false,
+    };
+
+    it('should allow @key on <term> (att.canonical)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><term key="keyword">test</term></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const keyError = errors.find(e => e.message.includes('key'));
+      expect(keyError).toBeUndefined();
+    });
+
+    it('should allow @ref on <term> (att.canonical)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><term ref="#def1">test</term></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const refError = errors.find(e => e.message.includes('ref'));
+      expect(refError).toBeUndefined();
+    });
+
+    it('should allow @when on <date> (att.datable.w3c)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><date when="2024-01-01">Jan 1</date></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const whenError = errors.find(e => e.message.includes('when'));
+      expect(whenError).toBeUndefined();
+    });
+
+    it('should allow @facs on <p> (att.global.facs)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p facs="#img1">Text with facsimile reference</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const facsError = errors.find(e => e.message.includes('facs'));
+      expect(facsError).toBeUndefined();
+    });
+
+    it('should allow @role on <persName> (att.naming)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><persName role="author">John Smith</persName></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const roleError = errors.find(e => e.message.includes('role'));
+      expect(roleError).toBeUndefined();
+    });
+
+    it('should still warn on truly unknown attributes', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><term unknownAttr="val">test</term></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const unknownAttrError = errors.find(e => e.message.includes('unknownAttr'));
+      expect(unknownAttrError).toBeDefined();
+    });
+  });
 });
