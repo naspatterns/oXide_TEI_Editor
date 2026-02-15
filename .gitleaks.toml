@@ -1,0 +1,22 @@
+# Gitleaks configuration for oXide TEI Editor
+
+title = "oXide TEI Editor Gitleaks Config"
+
+# 무시할 파일 패턴
+[allowlist]
+  paths = [
+    '''package-lock\.json''',
+    '''\.min\.js$''',
+    '''dist/''',
+  ]
+
+# 무시할 정규식 패턴 (false positives 방지)
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API Key"
+  regex = '''(?i)(api[_-]?key|apikey)\s*[:=]\s*['"][a-zA-Z0-9]{20,}['"]'''
+  keywords = ["api_key", "apikey"]
+
+  # TEI 스키마의 필드명은 무시 (예: maxTokens)
+  [rules.allowlist]
+    regexes = ['''maxTokens''', '''token.*:.*number''']
