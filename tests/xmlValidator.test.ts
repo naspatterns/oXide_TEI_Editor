@@ -10,7 +10,7 @@ import {
   validateContentModel,
   getRequiredChildren,
 } from '../src/schema/xmlValidator';
-import { getTeiAllElements } from '../src/schema/teiStaticSchema';
+import { getTeiAllElements, getTeiLiteElements } from '../src/schema/teiStaticSchema';
 import type { SchemaInfo, ElementSpec, ContentModel, ContentItem, AttrSpec } from '../src/types/schema';
 
 // ============================================================================
@@ -1258,6 +1258,841 @@ describe('Orphan and Unclosed Tag Detection', () => {
       const errors = validateXml(xml, teiAllSchema);
       const unknownAttrError = errors.find(e => e.message.includes('unknownAttr'));
       expect(unknownAttrError).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Test Suite: Complete TEI Document Validation (TEI All Schema)
+// ============================================================================
+
+describe('Complete TEI Document Validation', () => {
+  // Build TEI All schema once for all tests in this suite
+  const teiAllElements = getTeiAllElements();
+  const teiAllElementMap = new Map<string, ElementSpec>();
+  for (const el of teiAllElements) {
+    teiAllElementMap.set(el.name, el);
+  }
+  const teiAllSchema: SchemaInfo = {
+    id: 'tei_all',
+    name: 'TEI All',
+    elements: teiAllElements,
+    elementMap: teiAllElementMap,
+    hasSalveGrammar: false,
+  };
+
+  describe('Scenario 1: Valid TEI Document', () => {
+    it('validates minimal valid TEI document with no errors', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test Document</title></titleStmt>
+      <publicationStmt><p>Published for testing</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Hello, world!</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      // Filter to actual errors (not warnings about optional missing elements)
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('validates TEI document with multiple body elements', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Multi-paragraph Test</title></titleStmt>
+      <publicationStmt><p>Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div type="chapter">
+        <head>Chapter 1</head>
+        <p>First paragraph.</p>
+        <p>Second paragraph.</p>
+      </div>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+  });
+
+  describe('Scenario 2: Invalid Child Element Detection', () => {
+    it('detects span inside body (not allowed)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <span>Not allowed element</span>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const spanError = errors.find(e =>
+        e.message.includes('span') && e.message.includes('not allowed')
+      );
+      expect(spanError).toBeDefined();
+      expect(spanError!.severity).toBe('error');
+    });
+
+    it('detects div directly inside p (not allowed)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <p><div>Block inside inline</div></p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const divError = errors.find(e =>
+        e.message.includes('div') && e.message.includes('not allowed')
+      );
+      expect(divError).toBeDefined();
+      expect(divError!.severity).toBe('error');
+    });
+
+    it('allows valid child elements', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <p>This is <hi rend="bold">highlighted</hi> text.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const hiError = errors.find(e =>
+        e.message.includes('hi') && e.message.includes('not allowed')
+      );
+      expect(hiError).toBeUndefined();
+    });
+  });
+
+  describe('Scenario 3: Unknown Element Detection', () => {
+    it('warns about completely unknown elements', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <customElement>This element doesn't exist in TEI</customElement>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const customError = errors.find(e =>
+        e.message.includes('Unknown element') && e.message.includes('customElement')
+      );
+      expect(customError).toBeDefined();
+      expect(customError!.severity).toBe('warning');
+    });
+
+    it('warns about misspelled element names', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <paragraf>Misspelled paragraph</paragraf>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const paragrafError = errors.find(e =>
+        e.message.includes('Unknown element') && e.message.includes('paragraf')
+      );
+      expect(paragrafError).toBeDefined();
+    });
+
+    it('does not warn about valid TEI elements', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <p><persName>John Doe</persName> met <placeName>Paris</placeName>.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown element'));
+      expect(unknownErrors).toHaveLength(0);
+    });
+  });
+
+  describe('Scenario 4: Attribute Class Inheritance Validation', () => {
+    it('allows @key on term (att.canonical inheritance)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><term key="technical-term">API</term></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const keyWarning = errors.find(e =>
+        e.message.includes('key') && e.severity === 'warning'
+      );
+      expect(keyWarning).toBeUndefined();
+    });
+
+    it('allows @when on date (att.datable.w3c inheritance)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p>Born on <date when="1990-05-15">May 15, 1990</date>.</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const whenWarning = errors.find(e =>
+        e.message.includes('when') && e.severity === 'warning'
+      );
+      expect(whenWarning).toBeUndefined();
+    });
+
+    it('allows @from and @to on date (att.datable.w3c inheritance)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p>Active <date from="2020-01-01" to="2024-12-31">from 2020 to 2024</date>.</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const dateWarnings = errors.filter(e =>
+        (e.message.includes('from') || e.message.includes('to')) && e.severity === 'warning'
+      );
+      expect(dateWarnings).toHaveLength(0);
+    });
+
+    it('allows @xml:id on any element (att.global)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p xml:id="para1">A paragraph with ID.</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const xmlIdWarning = errors.find(e =>
+        e.message.includes('xml:id') && e.severity === 'warning'
+      );
+      expect(xmlIdWarning).toBeUndefined();
+    });
+
+    it('allows @n on any element (att.global)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><div n="1"><p n="1.1">Numbered content.</p></div></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const nWarning = errors.find(e =>
+        e.message.includes('"n"') && e.severity === 'warning'
+      );
+      expect(nWarning).toBeUndefined();
+    });
+  });
+
+  describe('Scenario 5: Required Children Detection (using test schema)', () => {
+    // Note: The TEI All schema from teiP5Generated.ts doesn't have contentModel
+    // defined for most elements, so required children detection only works
+    // with the test schema that has explicit contentModel definitions.
+    // These tests use the test schema (from earlier in this file) instead.
+
+    it('warns when fileDesc is missing required titleStmt (test schema)', () => {
+      const testSchema = buildTestSchema(testElements);
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+</TEI>`;
+      const errors = validateXml(xml, testSchema);
+      const titleStmtWarning = errors.find(e =>
+        e.message.includes('titleStmt') && e.message.includes('requires')
+      );
+      expect(titleStmtWarning).toBeDefined();
+    });
+
+    it('warns when empty fileDesc element (test schema)', () => {
+      const testSchema = buildTestSchema(testElements);
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc></fileDesc>
+  </teiHeader>
+</TEI>`;
+      const errors = validateXml(xml, testSchema);
+      const requiredWarning = errors.find(e =>
+        e.message.includes('requires') || e.message.includes('required')
+      );
+      expect(requiredWarning).toBeDefined();
+    });
+
+    it('validates without required children errors in TEI All (no contentModel)', () => {
+      // TEI All schema doesn't have contentModel, so it won't check required children
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Complete</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const requiredErrors = errors.filter(e =>
+        e.message.includes('requires') && e.severity === 'error'
+      );
+      expect(requiredErrors).toHaveLength(0);
+    });
+  });
+
+  describe('TEI P5 Element Coverage', () => {
+    it('has 588 elements in TEI All schema', () => {
+      expect(teiAllElements.length).toBe(588);
+    });
+
+    it('includes core TEI elements', () => {
+      const coreElements = ['TEI', 'teiHeader', 'fileDesc', 'text', 'body', 'p', 'div'];
+      for (const name of coreElements) {
+        expect(teiAllElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes manuscript description elements', () => {
+      const msDescElements = ['msDesc', 'msContents', 'msItem', 'physDesc', 'history'];
+      for (const name of msDescElements) {
+        expect(teiAllElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes names and dates elements', () => {
+      const nameElements = ['persName', 'placeName', 'orgName', 'date', 'birth', 'death'];
+      for (const name of nameElements) {
+        expect(teiAllElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes transcription elements', () => {
+      const transcrElements = ['add', 'del', 'subst', 'gap', 'unclear', 'supplied'];
+      for (const name of transcrElements) {
+        expect(teiAllElementMap.has(name)).toBe(true);
+      }
+    });
+  });
+});
+
+// ============================================================================
+// Test Suite: TEI Lite Schema Validation
+// ============================================================================
+
+describe('TEI Lite Schema Validation', () => {
+  // Build TEI Lite schema once for all tests
+  const teiLiteElements = getTeiLiteElements();
+  const teiLiteElementMap = new Map<string, ElementSpec>();
+  for (const el of teiLiteElements) {
+    teiLiteElementMap.set(el.name, el);
+  }
+  const teiLiteSchema: SchemaInfo = {
+    id: 'tei_lite',
+    name: 'TEI Lite',
+    elements: teiLiteElements,
+    elementMap: teiLiteElementMap,
+    hasSalveGrammar: false,
+  };
+
+  // Build TEI All schema for comparison tests
+  const teiAllElements = getTeiAllElements();
+  const teiAllElementMap = new Map<string, ElementSpec>();
+  for (const el of teiAllElements) {
+    teiAllElementMap.set(el.name, el);
+  }
+  const teiAllSchema: SchemaInfo = {
+    id: 'tei_all',
+    name: 'TEI All',
+    elements: teiAllElements,
+    elementMap: teiAllElementMap,
+    hasSalveGrammar: false,
+  };
+
+  describe('TEI Lite Element Coverage', () => {
+    it('has exactly 106 elements in TEI Lite schema', () => {
+      expect(teiLiteElements.length).toBe(106);
+    });
+
+    it('includes core TEI Lite elements', () => {
+      const coreElements = ['TEI', 'teiHeader', 'fileDesc', 'body', 'p', 'persName', 'placeName', 'date'];
+      for (const name of coreElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes header elements', () => {
+      const headerElements = ['teiHeader', 'fileDesc', 'titleStmt', 'publicationStmt', 'sourceDesc', 'encodingDesc', 'profileDesc', 'revisionDesc'];
+      for (const name of headerElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes text structure elements', () => {
+      const structElements = ['text', 'front', 'body', 'back', 'div', 'p', 'ab', 'head'];
+      for (const name of structElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes poetry elements', () => {
+      const poetryElements = ['lg', 'l'];
+      for (const name of poetryElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes drama elements', () => {
+      const dramaElements = ['sp', 'speaker', 'stage'];
+      for (const name of dramaElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes editorial elements', () => {
+      const editorialElements = ['choice', 'abbr', 'expan', 'orig', 'reg', 'sic', 'corr', 'add', 'del', 'subst', 'supplied', 'unclear', 'gap'];
+      for (const name of editorialElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes name and date elements', () => {
+      const nameElements = ['name', 'persName', 'placeName', 'orgName', 'date', 'num', 'measure'];
+      for (const name of nameElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+
+    it('includes milestone elements', () => {
+      const milestoneElements = ['pb', 'lb', 'cb', 'milestone'];
+      for (const name of milestoneElements) {
+        expect(teiLiteElementMap.has(name)).toBe(true);
+      }
+    });
+  });
+
+  describe('TEI Lite vs TEI All Differences', () => {
+    it('facsimile is known in TEI All but unknown in TEI Lite', () => {
+      // facsimile is in TEI All (TEI_ALL_EXTRA_ELEMENTS) but should generate warning in TEI Lite
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader><fileDesc><titleStmt><title>Test</title></titleStmt><publicationStmt><p>P</p></publicationStmt></fileDesc></teiHeader>
+  <facsimile><surface/></facsimile>
+</TEI>`;
+
+      const liteErrors = validateXml(xml, teiLiteSchema);
+      const allErrors = validateXml(xml, teiAllSchema);
+
+      // TEI Lite: should warn about unknown element
+      const liteUnknownError = liteErrors.find(e => e.message.includes('Unknown') && e.message.includes('facsimile'));
+      expect(liteUnknownError).toBeDefined();
+      expect(liteUnknownError!.severity).toBe('warning');
+
+      // TEI All: facsimile should be known (no Unknown error)
+      const allUnknownError = allErrors.find(e => e.message.includes('Unknown') && e.message.includes('facsimile'));
+      expect(allUnknownError).toBeUndefined();
+    });
+
+    it('surface is known in TEI All but unknown in TEI Lite', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <surface><zone/></surface>
+</TEI>`;
+
+      const liteErrors = validateXml(xml, teiLiteSchema);
+      const allErrors = validateXml(xml, teiAllSchema);
+
+      // TEI Lite: should warn about unknown element
+      const liteUnknownError = liteErrors.find(e => e.message.includes('Unknown') && e.message.includes('surface'));
+      expect(liteUnknownError).toBeDefined();
+
+      // TEI All: surface should be known
+      const allUnknownError = allErrors.find(e => e.message.includes('Unknown') && e.message.includes('surface'));
+      expect(allUnknownError).toBeUndefined();
+    });
+
+    it('zone is known in TEI All but unknown in TEI Lite', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <zone/>
+</TEI>`;
+
+      const liteErrors = validateXml(xml, teiLiteSchema);
+      const allErrors = validateXml(xml, teiAllSchema);
+
+      // TEI Lite: should warn about unknown element
+      const liteUnknownError = liteErrors.find(e => e.message.includes('Unknown') && e.message.includes('zone'));
+      expect(liteUnknownError).toBeDefined();
+
+      // TEI All: zone should be known
+      const allUnknownError = allErrors.find(e => e.message.includes('Unknown') && e.message.includes('zone'));
+      expect(allUnknownError).toBeUndefined();
+    });
+
+    it('both schemas accept standard p element', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p>Test paragraph</p></body></text>
+</TEI>`;
+
+      const liteErrors = validateXml(xml, teiLiteSchema);
+      const allErrors = validateXml(xml, teiAllSchema);
+
+      // Neither should report Unknown element for p
+      const litePError = liteErrors.find(e => e.message.includes('Unknown') && e.message.includes('p'));
+      const allPError = allErrors.find(e => e.message.includes('Unknown') && e.message.includes('p'));
+
+      expect(litePError).toBeUndefined();
+      expect(allPError).toBeUndefined();
+    });
+  });
+
+  describe('TEI Lite Attribute Validation', () => {
+    it('allows global attributes on all elements (xml:id)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p xml:id="p1">Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const xmlIdError = errors.find(e => e.message.includes('xml:id'));
+      expect(xmlIdError).toBeUndefined();
+    });
+
+    it('allows global attributes on all elements (n)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p n="1">Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const nError = errors.find(e => e.message.includes('"n"'));
+      expect(nError).toBeUndefined();
+    });
+
+    it('allows @when on date (att.datable.w3c inheritance)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><date when="2024-01-01">Today</date></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const whenError = errors.find(e => e.message.includes('when'));
+      expect(whenError).toBeUndefined();
+    });
+
+    it('allows @notBefore and @notAfter on date (att.datable.w3c)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><date notBefore="1800" notAfter="1900">19th century</date></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const dateAttrErrors = errors.filter(e =>
+        (e.message.includes('notBefore') || e.message.includes('notAfter')) && e.severity === 'warning'
+      );
+      expect(dateAttrErrors).toHaveLength(0);
+    });
+
+    it('allows @key on term (att.canonical)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><term key="keyword">Term</term></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const keyError = errors.find(e => e.message.includes('key'));
+      expect(keyError).toBeUndefined();
+    });
+
+    it('allows @ref on term (att.canonical)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><term ref="#def1">Term</term></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const refError = errors.find(e => e.message.includes('"ref"') && e.message.includes('Unknown'));
+      expect(refError).toBeUndefined();
+    });
+
+    it('allows @rend on hi (open value attribute)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><hi rend="bold">Bold text</hi></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const rendError = errors.find(e => e.message.includes('rend'));
+      expect(rendError).toBeUndefined();
+    });
+
+    it('allows @target on ref element', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target="http://example.com">Link</ref></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const targetError = errors.find(e => e.message.includes('target'));
+      expect(targetError).toBeUndefined();
+    });
+
+    it('warns on unknown attributes', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p unknownAttr="value">Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const unknownError = errors.find(e => e.message.includes('unknownAttr'));
+      expect(unknownError).toBeDefined();
+      expect(unknownError!.severity).toBe('warning');
+    });
+
+    it('validates @level enum values on title', () => {
+      // Valid value
+      const validXml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader><fileDesc><titleStmt><title level="m">Test</title></titleStmt><publicationStmt><p>P</p></publicationStmt></fileDesc></teiHeader>
+</TEI>`;
+      const validErrors = validateXml(validXml, teiLiteSchema);
+      const validLevelError = validErrors.find(e => e.message.includes('Invalid value') && e.message.includes('level'));
+      expect(validLevelError).toBeUndefined();
+
+      // Invalid value
+      const invalidXml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader><fileDesc><titleStmt><title level="invalid">Test</title></titleStmt><publicationStmt><p>P</p></publicationStmt></fileDesc></teiHeader>
+</TEI>`;
+      const invalidErrors = validateXml(invalidXml, teiLiteSchema);
+      const invalidLevelError = invalidErrors.find(e => e.message.includes('Invalid value') && e.message.includes('level'));
+      expect(invalidLevelError).toBeDefined();
+      expect(invalidLevelError!.severity).toBe('warning');
+    });
+  });
+
+  describe('TEI Lite Children Validation', () => {
+    it('allows p inside body', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p>Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const pError = errors.find(e => e.message.includes('p') && e.message.includes('not allowed'));
+      expect(pError).toBeUndefined();
+    });
+
+    it('allows div inside body', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><div><p>Text</p></div></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const divError = errors.find(e => e.message.includes('div') && e.message.includes('not allowed'));
+      expect(divError).toBeUndefined();
+    });
+
+    it('allows persName inside p', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><persName>John Doe</persName></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const persNameError = errors.find(e => e.message.includes('persName') && e.message.includes('not allowed'));
+      expect(persNameError).toBeUndefined();
+    });
+
+    it('errors when div is inside p (block inside inline)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><div>Block inside inline</div></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const divError = errors.find(e => e.message.includes('div') && e.message.includes('not allowed'));
+      expect(divError).toBeDefined();
+      expect(divError!.severity).toBe('error');
+    });
+
+    it('allows lg elements in body', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><lg><l>A line of poetry</l></lg></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const lgError = errors.find(e => e.message.includes('lg') && e.message.includes('not allowed'));
+      expect(lgError).toBeUndefined();
+    });
+
+    it('allows l inside lg', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><lg><l>Line 1</l><l>Line 2</l></lg></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const lError = errors.find(e => e.message.includes('"l"') && e.message.includes('not allowed'));
+      expect(lError).toBeUndefined();
+    });
+
+    it('allows nested lg elements', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><lg><lg><l>Nested line</l></lg></lg></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const nestedLgError = errors.find(e => e.message.includes('lg') && e.message.includes('not allowed'));
+      expect(nestedLgError).toBeUndefined();
+    });
+  });
+
+  describe('TEI Lite Valid Document Scenarios', () => {
+    it('validates minimal valid TEI Lite document', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test Document</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Hello, world!</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('validates TEI Lite document with multiple div sections', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Multi-section Document</title></titleStmt>
+      <publicationStmt><p>Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div type="chapter">
+        <head>Chapter 1</head>
+        <p>First paragraph.</p>
+        <p>Second paragraph.</p>
+      </div>
+      <div type="chapter">
+        <head>Chapter 2</head>
+        <p>Another chapter.</p>
+      </div>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('validates TEI Lite document with named entities', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Named Entities Test</title></titleStmt>
+      <publicationStmt><p>Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p><persName>홍길동</persName>은 <placeName>서울</placeName>에서 <orgName>조선</orgName>을 위해 일했다.</p>
+      <p>그는 <date when="1500-01-01">1500년</date>에 태어났다.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('validates TEI Lite document with poetry structure', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Poetry Test</title></titleStmt>
+      <publicationStmt><p>Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <lg type="poem">
+        <head>A Poem</head>
+        <lg type="stanza">
+          <l>First line of the poem</l>
+          <l>Second line of the poem</l>
+        </lg>
+        <lg type="stanza">
+          <l>Third line of the poem</l>
+          <l>Fourth line of the poem</l>
+        </lg>
+      </lg>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('validates TEI Lite document with editorial interventions', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Editorial Test</title></titleStmt>
+      <publicationStmt><p>Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p>This has a <choice><sic>teh</sic><corr>the</corr></choice> correction.</p>
+      <p>This word was <del>removed</del><add>added</add>.</p>
+      <p>There is a <gap reason="illegible" extent="5" unit="chars"/> here.</p>
+      <p>The text is <unclear>hard to read</unclear>.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, teiLiteSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+  });
+
+  describe('TEI Lite P5 Attribute Class Integration', () => {
+    it('term element has P5 attribute classes merged', () => {
+      // term should have key and ref from att.canonical class
+      const termSpec = teiLiteElementMap.get('term');
+      expect(termSpec).toBeDefined();
+      expect(termSpec!.attributes).toBeDefined();
+
+      const attrNames = termSpec!.attributes!.map(a => a.name);
+      expect(attrNames).toContain('key');
+      expect(attrNames).toContain('ref');
+    });
+
+    it('date element has P5 datable attributes merged', () => {
+      // date should have when, notBefore, notAfter from att.datable.w3c
+      const dateSpec = teiLiteElementMap.get('date');
+      expect(dateSpec).toBeDefined();
+      expect(dateSpec!.attributes).toBeDefined();
+
+      const attrNames = dateSpec!.attributes!.map(a => a.name);
+      expect(attrNames).toContain('when');
+      expect(attrNames).toContain('notBefore');
+      expect(attrNames).toContain('notAfter');
+    });
+
+    it('p element has global attributes', () => {
+      const pSpec = teiLiteElementMap.get('p');
+      expect(pSpec).toBeDefined();
+      expect(pSpec!.attributes).toBeDefined();
+
+      const attrNames = pSpec!.attributes!.map(a => a.name);
+      expect(attrNames).toContain('xml:id');
+      expect(attrNames).toContain('n');
+      expect(attrNames).toContain('type');
+      expect(attrNames).toContain('rend');
     });
   });
 });
