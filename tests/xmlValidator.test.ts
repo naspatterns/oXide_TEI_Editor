@@ -11,6 +11,7 @@ import {
   getRequiredChildren,
 } from '../src/schema/xmlValidator';
 import { getTeiAllElements, getTeiLiteElements } from '../src/schema/teiStaticSchema';
+import { parseRng } from '../src/schema/rngParser';
 import type { SchemaInfo, ElementSpec, ContentModel, ContentItem, AttrSpec } from '../src/types/schema';
 
 // ============================================================================
@@ -2093,6 +2094,844 @@ describe('TEI Lite Schema Validation', () => {
       expect(attrNames).toContain('n');
       expect(attrNames).toContain('type');
       expect(attrNames).toContain('rend');
+    });
+  });
+});
+
+// ============================================================================
+// Test Suite: Custom RNG Schema Validation (TEI Conformant)
+// ============================================================================
+
+describe('Custom RNG Schema Validation (TEI Conformant)', () => {
+  // TEI Lite subset RNG schema for testing
+  const TEI_CUSTOM_RNG = `<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
+         ns="http://www.tei-c.org/ns/1.0">
+  <start><ref name="TEI"/></start>
+
+  <define name="TEI">
+    <element name="TEI">
+      <optional><attribute name="xml:id"/></optional>
+      <ref name="teiHeader"/>
+      <ref name="text"/>
+    </element>
+  </define>
+
+  <define name="teiHeader">
+    <element name="teiHeader">
+      <ref name="fileDesc"/>
+    </element>
+  </define>
+
+  <define name="fileDesc">
+    <element name="fileDesc">
+      <ref name="titleStmt"/>
+      <ref name="publicationStmt"/>
+    </element>
+  </define>
+
+  <define name="titleStmt">
+    <element name="titleStmt">
+      <oneOrMore><ref name="title"/></oneOrMore>
+    </element>
+  </define>
+
+  <define name="title">
+    <element name="title">
+      <optional>
+        <attribute name="level">
+          <choice>
+            <value>a</value>
+            <value>m</value>
+            <value>s</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional><attribute name="type"/></optional>
+      <text/>
+    </element>
+  </define>
+
+  <define name="publicationStmt">
+    <element name="publicationStmt">
+      <oneOrMore><ref name="p"/></oneOrMore>
+    </element>
+  </define>
+
+  <define name="text">
+    <element name="text">
+      <ref name="body"/>
+    </element>
+  </define>
+
+  <define name="body">
+    <element name="body">
+      <zeroOrMore>
+        <choice>
+          <ref name="div"/>
+          <ref name="p"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="div">
+    <element name="div">
+      <optional><attribute name="type"/></optional>
+      <optional><attribute name="n"/></optional>
+      <optional><ref name="head"/></optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="div"/>
+          <ref name="p"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="head">
+    <element name="head"><text/></element>
+  </define>
+
+  <define name="p">
+    <element name="p">
+      <optional><attribute name="xml:id"/></optional>
+      <optional><attribute name="n"/></optional>
+      <zeroOrMore>
+        <choice>
+          <text/>
+          <ref name="persName"/>
+          <ref name="placeName"/>
+          <ref name="date"/>
+          <ref name="hi"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="persName">
+    <element name="persName">
+      <optional><attribute name="ref"/></optional>
+      <text/>
+    </element>
+  </define>
+
+  <define name="placeName">
+    <element name="placeName">
+      <optional><attribute name="ref"/></optional>
+      <text/>
+    </element>
+  </define>
+
+  <define name="date">
+    <element name="date">
+      <optional><attribute name="when"/></optional>
+      <text/>
+    </element>
+  </define>
+
+  <define name="hi">
+    <element name="hi">
+      <optional>
+        <attribute name="rend">
+          <choice>
+            <value>italic</value>
+            <value>bold</value>
+            <value>sup</value>
+            <value>sub</value>
+          </choice>
+        </attribute>
+      </optional>
+      <text/>
+    </element>
+  </define>
+</grammar>`;
+
+  // Build custom schema from RNG
+  function buildCustomSchema(rng: string): SchemaInfo {
+    const elements = parseRng(rng);
+    const elementMap = new Map<string, ElementSpec>();
+    for (const el of elements) {
+      elementMap.set(el.name, el);
+    }
+    return {
+      id: 'custom_tei_schema',
+      name: 'Custom TEI Schema',
+      elements,
+      elementMap,
+      hasSalveGrammar: false,
+    };
+  }
+
+  describe('Element Validation', () => {
+    it('accepts TEI elements defined in custom schema', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test Document</title></titleStmt>
+      <publicationStmt><p>Published by Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p>This is a paragraph.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown'));
+      expect(unknownErrors).toHaveLength(0);
+    });
+
+    it('warns about unknown elements like facsimile (not in TEI Lite subset)', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Test</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <facsimile><surface><graphic url="page1.jpg"/></surface></facsimile>
+  <text><body><p>Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const facsimileError = errors.find(e =>
+        e.message.includes('Unknown') && e.message.includes('facsimile')
+      );
+      expect(facsimileError).toBeDefined();
+      expect(facsimileError!.severity).toBe('warning');
+    });
+
+    it('validates multiple TEI elements in document', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI xml:id="doc1">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title level="m">Main Title</title>
+        <title level="s">Series Title</title>
+      </titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div type="chapter" n="1">
+        <head>Chapter One</head>
+        <p>First paragraph.</p>
+        <p>Second paragraph.</p>
+      </div>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown'));
+      expect(unknownErrors).toHaveLength(0);
+    });
+  });
+
+  describe('Attribute Validation', () => {
+    it('accepts valid TEI attributes (@xml:id, @n, @type)', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI xml:id="doc1">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title type="main">Test</title></titleStmt>
+      <publicationStmt><p xml:id="pub1" n="1">Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><div type="chapter" n="1"><p>Text</p></div></body></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      // Check that no "Unknown attribute" errors are generated for defined attributes
+      const unknownAttrErrors = errors.filter(e =>
+        e.message.includes('Unknown attribute') &&
+        (e.message.includes('xml:id') || e.message.includes('type') || e.message.includes(' n'))
+      );
+      expect(unknownAttrErrors).toHaveLength(0);
+    });
+
+    it('warns about unknown attributes in TEI custom schema', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p customAttr="value">Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const unknownAttrError = errors.find(e =>
+        e.message.includes('customAttr') && e.message.includes('Unknown')
+      );
+      expect(unknownAttrError).toBeDefined();
+      expect(unknownAttrError!.severity).toBe('warning');
+    });
+
+    it('validates enum attribute values (@level on title, @rend on hi)', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+
+      // Valid enum value
+      const validXml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title level="m">Monograph Title</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p><hi rend="italic">Emphasized</hi></p></body></text>
+</TEI>`;
+      const validErrors = validateXml(validXml, schema);
+      const validLevelError = validErrors.find(e =>
+        e.message.includes('Invalid value') && e.message.includes('level')
+      );
+      const validRendError = validErrors.find(e =>
+        e.message.includes('Invalid value') && e.message.includes('rend')
+      );
+      expect(validLevelError).toBeUndefined();
+      expect(validRendError).toBeUndefined();
+
+      // Invalid enum value
+      const invalidXml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title level="invalid">Title</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p><hi rend="underline">Text</hi></p></body></text>
+</TEI>`;
+      const invalidErrors = validateXml(invalidXml, schema);
+      const invalidLevelError = invalidErrors.find(e =>
+        e.message.includes('Invalid value') && e.message.includes('level')
+      );
+      expect(invalidLevelError).toBeDefined();
+      expect(invalidLevelError!.severity).toBe('warning');
+    });
+
+    it('allows open attribute values (@type, @when without enum constraint)', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title type="any-custom-type">Title</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p><date when="2026-02-15">Today</date></p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const valueErrors = errors.filter(e =>
+        e.message.includes('Invalid value') &&
+        (e.message.includes('type') || e.message.includes('when'))
+      );
+      expect(valueErrors).toHaveLength(0);
+    });
+  });
+
+  describe('Parent-Child Validation', () => {
+    it('validates correct TEI parent-child relationships (div in body)', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div type="chapter">
+        <head>Chapter</head>
+        <p>Valid child</p>
+      </div>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const nestingErrors = errors.filter(e => e.message.includes('not allowed'));
+      expect(nestingErrors).toHaveLength(0);
+    });
+
+    it('allows nesting inside p even when not explicitly defined (validator limitation)', () => {
+      // Note: The validator only checks nesting if the parent has children defined.
+      // For p elements, inline elements like persName, hi are allowed.
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p><persName ref="#person1">John Doe</persName> visited <placeName>London</placeName>.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const nestingError = errors.find(e =>
+        e.message.includes('persName') && e.message.includes('not allowed')
+      );
+      expect(nestingError).toBeUndefined();
+    });
+
+    it('errors when div nested inside p (invalid TEI structure)', () => {
+      // div should not be inside p - this is invalid TEI
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p>Text with <div>invalid nested div</div> inside.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const nestingError = errors.find(e =>
+        e.message.includes('div') && e.message.includes('not allowed')
+      );
+      expect(nestingError).toBeDefined();
+      expect(nestingError!.severity).toBe('error');
+    });
+  });
+
+  describe('Complex TEI Document Structure', () => {
+    // TEI manuscript description schema
+    const TEI_MSDESC_RNG = `<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         ns="http://www.tei-c.org/ns/1.0">
+  <start><ref name="TEI"/></start>
+
+  <define name="TEI">
+    <element name="TEI">
+      <ref name="teiHeader"/>
+      <ref name="text"/>
+    </element>
+  </define>
+
+  <define name="teiHeader">
+    <element name="teiHeader">
+      <ref name="fileDesc"/>
+    </element>
+  </define>
+
+  <define name="fileDesc">
+    <element name="fileDesc">
+      <ref name="titleStmt"/>
+      <ref name="publicationStmt"/>
+      <optional><ref name="sourceDesc"/></optional>
+    </element>
+  </define>
+
+  <define name="titleStmt">
+    <element name="titleStmt">
+      <oneOrMore><ref name="title"/></oneOrMore>
+    </element>
+  </define>
+
+  <define name="title">
+    <element name="title"><text/></element>
+  </define>
+
+  <define name="publicationStmt">
+    <element name="publicationStmt">
+      <oneOrMore><ref name="p"/></oneOrMore>
+    </element>
+  </define>
+
+  <define name="sourceDesc">
+    <element name="sourceDesc">
+      <choice>
+        <oneOrMore><ref name="p"/></oneOrMore>
+        <ref name="msDesc"/>
+      </choice>
+    </element>
+  </define>
+
+  <define name="msDesc">
+    <element name="msDesc">
+      <optional><attribute name="xml:id"/></optional>
+      <ref name="msIdentifier"/>
+      <optional><ref name="msContents"/></optional>
+      <optional><ref name="physDesc"/></optional>
+      <optional><ref name="history"/></optional>
+    </element>
+  </define>
+
+  <define name="msIdentifier">
+    <element name="msIdentifier">
+      <ref name="repository"/>
+      <ref name="idno"/>
+    </element>
+  </define>
+
+  <define name="repository">
+    <element name="repository"><text/></element>
+  </define>
+
+  <define name="idno">
+    <element name="idno"><text/></element>
+  </define>
+
+  <define name="msContents">
+    <element name="msContents">
+      <oneOrMore><ref name="msItem"/></oneOrMore>
+    </element>
+  </define>
+
+  <define name="msItem">
+    <element name="msItem">
+      <optional><attribute name="n"/></optional>
+      <optional><ref name="title"/></optional>
+      <optional><ref name="incipit"/></optional>
+      <optional><ref name="explicit"/></optional>
+    </element>
+  </define>
+
+  <define name="incipit">
+    <element name="incipit"><text/></element>
+  </define>
+
+  <define name="explicit">
+    <element name="explicit"><text/></element>
+  </define>
+
+  <define name="physDesc">
+    <element name="physDesc">
+      <optional><ref name="p"/></optional>
+    </element>
+  </define>
+
+  <define name="history">
+    <element name="history">
+      <optional><ref name="origin"/></optional>
+      <optional><ref name="provenance"/></optional>
+    </element>
+  </define>
+
+  <define name="origin">
+    <element name="origin">
+      <optional><ref name="p"/></optional>
+    </element>
+  </define>
+
+  <define name="provenance">
+    <element name="provenance">
+      <optional><ref name="p"/></optional>
+    </element>
+  </define>
+
+  <define name="p">
+    <element name="p"><text/></element>
+  </define>
+
+  <define name="text">
+    <element name="text">
+      <ref name="body"/>
+    </element>
+  </define>
+
+  <define name="body">
+    <element name="body">
+      <zeroOrMore><ref name="p"/></zeroOrMore>
+    </element>
+  </define>
+</grammar>`;
+
+    it('validates complex TEI manuscript description structure', () => {
+      const schema = buildCustomSchema(TEI_MSDESC_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Manuscript Catalog Entry</title>
+      </titleStmt>
+      <publicationStmt>
+        <p>Published by Digital Library</p>
+      </publicationStmt>
+      <sourceDesc>
+        <msDesc xml:id="MS-001">
+          <msIdentifier>
+            <repository>British Library</repository>
+            <idno>Add. MS 12345</idno>
+          </msIdentifier>
+          <msContents>
+            <msItem n="1">
+              <title>De Civitate Dei</title>
+              <incipit>Gloriosissimam civitatem Dei</incipit>
+              <explicit>in saecula saeculorum. Amen.</explicit>
+            </msItem>
+          </msContents>
+          <physDesc>
+            <p>Parchment, 350 folios</p>
+          </physDesc>
+          <history>
+            <origin>
+              <p>Written in England, 12th century</p>
+            </origin>
+            <provenance>
+              <p>Acquired by British Museum in 1850</p>
+            </provenance>
+          </history>
+        </msDesc>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p>Transcription here.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown'));
+      const nestingErrors = errors.filter(e => e.message.includes('not allowed'));
+      expect(unknownErrors).toHaveLength(0);
+      expect(nestingErrors).toHaveLength(0);
+    });
+
+    it('detects invalid elements in manuscript schema (e.g., acquisition not defined)', () => {
+      const schema = buildCustomSchema(TEI_MSDESC_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>MS Entry</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+      <sourceDesc>
+        <msDesc>
+          <msIdentifier>
+            <repository>Library</repository>
+            <idno>MS 001</idno>
+          </msIdentifier>
+          <history>
+            <acquisition>Not defined in schema</acquisition>
+          </history>
+        </msDesc>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const acquisitionError = errors.find(e =>
+        e.message.includes('acquisition')
+      );
+      expect(acquisitionError).toBeDefined();
+    });
+
+    it('validates nested msItem children correctly', () => {
+      const schema = buildCustomSchema(TEI_MSDESC_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+      <sourceDesc>
+        <msDesc>
+          <msIdentifier>
+            <repository>Lib</repository>
+            <idno>ID</idno>
+          </msIdentifier>
+          <msContents>
+            <msItem n="1">
+              <title>Item Title</title>
+              <incipit>Beginning</incipit>
+            </msItem>
+          </msContents>
+        </msDesc>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Content</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      // title and incipit are allowed in msItem
+      const itemChildError = errors.find(e =>
+        (e.message.includes('title') || e.message.includes('incipit')) &&
+        e.message.includes('not allowed')
+      );
+      expect(itemChildError).toBeUndefined();
+    });
+  });
+
+  describe('Self-Nesting div Elements', () => {
+    // Schema with self-nesting div (standard TEI pattern)
+    const TEI_DIV_RNG = `<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         ns="http://www.tei-c.org/ns/1.0">
+  <start><ref name="body"/></start>
+  <define name="body">
+    <element name="body">
+      <zeroOrMore>
+        <choice>
+          <ref name="div"/>
+          <ref name="p"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="div">
+    <element name="div">
+      <optional><attribute name="type"/></optional>
+      <optional><attribute name="n"/></optional>
+      <optional><ref name="head"/></optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="div"/>
+          <ref name="p"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="head">
+    <element name="head"><text/></element>
+  </define>
+  <define name="p">
+    <element name="p"><text/></element>
+  </define>
+</grammar>`;
+
+    it('allows self-nesting div elements (TEI standard pattern)', () => {
+      const schema = buildCustomSchema(TEI_DIV_RNG);
+      const xml = `<?xml version="1.0"?>
+<body>
+  <div type="part" n="1">
+    <head>Part One</head>
+    <div type="chapter" n="1">
+      <head>Chapter One</head>
+      <div type="section" n="1">
+        <head>Section One</head>
+        <p>Deep content here.</p>
+      </div>
+      <p>Chapter level paragraph.</p>
+    </div>
+    <p>Part level paragraph.</p>
+  </div>
+  <p>Body level paragraph.</p>
+</body>`;
+      const errors = validateXml(xml, schema);
+      const nestingErrors = errors.filter(e => e.message.includes('not allowed'));
+      expect(nestingErrors).toHaveLength(0);
+    });
+
+    it('detects invalid elements in self-nesting div structure', () => {
+      const schema = buildCustomSchema(TEI_DIV_RNG);
+      const xml = `<?xml version="1.0"?>
+<body>
+  <div type="chapter">
+    <div type="section">
+      <lg><l>Poetry not allowed</l></lg>
+    </div>
+  </div>
+</body>`;
+      const errors = validateXml(xml, schema);
+      const lgError = errors.find(e =>
+        e.message.includes('lg') && e.message.includes('Unknown')
+      );
+      expect(lgError).toBeDefined();
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('handles empty TEI body', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body/></text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      // Empty body is valid (p is zeroOrMore)
+      // Filter out well-formedness and unknown element errors, focus on body validity
+      const bodyErrors = errors.filter(e =>
+        e.severity === 'error' && e.message.includes('body')
+      );
+      expect(bodyErrors).toHaveLength(0);
+    });
+
+    it('handles minimal TEI document', () => {
+      const minimalRng = `<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         ns="http://www.tei-c.org/ns/1.0">
+  <start>
+    <element name="TEI">
+      <text/>
+    </element>
+  </start>
+</grammar>`;
+      const schema = buildCustomSchema(minimalRng);
+      const xml = `<?xml version="1.0"?><TEI>Simple text content</TEI>`;
+      const errors = validateXml(xml, schema);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('validates well-formedness errors before schema validation', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Unclosed
+</fileDesc>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      // Should have well-formedness error
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.some(e => e.severity === 'error')).toBe(true);
+    });
+
+    it('validates TEI document with named entities', () => {
+      const schema = buildCustomSchema(TEI_CUSTOM_RNG);
+      const xml = `<?xml version="1.0"?>
+<TEI>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Named Entities Test</title></titleStmt>
+      <publicationStmt><p>Published</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p><persName ref="#pers1">William Shakespeare</persName> was born in
+      <placeName ref="#place1">Stratford-upon-Avon</placeName> on
+      <date when="1564-04-26">26 April 1564</date>.</p>
+    </body>
+  </text>
+</TEI>`;
+      const errors = validateXml(xml, schema);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown'));
+      expect(unknownErrors).toHaveLength(0);
     });
   });
 });
