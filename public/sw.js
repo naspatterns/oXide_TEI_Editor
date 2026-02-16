@@ -1,7 +1,7 @@
 // Service Worker for offline support
 // Cache version: increment on each release or use build timestamp
 // Format: oxide-tei-v{major}.{minor}.{patch}-{timestamp}
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '0.1.0';
 const CACHE_NAME = `oxide-tei-v${CACHE_VERSION}`;
 
 // Assets to cache on install

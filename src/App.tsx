@@ -260,7 +260,7 @@ function EditorLayout() {
         label: 'About oXide TEI Editor',
         category: 'Help',
         icon: 'ℹ️',
-        action: () => setAlertMessage('oXide TEI Editor v1.0.0-beta.1\n\nA lightweight, browser-based TEI XML editor for Digital Humanities researchers.\n\n• Schema-aware autocomplete\n• Real-time validation\n• Multiple document tabs\n• Dark/Light themes'),
+        action: () => setAlertMessage('oXide TEI Editor v0.1.0\n\nA lightweight, browser-based TEI XML editor for Digital Humanities researchers.\n\n• Schema-aware autocomplete\n• Real-time validation\n• Multiple document tabs\n• Dark/Light themes'),
       },
     ];
   }, [createNewTab, getActiveDocument, markSaved, openFileAsTab, setFile, toast]);
