@@ -24,6 +24,12 @@ The editor was developed to provide digital humanities researchers with a free, 
 
 ## Quick Start
 
+The easiest way to try oXide is the online demo — no installation required:
+
+**https://naspatterns.github.io/oXide_TEI_Editor/**
+
+To run locally:
+
 ```bash
 git clone https://github.com/naspatterns/oXide_TEI_Editor.git
 cd oXide_TEI_Editor
@@ -62,6 +68,8 @@ npm run dev
 | TEI Lite | 106 | Curated subset |
 | TEI All | 588 | Full TEI P5 |
 | Custom RNG | User-defined | Upload .rng file |
+
+> **Note:** Custom RNG schemas must be TEI conformant. Non-TEI schemas (e.g., DocBook, DITA) are not supported by the validator.
 
 ## Contact
 
