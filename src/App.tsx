@@ -24,9 +24,20 @@ import type { Command } from './components/CommandPalette/CommandPalette';
 import { openFile, saveFile, saveAsFile } from './file/fileSystemAccess';
 import { startAutoSave, stopAutoSave, loadFromIDB } from './file/autoSave';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from './utils/schemaDetector';
+import { undo, redo } from '@codemirror/commands';
+import { openSearchPanel } from '@codemirror/search';
 
 // Lazy load CommandPalette (only shown when user presses Ctrl+K)
 const CommandPalette = lazy(() => import('./components/CommandPalette/CommandPalette').then(m => ({ default: m.CommandPalette })));
+
+/** Safely set localStorage item (handles Private Mode) */
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Private Mode — theme will reset on reload
+  }
+}
 
 function EditorLayout() {
   const {
@@ -40,6 +51,7 @@ function EditorLayout() {
     getActiveDocument,
     closeTab,
     setActiveTab,
+    editorViewRef,
   } = useEditor();
   const toast = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,6 +61,115 @@ function EditorLayout() {
   const [showExplorer, setShowExplorer] = useState(true);
   const [recoveryData, setRecoveryData] = useState<{ content: string; fileName: string | null; timestamp: number } | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // ═══════════════════════════════════════════════════════════
+  // Shared action handlers (used by both menus and keyboard shortcuts)
+  // ═══════════════════════════════════════════════════════════
+
+  const handleOpenFile = useCallback(async () => {
+    try {
+      const result = await openFile();
+      openFileAsTab(result.content, result.fileName, result.fileHandle, null);
+      toast.info(`Opened ${result.fileName}`);
+
+      const declarations = detectSchemaDeclarations(result.content);
+      if (declarations.length > 0) {
+        const analysis = analyzeSchemaDeclarations(declarations);
+        const message = buildSchemaAlertMessage(analysis);
+        if (message) {
+          setTimeout(() => setAlertMessage(message), 100);
+        }
+      }
+    } catch { /* cancelled */ }
+  }, [openFileAsTab, toast]);
+
+  const handleSave = useCallback(async () => {
+    try {
+      const activeDoc = getActiveDocument();
+      if (!activeDoc) return;
+      const result = await saveFile(activeDoc.content, activeDoc.fileHandle, activeDoc.fileName);
+      setFile(result.fileName, result.fileHandle);
+      markSaved();
+      toast.success(`Saved ${result.fileName}`);
+    } catch { /* cancelled */ }
+  }, [getActiveDocument, setFile, markSaved, toast]);
+
+  const handleSaveAs = useCallback(async () => {
+    try {
+      const activeDoc = getActiveDocument();
+      if (!activeDoc) return;
+      const result = await saveAsFile(activeDoc.content, activeDoc.fileName);
+      setFile(result.fileName, result.fileHandle);
+      markSaved();
+      toast.success(`Saved as ${result.fileName}`);
+    } catch { /* cancelled */ }
+  }, [getActiveDocument, setFile, markSaved, toast]);
+
+  const handleCloseTab = useCallback(() => {
+    if (multiTabState.activeDocumentId) {
+      closeTab(multiTabState.activeDocumentId);
+    }
+  }, [multiTabState.activeDocumentId, closeTab]);
+
+  const handleToggleExplorer = useCallback(() => {
+    setShowExplorer(prev => !prev);
+  }, []);
+
+  const handleToggleTheme = useCallback(() => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      safeSetItem('tei-editor-theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      safeSetItem('tei-editor-theme', 'dark');
+    }
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    const view = editorViewRef.current;
+    if (view) { undo(view); view.focus(); }
+  }, [editorViewRef]);
+
+  const handleRedo = useCallback(() => {
+    const view = editorViewRef.current;
+    if (view) { redo(view); view.focus(); }
+  }, [editorViewRef]);
+
+  const handleFind = useCallback(() => {
+    const view = editorViewRef.current;
+    if (view) { openSearchPanel(view); }
+  }, [editorViewRef]);
+
+  const handleReplace = useCallback(() => {
+    const view = editorViewRef.current;
+    if (view) {
+      // openSearchPanel opens find; Ctrl+H opens replace in CodeMirror's default keybindings
+      // We simulate Ctrl+H by dispatching a keydown event
+      openSearchPanel(view);
+      // After the search panel opens, click the replace toggle if available
+      setTimeout(() => {
+        const replaceBtn = view.dom.closest('.cm-editor')?.querySelector('.cm-search [name=replace]') as HTMLInputElement | null;
+        if (replaceBtn) replaceBtn.focus();
+      }, 50);
+    }
+  }, [editorViewRef]);
+
+  const handleCommandPalette = useCallback(() => {
+    setCommandPaletteOpen(true);
+  }, []);
+
+  const handleKeyboardShortcuts = useCallback(() => {
+    setHelpOpen(true);
+  }, []);
+
+  const handleAbout = useCallback(() => {
+    setAboutOpen(true);
+  }, []);
+
+  const handleNewDocument = useCallback(() => {
+    setDialogOpen(true);
+  }, []);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -60,78 +181,40 @@ function EditorLayout() {
         case 'n':
           e.preventDefault();
           if (e.shiftKey) {
-            // Ctrl+Shift+N: Create new empty tab
             createNewTab();
           } else {
-            // Ctrl+N: Open new document dialog
             setDialogOpen(true);
           }
           break;
         case 'o':
           e.preventDefault();
-          try {
-            const result = await openFile();
-            // Open as new tab instead of replacing current document
-            openFileAsTab(result.content, result.fileName, result.fileHandle, null);
-            toast.info(`Opened ${result.fileName}`);
-
-            // Check for schema declarations and warn if needed
-            const declarations = detectSchemaDeclarations(result.content);
-            if (declarations.length > 0) {
-              const analysis = analyzeSchemaDeclarations(declarations);
-              const message = buildSchemaAlertMessage(analysis);
-              if (message) {
-                setTimeout(() => setAlertMessage(message), 100);
-              }
-            }
-          } catch { /* cancelled */ }
+          handleOpenFile();
           break;
         case 's':
           e.preventDefault();
-          try {
-            const activeDoc = getActiveDocument();
-            if (!activeDoc) return;
-
-            if (e.shiftKey) {
-              const result = await saveAsFile(activeDoc.content, activeDoc.fileName);
-              setFile(result.fileName, result.fileHandle);
-              toast.success(`Saved as ${result.fileName}`);
-            } else {
-              const result = await saveFile(activeDoc.content, activeDoc.fileHandle, activeDoc.fileName);
-              setFile(result.fileName, result.fileHandle);
-              toast.success(`Saved ${result.fileName}`);
-            }
-            markSaved();
-          } catch { /* cancelled */ }
+          if (e.shiftKey) {
+            handleSaveAs();
+          } else {
+            handleSave();
+          }
           break;
         case 'b':
-          // Ctrl+B: Toggle explorer panel
           e.preventDefault();
-          setShowExplorer(prev => !prev);
+          handleToggleExplorer();
           break;
         case 'k':
-          // Ctrl+K / Cmd+K: Open command palette
           e.preventDefault();
           setCommandPaletteOpen(true);
           break;
         case 'p':
-          // Ctrl+Shift+P: Open command palette
           if (e.shiftKey) {
             e.preventDefault();
             setCommandPaletteOpen(true);
           }
           break;
         case 'w':
-          // Ctrl+W: Close current tab
           e.preventDefault();
-          if (multiTabState.activeDocumentId) {
-            const activeDoc = getActiveDocument();
-            if (activeDoc?.isDirty) {
-              // Show confirmation for unsaved changes - handled by EditorTabBar
-              // For now, just let it close (the user was warned on beforeunload)
-            }
-            closeTab(multiTabState.activeDocumentId);
-          }
+          handleCloseTab();
           break;
         case '1':
         case '2':
@@ -140,132 +223,33 @@ function EditorLayout() {
         case '5':
         case '6':
         case '7':
-        case '8':
-          // Ctrl+1-8: Switch to tab by number
+        case '8': {
           e.preventDefault();
           const tabIndex = parseInt(e.key) - 1;
           if (tabIndex < multiTabState.tabOrder.length) {
             setActiveTab(multiTabState.tabOrder[tabIndex]);
           }
           break;
+        }
       }
     },
-    [loadDocument, setFile, markSaved, openFileAsTab, createNewTab, getActiveDocument, multiTabState, closeTab, setActiveTab],
+    [createNewTab, handleOpenFile, handleSave, handleSaveAs, handleToggleExplorer, handleCloseTab, multiTabState, setActiveTab],
   );
 
-  // Define available commands
+  // Define available commands for Command Palette
   const commands = useMemo<Command[]>(() => {
-    const handleOpenFile = async () => {
-      try {
-        const result = await openFile();
-        openFileAsTab(result.content, result.fileName, result.fileHandle, null);
-        toast.info(`Opened ${result.fileName}`);
-      } catch { /* cancelled */ }
-    };
-
-    const handleSave = async () => {
-      try {
-        const activeDoc = getActiveDocument();
-        if (!activeDoc) return;
-        const result = await saveFile(activeDoc.content, activeDoc.fileHandle, activeDoc.fileName);
-        setFile(result.fileName, result.fileHandle);
-        markSaved();
-        toast.success(`Saved ${result.fileName}`);
-      } catch { /* cancelled */ }
-    };
-
-    const handleSaveAs = async () => {
-      try {
-        const activeDoc = getActiveDocument();
-        if (!activeDoc) return;
-        const result = await saveAsFile(activeDoc.content, activeDoc.fileName);
-        setFile(result.fileName, result.fileHandle);
-        markSaved();
-        toast.success(`Saved as ${result.fileName}`);
-      } catch { /* cancelled */ }
-    };
-
     return [
-      // File commands
-      {
-        id: 'file:new',
-        label: 'New Document',
-        category: 'File',
-        shortcut: 'Ctrl+N',
-        icon: '📄',
-        action: () => setDialogOpen(true),
-      },
-      {
-        id: 'file:new-empty',
-        label: 'New Empty Tab',
-        category: 'File',
-        shortcut: 'Ctrl+Shift+N',
-        icon: '➕',
-        action: createNewTab,
-      },
-      {
-        id: 'file:open',
-        label: 'Open File',
-        category: 'File',
-        shortcut: 'Ctrl+O',
-        icon: '📂',
-        action: handleOpenFile,
-      },
-      {
-        id: 'file:save',
-        label: 'Save',
-        category: 'File',
-        shortcut: 'Ctrl+S',
-        icon: '💾',
-        action: handleSave,
-      },
-      {
-        id: 'file:save-as',
-        label: 'Save As...',
-        category: 'File',
-        shortcut: 'Ctrl+Shift+S',
-        icon: '💾',
-        action: handleSaveAs,
-      },
-      // Edit commands
-      {
-        id: 'edit:close-tab',
-        label: 'Close Tab',
-        category: 'Edit',
-        shortcut: 'Ctrl+W',
-        icon: '✕',
-        action: () => {
-          if (multiTabState.activeDocumentId) {
-            closeTab(multiTabState.activeDocumentId);
-          }
-        },
-      },
-      // View commands
-      {
-        id: 'view:toggle-explorer',
-        label: 'Toggle File Explorer',
-        category: 'View',
-        shortcut: 'Ctrl+B',
-        icon: '📁',
-        action: () => setShowExplorer(prev => !prev),
-      },
-      // Help commands
-      {
-        id: 'help:shortcuts',
-        label: 'Keyboard Shortcuts',
-        category: 'Help',
-        icon: '⌨️',
-        action: () => setHelpOpen(true),
-      },
-      {
-        id: 'help:about',
-        label: 'About oXide TEI Editor',
-        category: 'Help',
-        icon: 'ℹ️',
-        action: () => setAboutOpen(true),
-      },
+      { id: 'file:new', label: 'New Document', category: 'File', shortcut: 'Ctrl+N', icon: '📄', action: handleNewDocument },
+      { id: 'file:new-empty', label: 'New Empty Tab', category: 'File', shortcut: 'Ctrl+Shift+N', icon: '➕', action: createNewTab },
+      { id: 'file:open', label: 'Open File', category: 'File', shortcut: 'Ctrl+O', icon: '📂', action: handleOpenFile },
+      { id: 'file:save', label: 'Save', category: 'File', shortcut: 'Ctrl+S', icon: '💾', action: handleSave },
+      { id: 'file:save-as', label: 'Save As...', category: 'File', shortcut: 'Ctrl+Shift+S', icon: '💾', action: handleSaveAs },
+      { id: 'edit:close-tab', label: 'Close Tab', category: 'Edit', shortcut: 'Ctrl+W', icon: '✕', action: handleCloseTab },
+      { id: 'view:toggle-explorer', label: 'Toggle File Explorer', category: 'View', shortcut: 'Ctrl+B', icon: '📁', action: handleToggleExplorer },
+      { id: 'help:shortcuts', label: 'Keyboard Shortcuts', category: 'Help', icon: '⌨️', action: handleKeyboardShortcuts },
+      { id: 'help:about', label: 'About oXide TEI Editor', category: 'Help', icon: 'ℹ️', action: handleAbout },
     ];
-  }, [createNewTab, getActiveDocument, markSaved, openFileAsTab, setFile, toast]);
+  }, [createNewTab, handleOpenFile, handleSave, handleSaveAs, handleCloseTab, handleToggleExplorer, handleKeyboardShortcuts, handleAbout, handleNewDocument]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -335,7 +319,25 @@ function EditorLayout() {
 
   return (
     <>
-      <AppShell toolbar={<Toolbar onNewDocument={() => setDialogOpen(true)} onSchemaAlert={setAlertMessage} onHelp={() => setHelpOpen(true)} />}>
+      <AppShell toolbar={
+        <Toolbar
+          onNewDocument={handleNewDocument}
+          onNewEmptyTab={createNewTab}
+          onOpenFile={handleOpenFile}
+          onSave={handleSave}
+          onSaveAs={handleSaveAs}
+          onCloseTab={handleCloseTab}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onFind={handleFind}
+          onReplace={handleReplace}
+          onToggleExplorer={handleToggleExplorer}
+          onToggleTheme={handleToggleTheme}
+          onCommandPalette={handleCommandPalette}
+          onKeyboardShortcuts={handleKeyboardShortcuts}
+          onAbout={handleAbout}
+        />
+      }>
         <MainLayout
           left={<FileExplorer onSchemaAlert={setAlertMessage} />}
           center={

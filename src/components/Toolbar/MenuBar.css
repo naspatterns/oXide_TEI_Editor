@@ -1,0 +1,147 @@
+/* ═══════════════════════════════════════════════════════════
+   MenuBar — Desktop-style dropdown menus
+   Reuses context-menu styling for dropdown items
+   ═══════════════════════════════════════════════════════════ */
+
+.menubar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+/* ─── Menu Trigger Button ─── */
+
+.menubar-trigger {
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.1s), color var(--transition-fast, 0.1s);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.menubar-trigger:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.menubar-trigger-active {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* ─── Menu Container (for positioning) ─── */
+
+.menubar-menu {
+  position: relative;
+}
+
+/* ─── Dropdown Panel ─── */
+
+.menubar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  max-width: 280px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 2000;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  animation: menubarDropdownFadeIn 0.1s ease-out;
+  margin-top: 2px;
+}
+
+@keyframes menubarDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Dropdown Item ─── */
+
+.menubar-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.1s);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.menubar-dropdown-item:hover,
+.menubar-dropdown-item.selected {
+  background: var(--color-hover);
+}
+
+.menubar-dropdown-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.menubar-dropdown-item.disabled:hover,
+.menubar-dropdown-item.disabled.selected {
+  background: transparent;
+}
+
+/* ─── Item Parts ─── */
+
+.menubar-dropdown-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menubar-dropdown-shortcut {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', Monaco, monospace;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Divider ─── */
+
+.menubar-dropdown-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 8px;
+}
+
+/* ─── Dark Theme ─── */
+
+[data-theme="dark"] .menubar-dropdown {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Reduced Motion ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  .menubar-dropdown {
+    animation: none;
+  }
+}
