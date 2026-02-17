@@ -10,6 +10,13 @@
   /* Left section: fixed width for file menu */
 }
 
+.toolbar-logo {
+  height: 24px;
+  width: auto;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
 .toolbar-center {
   /* Center section: flexible, contains schema and edit tools */
   flex: 1;

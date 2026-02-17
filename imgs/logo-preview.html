@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oXide Logo Preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #333;
+    }
+
+    h2 {
+      margin: 40px 0 20px;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    .version-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    .badge-new {
+      background: linear-gradient(135deg, #FFD700, #FF8C00);
+      color: #333;
+    }
+
+    .badge-v3 {
+      background: linear-gradient(135deg, #F5A623, #D35400);
+      color: white;
+    }
+
+    .badge-v2 {
+      background: linear-gradient(135deg, #00d4ff, #ff00ff);
+      color: white;
+    }
+
+    .badge-old {
+      background: #ccc;
+      color: #666;
+    }
+
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .logo-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .logo-card h3 {
+      padding: 15px 20px;
+      background: #333;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .logo-display {
+      padding: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-display.dark {
+      background: #0a0a0a;
+    }
+
+    .logo-display.light {
+      background: #ffffff;
+    }
+
+    .logo-display.gradient {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+
+    .logo-display img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .size-tests {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      background: #0a0a0a;
+      flex-wrap: wrap;
+    }
+
+    .size-tests img {
+      border: 1px dashed rgba(255,255,255,0.2);
+    }
+
+    .size-label {
+      color: #888;
+      font-size: 10px;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .comparison {
+      display: flex;
+      gap: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .comparison > div {
+      flex: 1;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .comparison .left {
+      background: #0a0a0a;
+    }
+
+    .comparison .right {
+      background: #ffffff;
+    }
+
+    .notes {
+      margin-top: 40px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .notes h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .notes ul {
+      padding-left: 20px;
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .notes code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    .section-divider {
+      margin: 60px 0 40px;
+      border-top: 3px solid #ddd;
+      position: relative;
+    }
+
+    .section-divider::after {
+      content: 'vs';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f5f5f5;
+      padding: 0 20px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.15));
+      border: 2px solid #F5A623;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .highlight-box h3 {
+      color: #E67E22;
+      margin-bottom: 10px;
+    }
+
+    .highlight-box-v3 {
+      background: linear-gradient(135deg, rgba(245, 166, 35, 0.1), rgba(211, 84, 0, 0.1));
+      border: 2px solid #E67E22;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .highlight-box-v3 h3 {
+      color: #D35400;
+      margin-bottom: 10px;
+    }
+
+    .highlight-box-v2 {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 255, 0.1));
+      border: 2px solid #00d4ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .highlight-box-v2 h3 {
+      color: #00d4ff;
+      margin-bottom: 10px;
+    }
+
+    .color-swatch {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-right: 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .feature-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+
+    .feature-table th, .feature-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .feature-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>oXide TEI Editor - Logo Design Preview</h1>
+
+  <!-- NEW v4 SMALL CAPS -->
+  <div class="highlight-box">
+    <h3>NEW: v4 - Small Caps + Wide Spacing</h3>
+    <p style="color: #666; margin-bottom: 15px;">모든 글자 대문자 + X만 정상 크기 (100%), 나머지는 작은 크기 (~70%) = Small Caps 효과</p>
+    <table class="feature-table">
+      <tr>
+        <th>속성</th>
+        <th>v3</th>
+        <th>v4 (NEW)</th>
+      </tr>
+      <tr>
+        <td>글자 형태</td>
+        <td><code>oXide</code> (소문자 + X)</td>
+        <td><code>OXIDE</code> (대문자 + X 강조)</td>
+      </tr>
+      <tr>
+        <td>X 크기</td>
+        <td>70px</td>
+        <td>72-78px (100% 기준)</td>
+      </tr>
+      <tr>
+        <td>다른 글자 크기</td>
+        <td>62px</td>
+        <td>50-54px (~70%)</td>
+      </tr>
+      <tr>
+        <td>Letter Spacing</td>
+        <td>4px (고정)</td>
+        <td>0.12em ~ 0.18em (em 단위)</td>
+      </tr>
+      <tr>
+        <td>수직 정렬</td>
+        <td>baseline</td>
+        <td><code>dominant-baseline="middle"</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>Concept B-v4: Self-Closing Tag &lt;OXIDE/&gt; <span class="version-badge badge-new">v4 NEW</span></h2>
+  <p style="color: #666; margin-bottom: 20px;">XML self-closing 태그 + Small Caps + TEI 색상</p>
+
+  <div class="logo-grid">
+    <div class="logo-card">
+      <h3>Dark Background (Primary)</h3>
+      <div class="logo-display dark">
+        <img src="logo-b-bold.svg" alt="Logo B-v4 (Dark)">
+      </div>
+    </div>
+    <div class="logo-card">
+      <h3>Light Background</h3>
+      <div class="logo-display light">
+        <img src="logo-b-bold-transparent.svg" alt="Logo B-v4 (Light)">
+      </div>
+    </div>
+  </div>
+
+  <h2>Concept C-v4: Wide Wordmark <span class="version-badge badge-new">v4 NEW</span></h2>
+  <p style="color: #666; margin-bottom: 20px;">Small Caps 워드마크 + TEI 그라데이션 언더라인 (letter-spacing: 0.18em)</p>
+
+  <div class="logo-grid">
+    <div class="logo-card">
+      <h3>Dark Background (Primary)</h3>
+      <div class="logo-display dark">
+        <img src="logo-c-bold.svg" alt="Logo C-v4 (Dark)">
+      </div>
+    </div>
+    <div class="logo-card">
+      <h3>Light Background</h3>
+      <div class="logo-display light">
+        <img src="logo-c-bold-transparent.svg" alt="Logo C-v4 (Light)">
+      </div>
+    </div>
+  </div>
+
+  <h2>v4 Comparison (Small Caps)</h2>
+
+  <div class="comparison" style="margin-bottom: 20px;">
+    <div class="left">
+      <img src="logo-b-bold.svg" alt="Concept B-v4" style="max-width: 100%;">
+    </div>
+    <div class="right">
+      <img src="logo-b-bold-transparent.svg" alt="Concept B-v4 Light" style="max-width: 100%;">
+    </div>
+  </div>
+
+  <div class="comparison">
+    <div class="left">
+      <img src="logo-c-bold.svg" alt="Concept C-v4" style="max-width: 100%;">
+    </div>
+    <div class="right">
+      <img src="logo-c-bold-transparent.svg" alt="Concept C-v4 Light" style="max-width: 100%;">
+    </div>
+  </div>
+
+  <h2>Size Tests (Concept B-v4)</h2>
+  <div class="logo-card">
+    <h3>Responsive Size Test</h3>
+    <div class="size-tests">
+      <div>
+        <img src="logo-b-bold.svg" alt="400px" style="width: 400px;">
+        <div class="size-label">400px (Full)</div>
+      </div>
+      <div>
+        <img src="logo-b-bold.svg" alt="250px" style="width: 250px;">
+        <div class="size-label">250px</div>
+      </div>
+      <div>
+        <img src="logo-b-bold.svg" alt="150px" style="width: 150px;">
+        <div class="size-label">150px</div>
+      </div>
+      <div>
+        <img src="logo-b-bold.svg" alt="100px" style="width: 100px;">
+        <div class="size-label">100px</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Size Tests (Concept C-v4)</h2>
+  <div class="logo-card">
+    <h3>Responsive Size Test</h3>
+    <div class="size-tests">
+      <div>
+        <img src="logo-c-bold.svg" alt="400px" style="width: 400px;">
+        <div class="size-label">400px (Full)</div>
+      </div>
+      <div>
+        <img src="logo-c-bold.svg" alt="250px" style="width: 250px;">
+        <div class="size-label">250px</div>
+      </div>
+      <div>
+        <img src="logo-c-bold.svg" alt="150px" style="width: 150px;">
+        <div class="size-label">150px</div>
+      </div>
+      <div>
+        <img src="logo-c-bold.svg" alt="100px" style="width: 100px;">
+        <div class="size-label">100px</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes" style="background: linear-gradient(135deg, #fff8e6, #fff0e0);">
+    <h3>v4 Design Notes (Small Caps)</h3>
+    <ul>
+      <li><strong>Small Caps 효과</strong>: 모든 글자 대문자, X만 100% 크기, O/I/D/E는 ~70% 크기</li>
+      <li><strong>Letter Spacing</strong>: em 단위 사용 (0.12em ~ 0.18em) - 픽셀보다 일관적인 와이드 효과</li>
+      <li><strong>수직 정렬</strong>: <code>dominant-baseline="middle"</code> - 작은 글자와 큰 X의 자연스러운 중앙 정렬</li>
+      <li><strong>Concept B</strong>: <code>&lt;OXIDE/&gt;</code> - 꺽쇠도 small caps 크기 (48px)</li>
+      <li><strong>Concept C</strong>: <code>OXIDE</code> - 와이드 워드마크 + TEI 그라데이션 언더라인</li>
+      <li><strong>"X" 강조</strong>: 크기 44% 증가 (50px → 72px), Yellow-Gold 그라데이션</li>
+    </ul>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="section-divider"></div>
+
+  <!-- PREVIOUS v2 CYAN-MAGENTA VERSIONS -->
+  <div class="highlight-box-v2">
+    <h3>Previous: v2 - Cyan-Magenta Gradient</h3>
+    <p style="color: #666;">시안-마젠타 그라데이션 (이전 버전)</p>
+  </div>
+
+  <h2>Concept B (v2): Full-Width Bracket Frame <span class="version-badge badge-v2">v2</span></h2>
+  <p style="color: #666; margin-bottom: 20px;">열린 꺽쇠 브래킷 프레임 + Cyan-Magenta 그라데이션</p>
+
+  <div class="logo-grid">
+    <div class="logo-card">
+      <h3>Dark Background</h3>
+      <div class="logo-display dark">
+        <img src="logo-b-bracket.svg" alt="Logo B-v2 (Dark)">
+      </div>
+    </div>
+    <div class="logo-card">
+      <h3>Light Background</h3>
+      <div class="logo-display light">
+        <img src="logo-b-bracket-transparent.svg" alt="Logo B-v2 (Light)">
+      </div>
+    </div>
+  </div>
+
+  <h2>Concept C (v2): Modern Wordmark <span class="version-badge badge-v2">v2</span></h2>
+  <p style="color: #666; margin-bottom: 20px;">미니멀 타이포그래피 + 언더라인</p>
+
+  <div class="logo-grid">
+    <div class="logo-card">
+      <h3>Dark Background</h3>
+      <div class="logo-display dark">
+        <img src="logo-c-wordmark.svg" alt="Logo C-v2 (Dark)">
+      </div>
+    </div>
+    <div class="logo-card">
+      <h3>Light Background</h3>
+      <div class="logo-display light">
+        <img src="logo-c-wordmark-transparent.svg" alt="Logo C-v2 (Light)">
+      </div>
+    </div>
+  </div>
+
+  <h2>v4 vs v2 Comparison</h2>
+  <p style="color: #666; margin-bottom: 20px;">Small Caps + TEI 색상 (v4) vs Cyan-Magenta (v2)</p>
+
+  <div class="logo-grid">
+    <div class="logo-card">
+      <h3>Concept B: v4 Small Caps (NEW)</h3>
+      <div class="logo-display dark">
+        <img src="logo-b-bold.svg" alt="B-v4">
+      </div>
+    </div>
+    <div class="logo-card">
+      <h3>Concept B: v2 Cyan-Magenta</h3>
+      <div class="logo-display dark">
+        <img src="logo-b-bracket.svg" alt="B-v2">
+      </div>
+    </div>
+  </div>
+
+  <div class="logo-grid">
+    <div class="logo-card">
+      <h3>Concept C: v4 Small Caps (NEW)</h3>
+      <div class="logo-display dark">
+        <img src="logo-c-bold.svg" alt="C-v4">
+      </div>
+    </div>
+    <div class="logo-card">
+      <h3>Concept C: v2 Cyan-Magenta</h3>
+      <div class="logo-display dark">
+        <img src="logo-c-wordmark.svg" alt="C-v2">
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Version Comparison Notes</h3>
+    <ul>
+      <li><strong>v4 (Small Caps)</strong>: 모든 글자 대문자, X 강조 (크기 차이), TEI 공식 색상</li>
+      <li><strong>v2 (Cyan-Magenta)</strong>: 현대적/테크 느낌, oXygen과 더 강하게 차별화</li>
+      <li><strong>Letter Spacing</strong>: v4는 em 단위 (0.12em ~ 0.18em), v2는 픽셀 단위 (-2px)</li>
+      <li><strong>B Concept 차이</strong>: v4는 <code>&lt;OXIDE/&gt;</code> small caps, v2는 열린 브래킷 프레임</li>
+    </ul>
+  </div>
+
+  <div class="notes" style="margin-top: 20px; background: #f0f7ff;">
+    <h3>Comparison with oXygen</h3>
+    <ul>
+      <li><strong>oXygen</strong>: Blue (#0049c9), 전통적 텍스트 로고, 엔터프라이즈 느낌</li>
+      <li><strong>oXide v4</strong>: TEI 주황/노란색, Small Caps로 X 강조, 학술적 정체성</li>
+      <li><strong>oXide v2</strong>: 시안-마젠타, 현대적/가벼운, 기술 스타트업 느낌</li>
+      <li>이름에서 "X"를 공유하지만, 색상과 스타일로 명확히 차별화</li>
+    </ul>
+  </div>
+</body>
+</html>

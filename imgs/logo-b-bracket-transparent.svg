@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <defs>
+    <!-- Cyan to Magenta gradient for brackets -->
+    <linearGradient id="bracketGradientLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d4ff"/>
+      <stop offset="100%" stop-color="#8855ff"/>
+    </linearGradient>
+    <linearGradient id="bracketGradientRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8855ff"/>
+      <stop offset="100%" stop-color="#ff00ff"/>
+    </linearGradient>
+    <!-- X gradient -->
+    <linearGradient id="xGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00d4ff"/>
+      <stop offset="50%" stop-color="#8855ff"/>
+      <stop offset="100%" stop-color="#ff00ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left angle bracket < -->
+  <path d="M 45 20 L 15 50 L 45 80"
+        fill="none"
+        stroke="url(#bracketGradientLeft)"
+        stroke-width="4"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Right angle bracket > -->
+  <path d="M 355 20 L 385 50 L 355 80"
+        fill="none"
+        stroke="url(#bracketGradientRight)"
+        stroke-width="4"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- oXide text - dark version for light backgrounds -->
+  <text x="200" y="62"
+        text-anchor="middle"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+        font-size="42"
+        font-weight="300"
+        letter-spacing="3">
+    <!-- "o" in dark gray -->
+    <tspan fill="#1a1a1a">o</tspan>
+    <!-- "X" with gradient, slightly larger and bolder -->
+    <tspan fill="url(#xGradient)" font-weight="500" font-size="48">X</tspan>
+    <!-- "ide" in dark gray -->
+    <tspan fill="#1a1a1a">ide</tspan>
+  </text>
+
+  <!-- Subtle tagline -->
+  <text x="200" y="88"
+        text-anchor="middle"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+        font-size="10"
+        font-weight="400"
+        letter-spacing="4"
+        fill="#666666">
+    TEI EDITOR
+  </text>
+</svg>

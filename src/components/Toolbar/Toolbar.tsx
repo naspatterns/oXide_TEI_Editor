@@ -8,6 +8,7 @@ import { WrapTagDialog } from './WrapTagDialog';
 import { SearchPanel } from './SearchPanel';
 import { XPathSearch } from './XPathSearch';
 import { Tooltip } from '../Tooltip/Tooltip';
+import logoUrl from '../../../imgs/logo-oxygen-style.svg';
 import './Toolbar.css';
 
 interface Props {
@@ -42,6 +43,7 @@ export function Toolbar({ onNewDocument, onSchemaAlert, onHelp }: Props) {
     <>
       {/* Left section: File menu */}
       <div className="toolbar-section toolbar-left">
+        <img src={logoUrl} alt="oXide TEI Editor" className="toolbar-logo" />
         <div className="toolbar-group">
           <FileMenu onNewDocument={onNewDocument} onSchemaAlert={onSchemaAlert} />
         </div>

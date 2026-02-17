@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oXide Favicon Preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    h2 {
+      margin: 30px 0 15px;
+      color: #555;
+      font-size: 18px;
+    }
+
+    .options {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .option {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .option h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .option p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+      max-width: 200px;
+    }
+
+    .sizes {
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .size-item {
+      text-align: center;
+    }
+
+    .size-item span {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .preview-row {
+      display: flex;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .browser-mock {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .browser-mock.dark {
+      background: #333;
+    }
+
+    .browser-mock.light {
+      background: #e8e8e8;
+    }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .tab-bar img {
+      width: 16px;
+      height: 16px;
+    }
+
+    .tab-bar span {
+      font-size: 12px;
+    }
+
+    .browser-mock.dark .tab-bar span {
+      color: #ccc;
+    }
+
+    .browser-mock.light .tab-bar span {
+      color: #333;
+    }
+
+    .comparison {
+      margin-top: 40px;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .comparison h2 {
+      margin-top: 0;
+    }
+
+    .comparison-row {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .comparison-item {
+      text-align: center;
+    }
+
+    .comparison-item img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 8px;
+    }
+
+    .comparison-item span {
+      display: block;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .pros-cons {
+      margin-top: 15px;
+      font-size: 13px;
+    }
+
+    .pros-cons .pro {
+      color: #2e7d32;
+    }
+
+    .pros-cons .con {
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+  <h1>oXide TEI Editor - Favicon Design Options</h1>
+
+  <div class="options">
+    <!-- Option A -->
+    <div class="option">
+      <h3>Option A: &lt;X/&gt;</h3>
+      <p>XML tag form preserved, X emphasized</p>
+
+      <div class="sizes">
+        <div class="size-item">
+          <img src="favicon-new-a.svg" width="16" height="16" alt="16px">
+          <span>16px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-a.svg" width="32" height="32" alt="32px">
+          <span>32px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-a.svg" width="48" height="48" alt="48px">
+          <span>48px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-a.svg" width="64" height="64" alt="64px">
+          <span>64px</span>
+        </div>
+      </div>
+
+      <div class="preview-row">
+        <div class="browser-mock dark">
+          <div class="tab-bar">
+            <img src="favicon-new-a.svg" alt="favicon">
+            <span>oXide TEI Editor</span>
+          </div>
+        </div>
+        <div class="browser-mock light">
+          <div class="tab-bar">
+            <img src="favicon-new-a.svg" alt="favicon">
+            <span>oXide TEI Editor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pro">+ Consistent with logo (XML tag feel)</div>
+        <div class="con">- Brackets may be hard to see at small sizes</div>
+      </div>
+    </div>
+
+    <!-- Option B -->
+    <div class="option">
+      <h3>Option B: oX</h3>
+      <p>Core two letters (oXygen parody emphasized)</p>
+
+      <div class="sizes">
+        <div class="size-item">
+          <img src="favicon-new-b.svg" width="16" height="16" alt="16px">
+          <span>16px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-b.svg" width="32" height="32" alt="32px">
+          <span>32px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-b.svg" width="48" height="48" alt="48px">
+          <span>48px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-b.svg" width="64" height="64" alt="64px">
+          <span>64px</span>
+        </div>
+      </div>
+
+      <div class="preview-row">
+        <div class="browser-mock dark">
+          <div class="tab-bar">
+            <img src="favicon-new-b.svg" alt="favicon">
+            <span>oXide TEI Editor</span>
+          </div>
+        </div>
+        <div class="browser-mock light">
+          <div class="tab-bar">
+            <img src="favicon-new-b.svg" alt="favicon">
+            <span>oXide TEI Editor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pro">+ Clear oXygen relationship, concise</div>
+        <div class="con">- No XML tag feel</div>
+      </div>
+    </div>
+
+    <!-- Option C -->
+    <div class="option">
+      <h3>Option C: X</h3>
+      <p>Most minimal version</p>
+
+      <div class="sizes">
+        <div class="size-item">
+          <img src="favicon-new-c.svg" width="16" height="16" alt="16px">
+          <span>16px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-c.svg" width="32" height="32" alt="32px">
+          <span>32px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-c.svg" width="48" height="48" alt="48px">
+          <span>48px</span>
+        </div>
+        <div class="size-item">
+          <img src="favicon-new-c.svg" width="64" height="64" alt="64px">
+          <span>64px</span>
+        </div>
+      </div>
+
+      <div class="preview-row">
+        <div class="browser-mock dark">
+          <div class="tab-bar">
+            <img src="favicon-new-c.svg" alt="favicon">
+            <span>oXide TEI Editor</span>
+          </div>
+        </div>
+        <div class="browser-mock light">
+          <div class="tab-bar">
+            <img src="favicon-new-c.svg" alt="favicon">
+            <span>oXide TEI Editor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pro">+ Clear at 16px, most concise</div>
+        <div class="con">- Brand recognition may be weak</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side by side comparison -->
+  <div class="comparison">
+    <h2>Side-by-Side Comparison (48px)</h2>
+    <div class="comparison-row">
+      <div class="comparison-item">
+        <img src="favicon-new-a.svg" alt="Option A">
+        <span>A: &lt;X/&gt;</span>
+      </div>
+      <div class="comparison-item">
+        <img src="favicon-new-b.svg" alt="Option B">
+        <span>B: oX</span>
+      </div>
+      <div class="comparison-item">
+        <img src="favicon-new-c.svg" alt="Option C">
+        <span>C: X</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16px stress test -->
+  <div class="comparison">
+    <h2>16px Stress Test (actual browser tab size)</h2>
+    <div class="comparison-row">
+      <div class="comparison-item">
+        <img src="favicon-new-a.svg" width="16" height="16" alt="Option A">
+        <span>A</span>
+      </div>
+      <div class="comparison-item">
+        <img src="favicon-new-b.svg" width="16" height="16" alt="Option B">
+        <span>B</span>
+      </div>
+      <div class="comparison-item">
+        <img src="favicon-new-c.svg" width="16" height="16" alt="Option C">
+        <span>C</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

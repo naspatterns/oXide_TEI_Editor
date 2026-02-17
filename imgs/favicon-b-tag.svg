@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- 주황 그라데이션 -->
+    <linearGradient id="tagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0a030"/>
+      <stop offset="100%" style="stop-color:#ff8c00"/>
+    </linearGradient>
+    <!-- 밝은 주황 (괄호용) -->
+    <linearGradient id="bracketGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffb347"/>
+      <stop offset="100%" style="stop-color:#f0a030"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경 -->
+  <rect x="2" y="2" width="96" height="96" rx="12" ry="12" fill="#1a1a1a"/>
+
+  <!-- 왼쪽 꺾쇠 < -->
+  <text x="8" y="62"
+        font-family="'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace"
+        font-size="40"
+        font-weight="300"
+        fill="#888888"
+        text-anchor="start">&lt;</text>
+
+  <!-- XTE 텍스트 (강조) -->
+  <text x="50" y="62"
+        font-family="'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace"
+        font-size="28"
+        font-weight="bold"
+        fill="url(#tagGrad)"
+        text-anchor="middle">XTE</text>
+
+  <!-- 오른쪽 /꺾쇠 /> -->
+  <text x="92" y="62"
+        font-family="'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace"
+        font-size="40"
+        font-weight="300"
+        fill="#888888"
+        text-anchor="end">/&gt;</text>
+
+  <!-- 하단 언더라인 (코드 에디터 느낌) -->
+  <rect x="15" y="72" width="70" height="2" rx="1" fill="url(#tagGrad)" opacity="0.6"/>
+</svg>

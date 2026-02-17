@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- 주황-금색 그라데이션 -->
+    <linearGradient id="orangeGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff8c00"/>
+      <stop offset="100%" style="stop-color:#ffd700"/>
+    </linearGradient>
+    <!-- 전자 궤도 그라데이션 -->
+    <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff8c00;stop-opacity:0.8"/>
+      <stop offset="50%" style="stop-color:#ffd700;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#ff8c00;stop-opacity:0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경 -->
+  <rect x="2" y="2" width="96" height="96" rx="12" ry="12" fill="#1a1a1a"/>
+
+  <!-- 전자 궤도 1 (수평 타원) -->
+  <ellipse cx="50" cy="50" rx="38" ry="14"
+           fill="none" stroke="url(#orbitGrad)" stroke-width="1.5"
+           transform="rotate(-30 50 50)"/>
+
+  <!-- 전자 궤도 2 (수평 타원, 다른 각도) -->
+  <ellipse cx="50" cy="50" rx="38" ry="14"
+           fill="none" stroke="url(#orbitGrad)" stroke-width="1.5"
+           transform="rotate(30 50 50)"/>
+
+  <!-- 전자 궤도 3 (수직 타원) -->
+  <ellipse cx="50" cy="50" rx="38" ry="14"
+           fill="none" stroke="url(#orbitGrad)" stroke-width="1.5"
+           transform="rotate(90 50 50)"/>
+
+  <!-- 전자 (작은 원들) -->
+  <circle cx="88" cy="50" r="4" fill="#ffd700"/>
+  <circle cx="50" cy="12" r="4" fill="#ff8c00"/>
+  <circle cx="18" cy="67" r="3.5" fill="#ffa500"/>
+
+  <!-- 중앙 핵 (XTE 텍스트) -->
+  <circle cx="50" cy="50" r="20" fill="#1a1a1a" stroke="url(#orangeGold)" stroke-width="2"/>
+
+  <!-- XTE 텍스트 -->
+  <text x="50" y="57"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="16"
+        font-weight="bold"
+        fill="url(#orangeGold)"
+        text-anchor="middle">XTE</text>
+</svg>

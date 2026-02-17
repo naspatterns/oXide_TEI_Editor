@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 80">
+  <text y="55" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" fill="#ffffff">
+    <tspan font-size="42" font-weight="400" x="20">&lt;</tspan><tspan font-size="42" font-weight="400">o</tspan><tspan font-size="52" font-weight="700" fill="#E5A834">X</tspan><tspan font-size="42" font-weight="400">ide</tspan><tspan font-size="42" font-weight="400">/&gt;</tspan>
+  </text>
+  <text x="255" y="55" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="30" font-weight="300" fill="#999999" text-anchor="start">TEI Editor</text>
+</svg>

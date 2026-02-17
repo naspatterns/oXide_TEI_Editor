@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <defs>
+    <!-- TEI Orange gradient for X -->
+    <linearGradient id="xGradientTei" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFEB3B"/>
+      <stop offset="50%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#F5A623"/>
+    </linearGradient>
+
+    <!-- Underline gradient: Yellow to Orange -->
+    <linearGradient id="underlineGradientTei" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0"/>
+      <stop offset="15%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#F5A623"/>
+      <stop offset="85%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#FF8C00" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="400" height="100" fill="#000000"/>
+
+  <!-- Small Caps style: OXIDE with X emphasized -->
+  <!-- All caps, but O/I/D/E are smaller (small caps effect) -->
+  <text x="200" y="52"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="800"
+        fill="#ffffff"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        letter-spacing="0.18em"><tspan font-size="54">O</tspan><tspan font-size="68" font-weight="900" fill="url(#xGradientTei)">X</tspan><tspan font-size="54">IDE</tspan></text>
+
+  <!-- Gradient underline bar -->
+  <rect x="70" y="78" width="260" height="4" rx="2" fill="url(#underlineGradientTei)"/>
+</svg>

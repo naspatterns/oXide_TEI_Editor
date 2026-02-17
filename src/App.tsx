@@ -19,6 +19,7 @@ const PreviewPanel = lazy(() => import('./components/Preview/PreviewPanel').then
 import { AlertDialog } from './components/FileDialog/AlertDialog';
 import { ConfirmDialog } from './components/FileDialog/ConfirmDialog';
 import { HelpDialog } from './components/Toolbar/HelpDialog';
+import logoUrl from '../imgs/logo-oxygen-style-transparent.svg';
 import type { Command } from './components/CommandPalette/CommandPalette';
 import { openFile, saveFile, saveAsFile } from './file/fileSystemAccess';
 import { startAutoSave, stopAutoSave, loadFromIDB } from './file/autoSave';
@@ -44,6 +45,7 @@ function EditorLayout() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [showExplorer, setShowExplorer] = useState(true);
   const [recoveryData, setRecoveryData] = useState<{ content: string; fileName: string | null; timestamp: number } | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -260,7 +262,7 @@ function EditorLayout() {
         label: 'About oXide TEI Editor',
         category: 'Help',
         icon: 'ℹ️',
-        action: () => setAlertMessage('oXide TEI Editor v0.1.0\n\nA lightweight, browser-based TEI XML editor for Digital Humanities researchers.\n\n• Schema-aware autocomplete\n• Real-time validation\n• Multiple document tabs\n• Dark/Light themes'),
+        action: () => setAboutOpen(true),
       },
     ];
   }, [createNewTab, getActiveDocument, markSaved, openFileAsTab, setFile, toast]);
@@ -358,6 +360,12 @@ function EditorLayout() {
         title="스키마 알림"
         message={alertMessage ?? ''}
         onClose={() => setAlertMessage(null)}
+      />
+      <AlertDialog
+        open={aboutOpen}
+        logo={logoUrl}
+        message={'v0.1.0\n\nA lightweight, browser-based TEI XML editor for Digital Humanities researchers.\n\n• Schema-aware autocomplete\n• Real-time validation\n• Multiple document tabs\n• Dark/Light themes'}
+        onClose={() => setAboutOpen(false)}
       />
       <ConfirmDialog
         open={recoveryData !== null}

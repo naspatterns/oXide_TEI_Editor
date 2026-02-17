@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <defs>
+    <!-- TEI Orange to Yellow gradient -->
+    <linearGradient id="teiGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#F5A623"/>
+      <stop offset="100%" stop-color="#FF8C00"/>
+    </linearGradient>
+
+    <!-- Brighter yellow for X -->
+    <linearGradient id="xHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFEB3B"/>
+      <stop offset="100%" stop-color="#FFD700"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="400" height="100" fill="#000000"/>
+
+  <!-- Small Caps style: <OXIDE/> with X emphasized -->
+  <!-- All caps, but O/I/D/E are smaller (small caps effect) -->
+  <!-- Using dominant-baseline for vertical centering -->
+  <text x="200" y="55"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="800"
+        fill="url(#teiGradient)"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        letter-spacing="0.12em"><tspan font-size="48" fill="#F5A623">&lt;</tspan><tspan font-size="50" fill="#F5A623">O</tspan><tspan font-size="62" font-weight="900" fill="url(#xHighlight)">X</tspan><tspan font-size="50" fill="#F5A623">IDE</tspan><tspan font-size="48" fill="#F5A623">/&gt;</tspan></text>
+</svg>

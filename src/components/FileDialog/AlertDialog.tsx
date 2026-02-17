@@ -4,6 +4,7 @@ interface Props {
   open: boolean;
   title?: string;
   message: string;
+  logo?: string;
   onClose: () => void;
 }
 
@@ -13,7 +14,7 @@ interface Props {
  * - Supports multi-line messages with proper formatting
  * - Styled consistently with the app theme
  */
-export function AlertDialog({ open, title, message, onClose }: Props) {
+export function AlertDialog({ open, title, message, logo, onClose }: Props) {
   if (!open) return null;
 
   // Parse message to handle line breaks and formatting
@@ -22,6 +23,7 @@ export function AlertDialog({ open, title, message, onClose }: Props) {
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="alert-dialog" onClick={(e) => e.stopPropagation()}>
+        {logo && <img src={logo} alt="" className="alert-logo" />}
         {title && <h2 className="dialog-title">{title}</h2>}
         <div className="alert-content">
           {lines.map((line, i) => {

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="12" fill="#333333"/>
+  <text y="62" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" text-anchor="middle" x="50">
+    <tspan font-size="28" font-weight="400" fill="#ffffff">&lt;o</tspan><tspan font-size="36" font-weight="700" fill="#E5A834">X</tspan><tspan font-size="28" font-weight="400" fill="#ffffff">/&gt;</tspan>
+  </text>
+</svg>

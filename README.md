@@ -1,4 +1,7 @@
-# oXide TEI Editor
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="imgs/logo-oxygen-style-transparent.svg">
+  <img src="imgs/logo-oxygen-style.svg" alt="oXide TEI Editor" height="60">
+</picture>
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 [![Build](https://github.com/naspatterns/oXide_TEI_Editor/actions/workflows/deploy.yml/badge.svg)](https://github.com/naspatterns/oXide_TEI_Editor/actions)

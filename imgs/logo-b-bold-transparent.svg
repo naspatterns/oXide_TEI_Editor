@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <defs>
+    <!-- TEI Orange to Amber gradient for light background -->
+    <linearGradient id="teiGradientDark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF8C00"/>
+      <stop offset="50%" stop-color="#E67E22"/>
+      <stop offset="100%" stop-color="#D35400"/>
+    </linearGradient>
+
+    <!-- Darker orange for X on light background -->
+    <linearGradient id="xHighlightDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5A623"/>
+      <stop offset="100%" stop-color="#E67E22"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent background (no rect) -->
+
+  <!-- Small Caps style: <OXIDE/> with X emphasized -->
+  <!-- All caps, but O/I/D/E are smaller (small caps effect) -->
+  <text x="200" y="55"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="800"
+        fill="url(#teiGradientDark)"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        letter-spacing="0.12em"><tspan font-size="48" fill="#D35400">&lt;</tspan><tspan font-size="50" fill="#D35400">O</tspan><tspan font-size="62" font-weight="900" fill="url(#xHighlightDark)">X</tspan><tspan font-size="50" fill="#D35400">IDE</tspan><tspan font-size="48" fill="#D35400">/&gt;</tspan></text>
+</svg>
