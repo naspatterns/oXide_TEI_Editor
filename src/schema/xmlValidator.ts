@@ -214,13 +214,48 @@ function findMalformedTagPosition(xmlStr: string): { line: number; column: numbe
 }
 
 /**
+ * Build an array of line-start offsets for offset→line/column conversion.
+ * lineStarts[i] = character offset where line (i+1) begins.
+ */
+function buildLineStarts(xmlStr: string): number[] {
+  const starts = [0];
+  for (let i = 0; i < xmlStr.length; i++) {
+    if (xmlStr[i] === '\n') starts.push(i + 1);
+  }
+  return starts;
+}
+
+/**
+ * Convert a character offset to 1-based line and column using binary search.
+ */
+function offsetToLineCol(lineStarts: number[], offset: number): { line: number; column: number } {
+  let lo = 0, hi = lineStarts.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (lineStarts[mid] <= offset) lo = mid;
+    else hi = mid - 1;
+  }
+  return { line: lo + 1, column: offset - lineStarts[lo] + 1 };
+}
+
+/**
+ * Replace comments and CDATA sections with spaces (preserving string length).
+ * This prevents regex from matching tags inside comments/CDATA.
+ */
+function stripCommentsAndCDATA(xmlStr: string): string {
+  return xmlStr.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?]]>/g,
+    (m) => ' '.repeat(m.length));
+}
+
+/**
  * Find orphan closing tags and unclosed opening tags.
  * Uses a stack-based approach to accurately track which specific opening tags
  * are unclosed (reports the FIRST unclosed tag, not the last).
  */
 function findTagMismatchErrors(xmlStr: string, firstErrorLine: number): ValidationError[] {
   const errors: ValidationError[] = [];
-  const lines = xmlStr.split('\n');
+  const lineStarts = buildLineStarts(xmlStr);
+  const stripped = stripCommentsAndCDATA(xmlStr);
 
   // Stack-based tracking: each tag name maps to a stack of opening tag positions
   // When a closing tag is found, we pop from the stack (LIFO matching)
@@ -236,57 +271,46 @@ function findTagMismatchErrors(xmlStr: string, firstErrorLine: number): Validati
   }
   const allTags: TagOccurrence[] = [];
 
-  // Regex to match tags (excluding self-closing, comments, CDATA, PIs)
+  // Regex to match tags on the full (stripped) text — handles multi-line tags
   // Use permissive pattern to match Unicode tag names (Korean, etc.)
-  // XML allows many Unicode characters in tag names beyond ASCII
-  const tagRegex = /<(\/?[^\s/>][^\s/>]*)(?:\s[^>]*)?\s*>/g;
+  // [\s\S] instead of [^>] so attributes spanning multiple lines are consumed
+  const tagRegex = /<(\/?[^\s/>][^\s/>]*)(?:\s[\s\S]*?)?\s*\/?>/g;
 
-  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-    const lineNum = lineIdx + 1;
-    const line = lines[lineIdx];
+  let match: RegExpExecArray | null;
+  while ((match = tagRegex.exec(stripped)) !== null) {
+    const fullMatch = match[0];
+    const tagWithSlash = match[1];
 
-    tagRegex.lastIndex = 0;
-    let match: RegExpExecArray | null;
+    // Skip self-closing tags
+    if (fullMatch.endsWith('/>')) continue;
 
-    while ((match = tagRegex.exec(line)) !== null) {
-      const fullMatch = match[0];
-      const tagWithSlash = match[1];
+    // Skip processing instructions
+    if (fullMatch.startsWith('<?')) continue;
 
-      // Skip self-closing tags
-      if (fullMatch.endsWith('/>')) continue;
+    const isClosing = tagWithSlash.startsWith('/');
+    const tagName = isClosing ? tagWithSlash.slice(1) : tagWithSlash;
+    const pos = offsetToLineCol(lineStarts, match.index);
 
-      // Skip processing instructions
-      if (fullMatch.startsWith('<?')) continue;
+    allTags.push({
+      name: tagName,
+      type: isClosing ? 'closing' : 'opening',
+      line: pos.line,
+      column: pos.column,
+    });
 
-      // Skip inside comments (simple check)
-      const before = line.substring(0, match.index);
-      if (before.includes('<!--') && !before.includes('-->')) continue;
-
-      const isClosing = tagWithSlash.startsWith('/');
-      const tagName = isClosing ? tagWithSlash.slice(1) : tagWithSlash;
-      const column = match.index + 1;
-
-      allTags.push({
-        name: tagName,
-        type: isClosing ? 'closing' : 'opening',
-        line: lineNum,
-        column,
-      });
-
-      // Update stack
-      if (isClosing) {
-        // Closing tag: pop from stack (matches most recent opening tag)
-        const stack = openingStacks.get(tagName);
-        if (stack && stack.length > 0) {
-          stack.pop();
-        }
-        // Note: orphan closing tags (no matching opening) are handled in Second Pass
-      } else {
-        // Opening tag: push to stack
-        const stack = openingStacks.get(tagName) || [];
-        stack.push({ line: lineNum, column });
-        openingStacks.set(tagName, stack);
+    // Update stack
+    if (isClosing) {
+      // Closing tag: pop from stack (matches most recent opening tag)
+      const stack = openingStacks.get(tagName);
+      if (stack && stack.length > 0) {
+        stack.pop();
       }
+      // Note: orphan closing tags (no matching opening) are handled in Second Pass
+    } else {
+      // Opening tag: push to stack
+      const stack = openingStacks.get(tagName) || [];
+      stack.push({ line: pos.line, column: pos.column });
+      openingStacks.set(tagName, stack);
     }
   }
 
@@ -376,85 +400,141 @@ function checkSchemaConformance(
   schema: SchemaInfo,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
-  const lines = xmlStr.split('\n');
+  const lineStarts = buildLineStarts(xmlStr);
+  const stripped = stripCommentsAndCDATA(xmlStr);
 
   // 중첩 검증을 위한 요소 스택 (부모-자식 관계 추적)
   const stack: StackEntry[] = [];
 
-  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-    const line = lines[lineIdx];
-    const lineNum = lineIdx + 1;
+  // Regex to match tags on the full (stripped) text — handles multi-line tags
+  // Use permissive pattern to match Unicode tag names (Korean, etc.)
+  // Capture group 1: tag name (with optional leading /), group 2: attribute string
+  // [\s\S]*? so attributes spanning multiple lines are consumed
+  const tagRegex = /<(\/?[^\s/>][^\s/>]*)(\s[\s\S]*?)?\s*\/?>/g;
+  let match: RegExpExecArray | null;
 
-    // Find all tags in this line
-    // Use permissive pattern to match Unicode tag names (Korean, etc.)
-    // This matches: <tagName>, </tagName>, <tagName attr="val">, <tagName/>
-    const tagRegex = /<(\/?[^\s/>][^\s/>]*)(\s[^>]*)?\s*\/?>/g;
-    let match: RegExpExecArray | null;
+  while ((match = tagRegex.exec(stripped)) !== null) {
+    const fullTag = match[0];
+    const tagWithSlash = match[1];  // May include leading / for closing tags
+    const attrString = match[2] ?? '';
+    const pos = offsetToLineCol(lineStarts, match.index);
+    const col = pos.column;
+    const lineNum = pos.line;
 
-    while ((match = tagRegex.exec(line)) !== null) {
-      const fullTag = match[0];
-      const tagWithSlash = match[1];  // May include leading / for closing tags
-      const attrString = match[2] ?? '';
-      const col = match.index + 1;
+    // Skip processing instructions and XML declarations
+    if (fullTag.startsWith('<?')) continue;
 
-      // Skip processing instructions and XML declarations
-      if (fullTag.startsWith('<?')) continue;
+    // Determine if closing tag and extract clean tag name
+    const isClosingTag = tagWithSlash.startsWith('/');
+    const tagName = isClosingTag ? tagWithSlash.slice(1) : tagWithSlash;
 
-      // Determine if closing tag and extract clean tag name
-      const isClosingTag = tagWithSlash.startsWith('/');
-      const tagName = isClosingTag ? tagWithSlash.slice(1) : tagWithSlash;
+    if (isClosingTag) {
+      // Closing tag
+      if (stack.length > 0 && stack[stack.length - 1].name === tagName) {
+        const closedElement = stack.pop()!;
+        const elSpec = schema.elementMap.get(tagName);
 
-      if (isClosingTag) {
-        // Closing tag
-        if (stack.length > 0 && stack[stack.length - 1].name === tagName) {
-          const closedElement = stack.pop()!;
-          const elSpec = schema.elementMap.get(tagName);
+        // Phase 2: ContentModel validation on element close
+        if (elSpec?.contentModel) {
+          errors.push(...validateContentModel(elSpec, closedElement.children));
+        }
 
-          // Phase 2: ContentModel validation on element close
-          if (elSpec?.contentModel) {
-            errors.push(...validateContentModel(elSpec, closedElement.children));
-          }
-
-          // Check for required children
-          if (elSpec?.contentModel) {
-            const required = getRequiredChildren(elSpec.contentModel);
-            const actualNames = new Set(closedElement.children.map(c => c.name));
-            for (const reqChild of required) {
-              if (!actualNames.has(reqChild)) {
-                errors.push({
-                  message: `<${tagName}> requires <${reqChild}> child element`,
-                  line: closedElement.line,
-                  column: 1,
-                  severity: 'warning',  // Warning to avoid blocking valid partial edits
-                });
-              }
+        // Check for required children
+        if (elSpec?.contentModel) {
+          const required = getRequiredChildren(elSpec.contentModel);
+          const actualNames = new Set(closedElement.children.map(c => c.name));
+          for (const reqChild of required) {
+            if (!actualNames.has(reqChild)) {
+              errors.push({
+                message: `<${tagName}> requires <${reqChild}> child element`,
+                line: closedElement.line,
+                column: 1,
+                severity: 'warning',  // Warning to avoid blocking valid partial edits
+              });
             }
           }
         }
-        continue;
       }
+      continue;
+    }
 
-      // Opening tag (or self-closing)
-      const elSpec = schema.elementMap.get(tagName);
+    // Opening tag (or self-closing)
+    const elSpec = schema.elementMap.get(tagName);
 
-      // Check 1: Is this element known?
-      if (!elSpec && tagName !== 'xml') {
-        errors.push({
-          message: `Unknown element <${tagName}>`,
-          line: lineNum,
-          column: col,
-          severity: 'warning',
-        });
+    // Check 1: Is this element known?
+    if (!elSpec && tagName !== 'xml') {
+      errors.push({
+        message: `Unknown element <${tagName}>`,
+        line: lineNum,
+        column: col,
+        severity: 'warning',
+      });
+    }
+
+    // Check 2: Is this element allowed in its parent?
+    if (stack.length > 0 && elSpec) {
+      const parent = stack[stack.length - 1];
+      const parentSpec = schema.elementMap.get(parent.name);
+      if (parentSpec?.children && parentSpec.children.length > 0) {
+        if (!parentSpec.children.includes(tagName)) {
+          errors.push({
+            message: `<${tagName}> is not allowed inside <${parent.name}>`,
+            line: lineNum,
+            column: col,
+            severity: 'error',
+          });
+        }
       }
+    }
 
-      // Check 2: Is this element allowed in its parent?
-      if (stack.length > 0 && elSpec) {
-        const parent = stack[stack.length - 1];
-        const parentSpec = schema.elementMap.get(parent.name);
-        if (parentSpec?.children && parentSpec.children.length > 0) {
-          if (!parentSpec.children.includes(tagName)) {
+    // Check 3: Are attributes valid for this element?
+    if (elSpec) {
+      // Extract present attribute names and values
+      const presentAttrs = new Set<string>();
+      if (attrString) {
+        // Offset in xmlStr where the attribute string begins
+        const attrStringStart = match.index + match[0].indexOf(attrString);
+        const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=/g;
+        let attrMatch: RegExpExecArray | null;
+        while ((attrMatch = attrRegex.exec(attrString)) !== null) {
+          const attrName = attrMatch[1];
+          presentAttrs.add(attrName);
+          // Skip xmlns attributes for unknown check
+          if (attrName === 'xmlns' || attrName.startsWith('xmlns:')) continue;
+
+          const attrSpec = elSpec.attributes?.find((a) => a.name === attrName);
+          if (!attrSpec) {
+            const attrPos = offsetToLineCol(lineStarts, attrStringStart + attrMatch.index);
             errors.push({
-              message: `<${tagName}> is not allowed inside <${parent.name}>`,
+              message: `Unknown attribute "${attrName}" on <${tagName}>`,
+              line: attrPos.line,
+              column: attrPos.column,
+              severity: 'warning',
+            });
+          } else if (attrSpec.values && attrSpec.values.length > 0) {
+            // Check 3.5: Validate enum attribute values
+            const actualValue = extractAttributeValue(attrString, attrName);
+            if (actualValue && !attrSpec.values.includes(actualValue)) {
+              const allowedPreview = attrSpec.values.slice(0, 5).join(', ');
+              const suffix = attrSpec.values.length > 5 ? '...' : '';
+              const attrPos = offsetToLineCol(lineStarts, attrStringStart + attrMatch.index);
+              errors.push({
+                message: `Invalid value "${actualValue}" for @${attrName}. Allowed: ${allowedPreview}${suffix}`,
+                line: attrPos.line,
+                column: attrPos.column,
+                severity: 'warning',
+              });
+            }
+          }
+        }
+      }
+
+      // Check 4: Are required attributes present?
+      if (elSpec.attributes) {
+        for (const attr of elSpec.attributes) {
+          if (attr.required && !presentAttrs.has(attr.name)) {
+            errors.push({
+              message: `Missing required attribute "${attr.name}" on <${tagName}>`,
               line: lineNum,
               column: col,
               severity: 'error',
@@ -462,80 +542,27 @@ function checkSchemaConformance(
           }
         }
       }
+    }
 
-      // Check 3: Are attributes valid for this element?
-      if (elSpec) {
-        // Extract present attribute names and values
-        const presentAttrs = new Set<string>();
-        if (attrString) {
-          const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=/g;
-          let attrMatch: RegExpExecArray | null;
-          while ((attrMatch = attrRegex.exec(attrString)) !== null) {
-            const attrName = attrMatch[1];
-            presentAttrs.add(attrName);
-            // Skip xmlns attributes for unknown check
-            if (attrName === 'xmlns' || attrName.startsWith('xmlns:')) continue;
+    // Track as child of parent
+    if (stack.length > 0) {
+      stack[stack.length - 1].children.push({ name: tagName, line: lineNum });
+    }
 
-            const attrSpec = elSpec.attributes?.find((a) => a.name === attrName);
-            if (!attrSpec) {
-              errors.push({
-                message: `Unknown attribute "${attrName}" on <${tagName}>`,
-                line: lineNum,
-                column: col + match.index + attrMatch.index,
-                severity: 'warning',
-              });
-            } else if (attrSpec.values && attrSpec.values.length > 0) {
-              // Check 3.5: Validate enum attribute values
-              const actualValue = extractAttributeValue(attrString, attrName);
-              if (actualValue && !attrSpec.values.includes(actualValue)) {
-                const allowedPreview = attrSpec.values.slice(0, 5).join(', ');
-                const suffix = attrSpec.values.length > 5 ? '...' : '';
-                errors.push({
-                  message: `Invalid value "${actualValue}" for @${attrName}. Allowed: ${allowedPreview}${suffix}`,
-                  line: lineNum,
-                  column: col + match.index + attrMatch.index,
-                  severity: 'warning',
-                });
-              }
-            }
-          }
-        }
-
-        // Check 4: Are required attributes present?
-        if (elSpec.attributes) {
-          for (const attr of elSpec.attributes) {
-            if (attr.required && !presentAttrs.has(attr.name)) {
-              errors.push({
-                message: `Missing required attribute "${attr.name}" on <${tagName}>`,
-                line: lineNum,
-                column: col,
-                severity: 'error',
-              });
-            }
-          }
-        }
-      }
-
-      // Track as child of parent
-      if (stack.length > 0) {
-        stack[stack.length - 1].children.push({ name: tagName, line: lineNum });
-      }
-
-      // Push to stack if not self-closing
-      if (!fullTag.endsWith('/>')) {
-        stack.push({ name: tagName, line: lineNum, children: [] });
-      } else {
-        // Self-closing tag: validate empty constraint if applicable
-        if (elSpec?.contentModel && elSpec.contentModel.type !== 'empty') {
-          const required = getRequiredChildren(elSpec.contentModel);
-          if (required.length > 0) {
-            errors.push({
-              message: `<${tagName}/> is self-closing but requires children: ${required.slice(0, 3).join(', ')}${required.length > 3 ? '...' : ''}`,
-              line: lineNum,
-              column: col,
-              severity: 'warning',
-            });
-          }
+    // Push to stack if not self-closing
+    if (!fullTag.endsWith('/>')) {
+      stack.push({ name: tagName, line: lineNum, children: [] });
+    } else {
+      // Self-closing tag: validate empty constraint if applicable
+      if (elSpec?.contentModel && elSpec.contentModel.type !== 'empty') {
+        const required = getRequiredChildren(elSpec.contentModel);
+        if (required.length > 0) {
+          errors.push({
+            message: `<${tagName}/> is self-closing but requires children: ${required.slice(0, 3).join(', ')}${required.length > 3 ? '...' : ''}`,
+            line: lineNum,
+            column: col,
+            severity: 'warning',
+          });
         }
       }
     }

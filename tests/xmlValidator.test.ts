@@ -2935,3 +2935,782 @@ describe('Custom RNG Schema Validation (TEI Conformant)', () => {
     });
   });
 });
+
+// ============================================================================
+// Multi-line Tag Recognition
+// ============================================================================
+
+describe('Multi-line Tag Recognition', () => {
+  const teiAllElements = getTeiAllElements();
+  const teiAllElementMap = new Map<string, ElementSpec>();
+  for (const el of teiAllElements) {
+    teiAllElementMap.set(el.name, el);
+  }
+  const teiAllSchema: SchemaInfo = {
+    id: 'tei_all',
+    name: 'TEI All',
+    elements: teiAllElements,
+    elementMap: teiAllElementMap,
+    hasSalveGrammar: false,
+  };
+
+  it('should accept opening tag with attributes on next line', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><rs type="person"
+           key="someone"
+           >John</rs></p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  it('should accept closing > on the next line', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><name type="person"
+    >Shakespeare</name></p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  it('should correctly match opening and closing multi-line tags', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <div
+      type="chapter"
+      n="1">
+      <p>Content</p>
+    </div>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  it('should validate element nesting for multi-line tags', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p
+      xml:id="p1"
+      >Some <hi
+              rend="italic"
+              >emphasized</hi> text</p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  it('should validate attributes on multi-line tags', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><date
+         when="1564-04-26"
+         >April 26</date></p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    // @when should be recognized as a valid attribute
+    const unknownAttrErrors = errors.filter(e => e.message.includes('Unknown attribute'));
+    expect(unknownAttrErrors).toHaveLength(0);
+  });
+
+  it('should detect unknown element in multi-line context', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><fakeElement
+         type="test"
+         >content</fakeElement></p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const unknownErrors = errors.filter(e => e.message.includes('Unknown element <fakeElement>'));
+    expect(unknownErrors.length).toBeGreaterThan(0);
+  });
+
+  it('should handle self-closing tag spanning multiple lines', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p>Before<lb
+                 n="5"
+                 />After</p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  it('should ignore tags inside multi-line comments', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <!-- <fakeElement
+         type="test"
+         >this should be ignored</fakeElement> -->
+    <p>Hello</p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const unknownErrors = errors.filter(e => e.message.includes('fakeElement'));
+    expect(unknownErrors).toHaveLength(0);
+  });
+
+  it('should handle real TEI scenario: rs with long attributes', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Sanskrit Text</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p>The commentary by <rs type="person" key="Śabarasvāmin"
+                >śabarasvāmī</rs> explains the <rs
+                  type="work"
+                  key="Mīmāṃsāsūtra"
+                  >sūtra</rs>.</p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+    const unknownErrors = errors.filter(e => e.message.includes('Unknown'));
+    expect(unknownErrors).toHaveLength(0);
+  });
+
+  it('should handle q element with multi-line attributes', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p>He said <q
+        type="spoken"
+        xml:id="q1"
+        >hello world</q> to them.</p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  it('should detect invalid attribute value on multi-line tag', () => {
+    // Build a test schema with enum-constrained attribute
+    const testSchema = buildTestSchema([
+      {
+        name: 'TEI',
+        children: ['teiHeader', 'text'],
+        attributes: [{ name: 'xmlns', values: [] }],
+      },
+      { name: 'teiHeader', children: ['fileDesc'], attributes: [] },
+      { name: 'fileDesc', children: ['titleStmt', 'publicationStmt'], attributes: [] },
+      { name: 'titleStmt', children: ['title'], attributes: [] },
+      {
+        name: 'title',
+        children: [],
+        attributes: [{ name: 'level', values: ['a', 'm', 'j', 's', 'u'] }],
+      },
+      { name: 'publicationStmt', children: ['p'], attributes: [] },
+      { name: 'text', children: ['body'], attributes: [] },
+      { name: 'body', children: ['p'], attributes: [] },
+      { name: 'p', children: [], attributes: [] },
+    ]);
+
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title
+                    level="INVALID"
+                    >Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Hello</p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, testSchema);
+    const invalidValueErrors = errors.filter(e => e.message.includes('Invalid value'));
+    expect(invalidValueErrors.length).toBeGreaterThan(0);
+    expect(invalidValueErrors[0].message).toContain('INVALID');
+    expect(invalidValueErrors[0].message).toContain('@level');
+  });
+
+  it('should handle multiple multi-line tags in sequence', () => {
+    const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><persName
+         ref="#p1"
+         >Alice</persName> met <persName
+                                  ref="#p2"
+                                  >Bob</persName> in <placeName
+                                                       ref="#pl1"
+                                                       >Paris</placeName>.</p>
+  </body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiAllSchema);
+    const actualErrors = errors.filter(e => e.severity === 'error');
+    expect(actualErrors).toHaveLength(0);
+  });
+
+  // ========================================================================
+  // Group A: Error Detection Accuracy
+  // ========================================================================
+
+  describe('Error Detection on Invalid Multi-line XML', () => {
+    it('A1: should detect tag mismatch in multi-line opening tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <div
+      type="chapter"
+      >content</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('A2: should detect orphan closing tag after multi-line tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <div
+      n="1"
+      >content</div>
+    </div>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('A3: should detect unclosed multi-line opening tag (persName not closed)', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><persName
+         ref="#p1"
+         >John
+    </p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('A4: should detect unknown attribute on multi-line tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p
+      fakeAttr="value"
+      >text</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const unknownAttrErrors = errors.filter(e => e.message.includes('Unknown attribute'));
+      expect(unknownAttrErrors.length).toBeGreaterThan(0);
+      expect(unknownAttrErrors[0].message).toContain('fakeAttr');
+    });
+
+    it('A5: should detect nesting violation in multi-line tag context', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p
+      xml:id="p1"
+      ><div>bad nesting</div></p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const nestingErrors = errors.filter(e =>
+        e.message.includes('not allowed inside') || e.message.includes('not a valid child')
+      );
+      expect(nestingErrors.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ========================================================================
+  // Group B: Line Number Accuracy
+  // ========================================================================
+
+  describe('Line Number Accuracy for Multi-line Tags', () => {
+    it('B1: multi-line opening tag error line should be the < start line', () => {
+      // Build a strict schema where <unknown> is not allowed
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><fakeElement
+         type="x"
+         >text</fakeElement></p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown element <fakeElement>'));
+      expect(unknownErrors.length).toBeGreaterThan(0);
+      // The error line should be 10 (line of <fakeElement), not 12 (line of >)
+      expect(unknownErrors[0].line).toBe(10);
+    });
+
+    it('B2: orphan closing tag line number after multi-line tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <div
+      n="1">content</div>
+    </span>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      // Look for an error mentioning </span>
+      const spanErrors = errors.filter(e => e.message.includes('span'));
+      expect(spanErrors.length).toBeGreaterThan(0);
+    });
+
+    it('B3: consecutive multi-line tags each report correct line numbers', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><fakeOne
+         type="a"
+         >text1</fakeOne></p>
+    <p><fakeTwo
+         type="b"
+         >text2</fakeTwo></p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const fakeOneErrors = errors.filter(e => e.message.includes('fakeOne'));
+      const fakeTwoErrors = errors.filter(e => e.message.includes('fakeTwo'));
+      expect(fakeOneErrors.length).toBeGreaterThan(0);
+      expect(fakeTwoErrors.length).toBeGreaterThan(0);
+      // fakeOne starts at line 10, fakeTwo starts at line 13
+      expect(fakeOneErrors[0].line).toBe(10);
+      expect(fakeTwoErrors[0].line).toBe(13);
+    });
+
+    it('B4: unclosed multi-line tag reports FIRST unclosed line', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <div
+      type="ch">
+      <p>text</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      // Should find an error — either well-formedness or unclosed tag
+      expect(errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ========================================================================
+  // Group C: Comments / CDATA / PI Edge Cases
+  // ========================================================================
+
+  describe('Comments, CDATA, and PI with Multi-line Tags', () => {
+    it('C1: should ignore multi-line "tags" inside CDATA', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><![CDATA[
+  <fake
+    attr="val"
+    >not a tag</fake>
+]]></p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const fakeErrors = errors.filter(e => e.message.includes('fake'));
+      expect(fakeErrors).toHaveLength(0);
+    });
+
+    it('C2: should ignore multi-line tags inside multiple comments', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <!-- comment 1
+      <fake1
+        type="x"
+        >ignore</fake1>
+    -->
+    <p>text</p>
+    <!-- comment 2
+      <fake2
+        type="y"
+        >ignore</fake2>
+    -->
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const fakeErrors = errors.filter(e =>
+        e.message.includes('fake1') || e.message.includes('fake2')
+      );
+      expect(fakeErrors).toHaveLength(0);
+    });
+
+    it('C3: should handle processing instruction spanning lines', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p>text<?target
+      data="val"
+    ?>more</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+  });
+
+  // ========================================================================
+  // Group D: Real TEI Patterns
+  // ========================================================================
+
+  describe('Real TEI Patterns with Multi-line Tags', () => {
+    it('D1: msDesc with deep nesting and multi-line msItem', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Manuscript</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+      <sourceDesc>
+        <msDesc>
+          <msContents>
+            <msItem
+              n="1"
+              defective="false"
+              >
+              <locus>fol. 1r-15v</locus>
+              <title>Manuscript Title</title>
+            </msItem>
+          </msContents>
+        </msDesc>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('D2: critical apparatus with multi-line lem and rdg', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Edition</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><app>
+      <lem
+        wit="#MS1 #MS2"
+        >reading one</lem>
+      <rdg
+        wit="#MS3"
+        >reading two</rdg>
+    </app></p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('D3: facsimile surface with multi-line coordinate attributes', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <facsimile>
+    <surface
+      ulx="0" uly="0"
+      lrx="1200" lry="1600"
+      >
+      <zone
+        ulx="50" uly="100"
+        lrx="300" lry="200"
+        />
+    </surface>
+  </facsimile>
+  <text><body><p>Text</p></body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('D4: mixed single-line and multi-line tags in same paragraph', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p>Normal <hi rend="bold">bold</hi> and <rs
+      type="person"
+      key="PersonID"
+      >person name</rs> end.</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+      const unknownErrors = errors.filter(e => e.message.includes('Unknown'));
+      expect(unknownErrors).toHaveLength(0);
+    });
+  });
+
+  // ========================================================================
+  // Group E: Attribute Edge Cases
+  // ========================================================================
+
+  describe('Attribute Edge Cases in Multi-line Tags', () => {
+    it('E1: single quotes in multi-line tag attributes', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p><name
+         type='person'
+         >John</name></p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('E2: blank lines between attributes in multi-line tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <div
+      type="chapter"
+
+      n="1"
+      >content</div>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('E3: tab-indented attributes in multi-line tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p
+\ttype="x"
+\tn="1"
+\t>text</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+    });
+
+    it('E4: namespace-prefixed attributes in multi-line tag', () => {
+      const xml = `<?xml version="1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Test</title></titleStmt>
+      <publicationStmt><p>Pub</p></publicationStmt>
+    </fileDesc>
+  </teiHeader>
+  <text><body>
+    <p xml:id="p1"
+       xml:lang="sa"
+       >Sanskrit text</p>
+  </body></text>
+</TEI>`;
+      const errors = validateXml(xml, teiAllSchema);
+      const actualErrors = errors.filter(e => e.severity === 'error');
+      expect(actualErrors).toHaveLength(0);
+      const unknownAttrErrors = errors.filter(e => e.message.includes('Unknown attribute'));
+      expect(unknownAttrErrors).toHaveLength(0);
+    });
+  });
+});
