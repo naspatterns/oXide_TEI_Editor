@@ -128,16 +128,24 @@ export function Tooltip({
     },
     ref: (node: HTMLElement | null) => {
       triggerRef.current = node;
-      // Handle existing ref on child
+      // Forward to any ref the child already has. Refs are designed to be
+      // mutated (that's their purpose) — the lint rule is overly strict for
+      // this legitimate ref-forwarding pattern.
       const { ref } = children as { ref?: React.Ref<HTMLElement> };
       if (typeof ref === 'function') {
         ref(node);
       } else if (ref && typeof ref === 'object') {
-        (ref as React.MutableRefObject<HTMLElement | null>).current = node;
+        // eslint-disable-next-line react-hooks/immutability
+        (ref as { current: HTMLElement | null }).current = node;
       }
     },
   };
 
+  // cloneElement is intentional here: Tooltip wraps an arbitrary child to
+  // inject hover handlers + a trigger ref without adding a DOM wrapper.
+  // Refactoring to a wrapper <span> would change CSS layout in many call
+  // sites, so we accept the lint exception.
+  // eslint-disable-next-line react-hooks/refs
   const clonedChild = cloneElement(children, childProps);
 
   return (

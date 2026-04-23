@@ -58,11 +58,9 @@ function parseRngXml(rngXml: string): ParsedElement[] {
   const docRegex = /<(?:a:)?documentation[^>]*>([\s\S]*?)<\/(?:a:)?documentation>/;
   const refRegex = /<(?:rng:)?ref\s+name="([^"]+)"/g;
   const attributeRegex = /<(?:rng:)?attribute\s+name="([^"]+)"[^>]*>[\s\S]*?<\/(?:rng:)?attribute>/g;
-  const valueRegex = /<(?:rng:)?value[^>]*>([^<]+)<\/(?:rng:)?value>/g;
 
   // Track element patterns for child relationship resolution
   const patternToElement = new Map<string, string>();
-  const elementPatterns = new Map<string, Set<string>>();
 
   let match;
 
@@ -82,7 +80,6 @@ function parseRngXml(rngXml: string): ParsedElement[] {
 
   // Second pass: extract elements with their properties
   while ((match = defineRegex.exec(rngXml)) !== null) {
-    const defineName = match[1];
     const defineContent = match[2];
 
     const elementMatch = elementRegex.exec(defineContent);

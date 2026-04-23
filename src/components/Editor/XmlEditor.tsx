@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useRef, useEffect, useState, useSyncExternalStore } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import type { EditorView, ViewUpdate } from '@codemirror/view';
-import { useEditor } from '../../store/EditorContext';
-import { useSchema } from '../../store/SchemaContext';
+import { useEditor } from '../../store/useEditor';
+import { useSchema } from '../../store/useSchema';
 import { useFileDrop } from '../../hooks/useFileDrop';
-import { useToast } from '../../components/Toast/Toast';
+import { useToast } from '../../components/Toast/useToast';
 import { createEditorExtensions, FILE_DROP_EVENT, QUICK_TAG_MENU_EVENT } from './extensions';
 import { validationErrorsCompartment, validationErrorsFacet } from './scrollbarMarkers';
 import { isValidXmlFile, getDragData } from '../../utils/dragDropUtils';
@@ -64,7 +64,7 @@ export function XmlEditor() {
     if (activeDoc) {
       contentRef.current = activeDoc.content;
     }
-  }, [activeDoc?.id, activeDoc?.content]);
+  }, [activeDoc]);
 
   // Register EditorView with the context when it changes
   const handleCreateEditor = useCallback((view: EditorView) => {

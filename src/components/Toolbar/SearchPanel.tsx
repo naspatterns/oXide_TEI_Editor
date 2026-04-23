@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import './SearchPanel.css';
 
 interface Props {

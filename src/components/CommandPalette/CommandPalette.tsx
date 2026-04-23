@@ -121,18 +121,29 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
       .sort((a, b) => b.score - a.score);
   }, [commands, query]);
 
-  // Reset selection when query changes
-  useEffect(() => {
+  // Reset selection when query changes (render-time pattern, see React docs:
+  // "Adjusting state when a prop changes")
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
     setSelectedIndex(0);
-  }, [query]);
+  }
 
-  // Focus input when opened
-  useEffect(() => {
+  // Reset query/selection on open transition (open: false → true)
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
+  }
+
+  // Focus input shortly after opening (DOM side-effect — keep in effect)
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
   }, [open]);
 
   // Scroll selected item into view

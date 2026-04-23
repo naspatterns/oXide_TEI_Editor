@@ -40,7 +40,7 @@ export function AlertDialog({ open, title, message, logo, onClose }: Props) {
               );
             }
             // Lines starting with emoji are section headers
-            if (/^[⚠️💡📁]/.test(line)) {
+            if (/^(⚠️|💡|📁)/u.test(line)) {
               return (
                 <div key={i} className="alert-section">
                   {line}

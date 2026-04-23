@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSchema } from '../../store/SchemaContext';
+import { useSchema } from '../../store/useSchema';
 import './WrapTagDialog.css';
 
 interface Props {

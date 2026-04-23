@@ -12,7 +12,7 @@ import {
 } from '../src/schema/xmlValidator';
 import { getTeiAllElements, getTeiLiteElements } from '../src/schema/teiStaticSchema';
 import { parseRng } from '../src/schema/rngParser';
-import type { SchemaInfo, ElementSpec, ContentModel, ContentItem, AttrSpec } from '../src/types/schema';
+import type { SchemaInfo, ElementSpec, ContentModel } from '../src/types/schema';
 
 // ============================================================================
 // Test Helper: Build Schema with ContentModel

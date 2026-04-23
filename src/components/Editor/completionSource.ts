@@ -2,6 +2,8 @@ import type { CompletionContext, CompletionResult, Completion } from '@codemirro
 import { snippetCompletion } from '@codemirror/autocomplete';
 import type { SchemaInfo, ElementSpec } from '../../types/schema';
 import { getRequiredChildren } from '../../schema/xmlValidator';
+import { getOpenElementStack, tokenizeXmlTags } from '../../schema/xmlTokenizer';
+import { getAttribute, getAttributes, getElement } from '../../schema/schemaQuery';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 정규식 캐싱 (모듈 레벨)
@@ -18,8 +20,6 @@ const ATTR_NAME_REGEX = /<([a-zA-Z_][\w.:_-]*)\s[^>]*?([a-zA-Z_][\w.:_-]*)$/;
 const SPACE_IN_TAG_REGEX = /<([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s$/;
 /** 닫는 태그 입력 패턴: </tagName */
 const CLOSING_TAG_REGEX = /<\/([a-zA-Z_][\w.:_-]*)$/;
-/** 태그 매칭 패턴 (g 플래그 - lastIndex 리셋 필요) */
-const TAG_PARSE_REGEX = /<\/?([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s*\/?>/g;
 /** 열린 태그 패턴: <tag attrs... */
 const OPEN_TAG_REGEX = /<([a-zA-Z_][\w.:_-]*)(\s[^>]*)?$/;
 /** 속성 추출 패턴 (g 플래그 - lastIndex 리셋 필요) */
@@ -45,9 +45,9 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
     const textBefore = state.doc.sliceString(Math.max(0, pos - 2000), pos);
 
     // Parse element stack up to cursor for context awareness
-    const elementStack = getElementStack(textBefore);
+    const elementStack = getOpenElementStack(textBefore);
     const parentName = elementStack.length > 0 ? elementStack[elementStack.length - 1] : null;
-    const parentSpec = parentName ? schema.elementMap.get(parentName) : null;
+    const parentSpec = parentName ? getElement(schema, parentName) : null;
 
     // Get existing children for required element detection
     const existingChildren = getExistingChildren(textBefore, parentName);
@@ -119,42 +119,6 @@ function getUsedAttributes(text: string): Set<string> {
 }
 
 /**
- * XML 텍스트에서 요소 스택 파싱 (열린/닫힌 태그 추적)
- * 루트부터 커서 위치까지 현재 열린 요소명 배열 반환
- *
- * 컨텍스트 인식 자동완성의 핵심 로직:
- * - 스택을 통해 현재 부모 요소 파악
- * - 부모 요소의 허용 자식만 제안하여 정확도 향상
- */
-function getElementStack(text: string): string[] {
-  const stack: string[] = [];
-  // g 플래그 정규식은 재사용 전 lastIndex 리셋 필수
-  TAG_PARSE_REGEX.lastIndex = 0;
-  let m: RegExpExecArray | null;
-
-  while ((m = TAG_PARSE_REGEX.exec(text)) !== null) {
-    const fullTag = m[0];
-    const tagName = m[1];
-
-    if (fullTag.startsWith('<?')) continue; // Processing instruction
-    if (fullTag.startsWith('<!')) continue; // Comments/CDATA
-
-    if (fullTag.startsWith('</')) {
-      // 닫는 태그: 스택 top과 매칭되면 pop
-      // (잘못된 중첩 시 스택 유지 - 자동완성 정확도 향상)
-      if (stack[stack.length - 1] === tagName) {
-        stack.pop();
-      }
-    } else if (!fullTag.endsWith('/>')) {
-      // 여는 태그 (self-closing 제외) → 스택에 push
-      stack.push(tagName);
-    }
-  }
-
-  return stack;
-}
-
-/**
  * Create a snippet completion for an element with cursor between tags.
  * @param el - Element specification
  * @param boost - Priority boost for ordering
@@ -213,29 +177,23 @@ function getExistingChildren(text: string, parentName: string | null): string[] 
 
   const children: string[] = [];
   const stack: string[] = [];
-  TAG_PARSE_REGEX.lastIndex = 0;
-  let m: RegExpExecArray | null;
 
-  while ((m = TAG_PARSE_REGEX.exec(text)) !== null) {
-    const fullTag = m[0];
-    const tagName = m[1];
+  for (const tok of tokenizeXmlTags(text)) {
+    if (tok.kind === 'pi' || tok.kind === 'comment' || tok.kind === 'cdata') continue;
 
-    if (fullTag.startsWith('<?') || fullTag.startsWith('<!')) continue;
-
-    if (fullTag.startsWith('</')) {
-      if (stack[stack.length - 1] === tagName) {
+    if (tok.kind === 'close') {
+      if (stack[stack.length - 1] === tok.name) {
         stack.pop();
       }
-    } else if (!fullTag.endsWith('/>')) {
-      // If we're directly inside the parent, this is a child
-      if (stack.length > 0 && stack[stack.length - 1] === parentName) {
-        children.push(tagName);
+    } else if (tok.kind === 'open') {
+      if (stack[stack.length - 1] === parentName) {
+        children.push(tok.name);
       }
-      stack.push(tagName);
+      stack.push(tok.name);
     } else {
-      // Self-closing: also a child if we're in the parent
-      if (stack.length > 0 && stack[stack.length - 1] === parentName) {
-        children.push(tagName);
+      // self-close: also a child if we're in the parent
+      if (stack[stack.length - 1] === parentName) {
+        children.push(tok.name);
       }
     }
   }
@@ -319,8 +277,7 @@ function completeAttributeName(
   from: number,
   usedAttrs: Set<string> = new Set(),
 ): CompletionResult {
-  const elSpec = schema.elementMap.get(elementName);
-  const attrs = elSpec?.attributes ?? [];
+  const attrs = getAttributes(schema, elementName);
 
   // Use snippetCompletion to place cursor inside quotes
   // Filter out already used attributes
@@ -346,8 +303,7 @@ function completeAttributeValue(
   partial: string,
   from: number,
 ): CompletionResult | null {
-  const elSpec = schema.elementMap.get(elementName);
-  const attrSpec = elSpec?.attributes?.find((a) => a.name === attrName);
+  const attrSpec = getAttribute(schema, elementName, attrName);
   if (!attrSpec?.values) return null;
 
   const options: Completion[] = attrSpec.values

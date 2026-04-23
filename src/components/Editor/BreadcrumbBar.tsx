@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import './BreadcrumbBar.css';
 
 interface PathElement {

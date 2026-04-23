@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { useEditor } from '../store/EditorContext';
-import { useToast } from '../components/Toast/Toast';
+import { useEditor } from '../store/useEditor';
+import { useToast } from '../components/Toast/useToast';
 import { isValidXmlFile, getDragData, INTERNAL_DRAG_TYPE } from '../utils/dragDropUtils';
 
 /**

@@ -5,13 +5,7 @@
  * Follows the same pattern as EditorContext and SchemaContext.
  */
 
-import {
-  createContext,
-  useContext,
-  useReducer,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { useReducer, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import type {
   AIState,
   AIMessage,
@@ -22,6 +16,7 @@ import type {
 } from './types';
 import { getProvider } from './providers';
 import { parseAIResponse } from './utils/responseParser';
+import { AIContext } from './useAI';
 
 // ─── Initial State ───
 
@@ -65,7 +60,7 @@ function reducer(state: AIState, action: Action): AIState {
     case 'UPDATE_MESSAGE':
       return {
         ...state,
-        messages: state.messages.map(msg =>
+        messages: state.messages.map((msg) =>
           msg.id === action.id ? { ...msg, ...action.updates } : msg,
         ),
       };
@@ -82,7 +77,7 @@ function reducer(state: AIState, action: Action): AIState {
     case 'REMOVE_MESSAGE':
       return {
         ...state,
-        messages: state.messages.filter(msg => msg.id !== action.id),
+        messages: state.messages.filter((msg) => msg.id !== action.id),
       };
 
     default:
@@ -90,43 +85,18 @@ function reducer(state: AIState, action: Action): AIState {
   }
 }
 
-// ─── Context ───
-
-interface AIContextValue {
-  /** Current AI state */
-  state: AIState;
-
-  /** Send a message to the AI */
-  sendMessage: (content: string, context: XMLContext) => Promise<void>;
-
-  /** Clear chat history */
-  clearMessages: () => void;
-
-  /** Start mock mode (no login required) */
-  startMockMode: () => void;
-
-  /** Logout (placeholder for future OAuth) */
-  logout: () => void;
-
-  /** Apply an AI action to the editor */
-  applyAction: (action: AIAction) => void;
-
-  /** Set apply action handler (set by parent component) */
-  setApplyActionHandler: (handler: (action: AIAction) => void) => void;
-}
-
-const AIContext = createContext<AIContextValue | null>(null);
-
 // ─── Provider ───
 
 export function AIProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Store the apply action handler (will be set by the component that has editor access)
-  let applyActionHandler: ((action: AIAction) => void) | null = null;
+  // Store the apply action handler in a ref so it survives re-renders
+  // and can be updated imperatively by a child component (AIPanel) without
+  // triggering a re-render cascade across all AI consumers.
+  const applyActionHandlerRef = useRef<((action: AIAction) => void) | null>(null);
 
   const setApplyActionHandler = useCallback((handler: (action: AIAction) => void) => {
-    applyActionHandler = handler;
+    applyActionHandlerRef.current = handler;
   }, []);
 
   const generateMessageId = useCallback(() => {
@@ -218,36 +188,26 @@ export function AIProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const applyAction = useCallback((action: AIAction) => {
-    if (applyActionHandler) {
-      applyActionHandler(action);
+    const handler = applyActionHandlerRef.current;
+    if (handler) {
+      handler(action);
     } else {
       console.warn('No apply action handler set');
     }
   }, []);
 
-  return (
-    <AIContext.Provider
-      value={{
-        state,
-        sendMessage,
-        clearMessages,
-        startMockMode,
-        logout,
-        applyAction,
-        setApplyActionHandler,
-      }}
-    >
-      {children}
-    </AIContext.Provider>
+  const value = useMemo(
+    () => ({
+      state,
+      sendMessage,
+      clearMessages,
+      startMockMode,
+      logout,
+      applyAction,
+      setApplyActionHandler,
+    }),
+    [state, sendMessage, clearMessages, startMockMode, logout, applyAction, setApplyActionHandler],
   );
-}
 
-// ─── Hook ───
-
-export function useAI(): AIContextValue {
-  const ctx = useContext(AIContext);
-  if (!ctx) {
-    throw new Error('useAI must be used within AIProvider');
-  }
-  return ctx;
+  return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
 }

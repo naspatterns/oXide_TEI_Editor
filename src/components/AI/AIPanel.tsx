@@ -5,10 +5,10 @@
  * Displays chat messages, input field, and quick actions.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
-import { useAI } from '../../ai/AIContext';
-import { useEditor } from '../../store/EditorContext';
-import { useSchema } from '../../store/SchemaContext';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAI } from '../../ai/useAI';
+import { useEditor } from '../../store/useEditor';
+import { useSchema } from '../../store/useSchema';
 import { buildXMLContext } from '../../ai/utils/contextBuilder';
 import type { AIAction, QuickAction } from '../../ai/types';
 import { ChatMessage } from './ChatMessage';
@@ -23,16 +23,17 @@ export function AIPanel() {
   const { schema } = useSchema();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const hasSelection = useRef(false);
+  const [hasSelection, setHasSelection] = useState(false);
 
-  // Update selection state
+  // Poll selection state. Using state (not ref) so that AIActions re-renders
+  // when selection appears/disappears. The conditional update keeps the
+  // re-render rate at 0/sec while idle.
   useEffect(() => {
     const checkSelection = () => {
-      const selection = getSelection();
-      hasSelection.current = selection.length > 0;
+      const next = getSelection().length > 0;
+      setHasSelection((prev) => (prev === next ? prev : next));
     };
 
-    // Check periodically (simple approach)
     const interval = setInterval(checkSelection, 500);
     return () => clearInterval(interval);
   }, [getSelection]);
@@ -188,7 +189,7 @@ export function AIPanel() {
       {/* Quick Actions */}
       <AIActions
         onAction={handleQuickAction}
-        hasSelection={hasSelection.current}
+        hasSelection={hasSelection}
         disabled={aiState.isLoading}
       />
 

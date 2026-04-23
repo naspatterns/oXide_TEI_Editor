@@ -54,7 +54,7 @@ function renderMarkdown(content: string): JSX.Element[] {
 
     if (lastIndex < text.length) {
       parts.push(
-        <span key={partKey++}>
+        <span key={partKey}>
           {processTextFormatting(text.slice(lastIndex))}
         </span>,
       );
@@ -135,7 +135,7 @@ function renderMarkdown(content: string): JSX.Element[] {
   // Handle unclosed code block
   if (inCodeBlock && codeBlockContent.length > 0) {
     elements.push(
-      <pre key={key++} className="code-block" data-lang={codeBlockLang}>
+      <pre key={key} className="code-block" data-lang={codeBlockLang}>
         <code>{codeBlockContent.join('\n')}</code>
       </pre>,
     );

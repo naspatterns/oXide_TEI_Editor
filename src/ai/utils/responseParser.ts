@@ -23,7 +23,6 @@ export function parseAIResponse(response: string): {
   actions: AIAction[];
 } {
   const actions: AIAction[] = [];
-  let cleanContent = response;
 
   // Extract all xml-action blocks
   let match;
@@ -37,9 +36,8 @@ export function parseAIResponse(response: string): {
     }
   }
 
-  // Remove xml-action blocks from display content
-  // but keep a placeholder
-  cleanContent = response.replace(
+  // Remove xml-action blocks from display content but keep a placeholder
+  const cleanContent = response.replace(
     XML_ACTION_PATTERN,
     '\n_[액션 블록 - 아래 버튼으로 적용]_\n',
   );
@@ -81,7 +79,7 @@ function parseActionBlock(content: string): AIAction | null {
         fields[fieldMatch[1]] = fieldMatch[2];
       } else {
         // Continue multiline (remove leading indentation)
-        multilineValue.push(line.replace(/^  /, ''));
+        multilineValue.push(line.replace(/^ {2}/, ''));
       }
       continue;
     }

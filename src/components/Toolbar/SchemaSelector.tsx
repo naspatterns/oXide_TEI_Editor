@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useSchema } from '../../store/SchemaContext';
+import { useSchema } from '../../store/useSchema';
 import { schemaEngine } from '../../schema/SchemaEngine';
 
 export function SchemaSelector() {

@@ -1,4 +1,4 @@
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import { openFile, saveFile, saveAsFile } from '../../file/fileSystemAccess';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from '../../utils/schemaDetector';
 

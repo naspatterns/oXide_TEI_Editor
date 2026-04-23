@@ -1,4 +1,4 @@
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import './FontSizeControl.css';
 
 const MIN_FONT_SIZE = 10;

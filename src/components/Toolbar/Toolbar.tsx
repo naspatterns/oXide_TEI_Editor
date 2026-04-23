@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import type { ViewMode } from '../../types/editor';
 import { MenuBar, type MenuDefinition } from './MenuBar';
 import { SchemaSelector } from './SchemaSelector';

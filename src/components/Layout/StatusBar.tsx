@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useEditor } from '../../store/EditorContext';
-import { useSchema } from '../../store/SchemaContext';
+import { useEditor } from '../../store/useEditor';
+import { useSchema } from '../../store/useSchema';
 import type { ValidationError } from '../../types/schema';
 import './StatusBar.css';
 

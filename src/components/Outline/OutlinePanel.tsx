@@ -1,6 +1,7 @@
 import { memo, useMemo, useState, useCallback, useDeferredValue } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import type { ValidationError } from '../../types/schema';
+import { tokenizeXmlTags, parseAttributes } from '../../schema/xmlTokenizer';
 import './OutlinePanel.css';
 
 const MIN_FONT_SIZE = 10;
@@ -26,89 +27,53 @@ interface ParseResult {
   parseErrors: Array<{ line: number; message: string }>;
 }
 
-/** Parse attributes from a tag string */
-function parseAttributes(attrStr: string): Record<string, string> {
-  const attrs: Record<string, string> = {};
-  const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=\s*["']([^"']*)["']/g;
-  let match;
-  while ((match = attrRegex.exec(attrStr)) !== null) {
-    attrs[match[1]] = match[2];
-  }
-  return attrs;
-}
-
-/** Regex-based XML parsing (works even with malformed XML) */
+/**
+ * Tag-stream-based XML parsing (works even with malformed XML).
+ * Uses the shared `xmlTokenizer` so this view, the completion source, and
+ * the validator agree on what counts as a tag.
+ */
 function parseXmlWithRegex(xmlStr: string): ParseResult {
-  const lines = xmlStr.split('\n');
   const parseErrors: Array<{ line: number; message: string }> = [];
-
-  // Stack-based parsing
   const stack: Array<{ node: XmlNode; expectedClosing: string }> = [];
   const root: XmlNode = { name: '#root', attributes: {}, children: [], line: 0 };
   let current = root;
 
-  // Tag matching regex
-  const tagRegex = /<\/?([a-zA-Z_][\w.:_-]*)(\s[^>]*)?\s*\/?>/g;
+  for (const tok of tokenizeXmlTags(xmlStr)) {
+    if (tok.kind === 'pi' || tok.kind === 'comment' || tok.kind === 'cdata') continue;
 
-  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-    const lineText = lines[lineIdx];
-    const lineNum = lineIdx + 1;
-
-    // Skip XML declaration, comments, CDATA
-    if (lineText.includes('<?') || lineText.includes('<!--') || lineText.includes('<![CDATA[')) continue;
-
-    tagRegex.lastIndex = 0; // Reset for each line
-    let match;
-
-    while ((match = tagRegex.exec(lineText)) !== null) {
-      const fullTag = match[0];
-      const tagName = match[1];
-      const attrStr = match[2] ?? '';
-
-      if (fullTag.startsWith('</')) {
-        // Closing tag
-        if (stack.length > 0) {
-          const expected = stack[stack.length - 1];
-          if (expected.expectedClosing !== tagName) {
-            parseErrors.push({
-              line: lineNum,
-              message: `Expected </${expected.expectedClosing}>, found </${tagName}>`
-            });
-            // Recovery: find matching tag and clean up stack
-            let found = false;
-            for (let i = stack.length - 1; i >= 0; i--) {
-              if (stack[i].expectedClosing === tagName) {
-                stack.splice(i);
-                current = stack.length > 0 ? stack[stack.length - 1].node : root;
-                found = true;
-                break;
-              }
-            }
-            if (!found) continue; // No match, ignore
-          } else {
-            stack.pop();
+    if (tok.kind === 'close') {
+      if (stack.length === 0) continue;
+      const expected = stack[stack.length - 1];
+      if (expected.expectedClosing !== tok.name) {
+        parseErrors.push({
+          line: tok.line,
+          message: `Expected </${expected.expectedClosing}>, found </${tok.name}>`,
+        });
+        // Recovery: find matching tag and clean up the stack down to it.
+        let found = false;
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (stack[i].expectedClosing === tok.name) {
+            stack.splice(i);
             current = stack.length > 0 ? stack[stack.length - 1].node : root;
+            found = true;
+            break;
           }
         }
-      } else if (fullTag.endsWith('/>')) {
-        // Self-closing tag
-        const node: XmlNode = {
-          name: tagName,
-          attributes: parseAttributes(attrStr),
-          children: [],
-          line: lineNum,
-        };
-        current.children.push(node);
+        if (!found) continue;
       } else {
-        // Opening tag
-        const node: XmlNode = {
-          name: tagName,
-          attributes: parseAttributes(attrStr),
-          children: [],
-          line: lineNum,
-        };
-        current.children.push(node);
-        stack.push({ node, expectedClosing: tagName });
+        stack.pop();
+        current = stack.length > 0 ? stack[stack.length - 1].node : root;
+      }
+    } else {
+      const node: XmlNode = {
+        name: tok.name,
+        attributes: parseAttributes(tok.attributesText),
+        children: [],
+        line: tok.line,
+      };
+      current.children.push(node);
+      if (tok.kind === 'open') {
+        stack.push({ node, expectedClosing: tok.name });
         current = node;
       }
     }
@@ -118,7 +83,7 @@ function parseXmlWithRegex(xmlStr: string): ParseResult {
   for (const item of stack) {
     parseErrors.push({
       line: item.node.line,
-      message: `Unclosed tag <${item.expectedClosing}>`
+      message: `Unclosed tag <${item.expectedClosing}>`,
     });
   }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useSchema } from '../../store/SchemaContext';
+import { useSchema } from '../../store/useSchema';
 import './QuickTagMenu.css';
 
 interface Props {
@@ -142,10 +142,12 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
     );
   }, [allTags, filter]);
 
-  // Reset selected index when filter changes
-  useEffect(() => {
+  // Reset selected index when filter changes (render-time pattern)
+  const [prevFilter, setPrevFilter] = useState(filter);
+  if (prevFilter !== filter) {
+    setPrevFilter(filter);
     setSelectedIndex(0);
-  }, [filter]);
+  }
 
   // Handle click outside to close
   useEffect(() => {
@@ -211,13 +213,15 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
   // filter tags, and the document-level keydown handler will focus
   // the input automatically.
 
-  // Reset filter when menu closes
-  useEffect(() => {
+  // Reset filter when menu closes (render-time pattern)
+  const [prevPosition, setPrevPosition] = useState(position);
+  if (prevPosition !== position) {
+    setPrevPosition(position);
     if (!position) {
       setFilter('');
       setSelectedIndex(0);
     }
-  }, [position]);
+  }
 
   // Scroll selected item into view
   useEffect(() => {

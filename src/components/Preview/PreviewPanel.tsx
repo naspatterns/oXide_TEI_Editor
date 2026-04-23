@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import { teiToHtml } from './teiTransform';
 import './tei-preview.css';
 

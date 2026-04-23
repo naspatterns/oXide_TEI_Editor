@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
-import { useWorkspace } from '../../store/WorkspaceContext';
-import { useEditor } from '../../store/EditorContext';
+import { useWorkspace } from '../../store/useWorkspace';
+import { useEditor } from '../../store/useEditor';
 import { openFile, readFileContent } from '../../file/fileSystemAccess';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from '../../utils/schemaDetector';
-import { ContextMenu, useContextMenu, MenuItem, MenuDivider } from '../ContextMenu/ContextMenu';
+import { ContextMenu, type MenuItem, type MenuDivider } from '../ContextMenu/ContextMenu';
+import { useContextMenu } from '../ContextMenu/useContextMenu';
 import { FileTreeItem } from './FileTreeItem';
 import type { FileTreeNode } from '../../types/workspace';
 import './FileExplorer.css';

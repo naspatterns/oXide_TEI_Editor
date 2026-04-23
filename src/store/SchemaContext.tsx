@@ -1,21 +1,7 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { SchemaInfo } from '../types/schema';
 import { schemaEngine } from '../schema/SchemaEngine';
-
-interface SchemaContextValue {
-  /** Currently active schema */
-  schema: SchemaInfo | null;
-  /** Available schema IDs */
-  availableSchemas: string[];
-  /** Whether schema is loading */
-  isLoading: boolean;
-  /** Load a schema by ID */
-  loadSchema: (id: string) => Promise<void>;
-  /** Set schema directly (for custom uploads) */
-  setSchema: (schema: SchemaInfo) => void;
-}
-
-const SchemaContext = createContext<SchemaContextValue | null>(null);
+import { SchemaContext } from './useSchema';
 
 const BUILTIN_SCHEMAS = ['tei_lite', 'tei_all'];
 
@@ -39,20 +25,24 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
     setSchemaState(s);
   }, []);
 
-  // Auto-load TEI Lite on mount
+  // Auto-load TEI Lite on mount.
+  // This is a legitimate one-time async data fetch on mount; the alternative
+  // (Suspense + use()) would require restructuring the whole provider tree.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSchema('tei_lite');
   }, [loadSchema]);
 
-  return (
-    <SchemaContext.Provider value={{ schema, availableSchemas: BUILTIN_SCHEMAS, isLoading, loadSchema, setSchema }}>
-      {children}
-    </SchemaContext.Provider>
+  const value = useMemo(
+    () => ({
+      schema,
+      availableSchemas: BUILTIN_SCHEMAS,
+      isLoading,
+      loadSchema,
+      setSchema,
+    }),
+    [schema, isLoading, loadSchema, setSchema],
   );
-}
 
-export function useSchema(): SchemaContextValue {
-  const ctx = useContext(SchemaContext);
-  if (!ctx) throw new Error('useSchema must be used within SchemaProvider');
-  return ctx;
+  return <SchemaContext.Provider value={value}>{children}</SchemaContext.Provider>;
 }

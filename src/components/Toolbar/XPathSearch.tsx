@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import './XPathSearch.css';
 
 // ═══════════════════════════════════════════════════════════
@@ -34,10 +34,10 @@ function convertToLocalNameXPath(expression: string): string {
   // Convert //tagname to //*[local-name()='tagname']
   // Also handle /tagname, //tagname[@attr], etc.
   return expression.replace(
-    /\/\/([a-zA-Z_][\w-]*)([\[@]|$)/g,
+    /\/\/([a-zA-Z_][\w-]*)([[@]|$)/g,
     (_, tagName, suffix) => `//*[local-name()='${tagName}']${suffix || ''}`
   ).replace(
-    /\/([a-zA-Z_][\w-]*)([\[@]|$)/g,
+    /\/([a-zA-Z_][\w-]*)([[@]|$)/g,
     (match, tagName, suffix) => {
       // Don't convert if it's already converted or part of a predicate
       if (match.includes('local-name')) return match;
@@ -212,13 +212,17 @@ export function XPathSearch() {
     [matches, currentIndex, showResults, navigateToMatch],
   );
 
-  // Reset index when expression changes
-  useEffect(() => {
+  // Reset index and reveal results panel when expression or match count
+  // changes (render-time pattern, see React docs: "Adjusting state when a
+  // prop changes")
+  const [prevDeps, setPrevDeps] = useState({ expression, matchesLen: matches.length });
+  if (prevDeps.expression !== expression || prevDeps.matchesLen !== matches.length) {
+    setPrevDeps({ expression, matchesLen: matches.length });
     setCurrentIndex(0);
     if (expression.trim() && matches.length > 0) {
       setShowResults(true);
     }
-  }, [expression, matches.length]);
+  }
 
   // Close results when clicking outside
   useEffect(() => {

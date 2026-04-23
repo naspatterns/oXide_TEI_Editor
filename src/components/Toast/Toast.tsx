@@ -1,47 +1,6 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from 'react';
+import { ToastContext, type ToastContextValue, type ToastItem } from './useToast';
 import './Toast.css';
-
-// ═══════════════════════════════════════════════════════════
-// Toast Types
-// ═══════════════════════════════════════════════════════════
-
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-export interface ToastItem {
-  id: string;
-  type: ToastType;
-  message: string;
-  duration?: number;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
-
-interface ToastContextValue {
-  toasts: ToastItem[];
-  showToast: (toast: Omit<ToastItem, 'id'>) => string;
-  dismissToast: (id: string) => void;
-  // Convenience methods
-  success: (message: string, duration?: number) => string;
-  error: (message: string, duration?: number) => string;
-  warning: (message: string, duration?: number) => string;
-  info: (message: string, duration?: number) => string;
-}
-
-// ═══════════════════════════════════════════════════════════
-// Context
-// ═══════════════════════════════════════════════════════════
-
-const ToastContext = createContext<ToastContextValue | null>(null);
-
-export function useToast(): ToastContextValue {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-}
 
 // ═══════════════════════════════════════════════════════════
 // Provider
@@ -57,40 +16,55 @@ export function ToastProvider({ children }: ToastProviderProps) {
 
   const showToast = useCallback((toast: Omit<ToastItem, 'id'>): string => {
     const id = `toast-${++idCounter.current}`;
-    setToasts(prev => [...prev, { ...toast, id }]);
+    setToasts((prev) => [...prev, { ...toast, id }]);
     return id;
   }, []);
 
   const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   // Convenience methods
-  const success = useCallback((message: string, duration = 3000) => {
-    return showToast({ type: 'success', message, duration });
-  }, [showToast]);
+  const success = useCallback(
+    (message: string, duration = 3000) => {
+      return showToast({ type: 'success', message, duration });
+    },
+    [showToast],
+  );
 
-  const error = useCallback((message: string, duration = 5000) => {
-    return showToast({ type: 'error', message, duration });
-  }, [showToast]);
+  const error = useCallback(
+    (message: string, duration = 5000) => {
+      return showToast({ type: 'error', message, duration });
+    },
+    [showToast],
+  );
 
-  const warning = useCallback((message: string, duration = 4000) => {
-    return showToast({ type: 'warning', message, duration });
-  }, [showToast]);
+  const warning = useCallback(
+    (message: string, duration = 4000) => {
+      return showToast({ type: 'warning', message, duration });
+    },
+    [showToast],
+  );
 
-  const info = useCallback((message: string, duration = 3000) => {
-    return showToast({ type: 'info', message, duration });
-  }, [showToast]);
+  const info = useCallback(
+    (message: string, duration = 3000) => {
+      return showToast({ type: 'info', message, duration });
+    },
+    [showToast],
+  );
 
-  const value: ToastContextValue = {
-    toasts,
-    showToast,
-    dismissToast,
-    success,
-    error,
-    warning,
-    info,
-  };
+  const value = useMemo<ToastContextValue>(
+    () => ({
+      toasts,
+      showToast,
+      dismissToast,
+      success,
+      error,
+      warning,
+      info,
+    }),
+    [toasts, showToast, dismissToast, success, error, warning, info],
+  );
 
   return (
     <ToastContext.Provider value={value}>
@@ -112,7 +86,7 @@ interface ToastContainerProps {
 function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
     <div className="toast-container" role="region" aria-label="Notifications">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <ToastNotification key={toast.id} toast={toast} onDismiss={onDismiss} />
       ))}
     </div>
@@ -133,7 +107,9 @@ function ToastNotification({ toast, onDismiss }: ToastNotificationProps) {
   const [isPaused, setIsPaused] = useState(false);
   const timeoutRef = useRef<number | null>(null);
   const remainingRef = useRef(toast.duration ?? 3000);
-  const startTimeRef = useRef(Date.now());
+  // Initialized to 0; startTimer() overwrites with Date.now() before pauseTimer()
+  // can read it.
+  const startTimeRef = useRef(0);
 
   const startTimer = useCallback(() => {
     if (remainingRef.current <= 0) return;
@@ -175,10 +151,14 @@ function ToastNotification({ toast, onDismiss }: ToastNotificationProps) {
 
   const getIcon = () => {
     switch (toast.type) {
-      case 'success': return '✓';
-      case 'error': return '✗';
-      case 'warning': return '⚠';
-      case 'info': return 'ℹ';
+      case 'success':
+        return '✓';
+      case 'error':
+        return '✗';
+      case 'warning':
+        return '⚠';
+      case 'info':
+        return 'ℹ';
     }
   };
 

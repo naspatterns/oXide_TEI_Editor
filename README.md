@@ -55,7 +55,13 @@ npm run dev
 |---------|-------------|
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm run test:run` | Run tests |
+| `npm run test:run` | Run tests once |
+| `npm run test` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with v8 coverage report |
+| `npm run lint` | ESLint check |
+| `npm run lint:fix` | ESLint auto-fix |
+| `npm run format` | Prettier write |
+| `npm run format:check` | Prettier check |
 
 ## Browser Support
 
@@ -73,6 +79,11 @@ npm run dev
 | Custom RNG | User-defined | Upload .rng file |
 
 > **Note:** Custom RNG schemas must be TEI conformant. Non-TEI schemas (e.g., DocBook, DITA) are not supported by the validator.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full version history and rebuild
+notes.
 
 ## Contact
 

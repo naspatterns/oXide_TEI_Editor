@@ -1,5 +1,5 @@
 import { memo, useCallback, useState } from 'react';
-import { useWorkspace } from '../../store/WorkspaceContext';
+import { useWorkspace } from '../../store/useWorkspace';
 import type { FileTreeNode } from '../../types/workspace';
 import { setDragData, INTERNAL_DRAG_TYPE } from '../../utils/dragDropUtils';
 

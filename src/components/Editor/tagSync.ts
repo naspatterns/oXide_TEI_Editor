@@ -510,14 +510,12 @@ export function createTagSyncExtension(): Extension {
           const adjustment = insertedLength - deletedLength;
 
           // Calculate where the tag would be in the new document
-          let newPos = fromA;
-          if (originalTag.tagStart < fromA) {
-            // Tag started before deletion point
-            newPos = originalTag.tagStart + 1;
-          } else {
-            // Tag started at or after deletion point
-            newPos = Math.max(0, originalTag.tagStart + adjustment + 1);
-          }
+          const newPos =
+            originalTag.tagStart < fromA
+              ? // Tag started before deletion point
+                originalTag.tagStart + 1
+              : // Tag started at or after deletion point
+                Math.max(0, originalTag.tagStart + adjustment + 1);
 
           // Check if a complete tag exists at the new position
           const newTag = findTagAtPosition(update.state.doc, Math.min(newPos, update.state.doc.length));

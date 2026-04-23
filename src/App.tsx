@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { SchemaProvider } from './store/SchemaContext';
-import { EditorProvider, useEditor } from './store/EditorContext';
+import { EditorProvider } from './store/EditorContext';
+import { useEditor } from './store/useEditor';
 import { WorkspaceProvider } from './store/WorkspaceContext';
 import { AIProvider } from './ai/AIContext';
-import { ToastProvider, useToast } from './components/Toast/Toast';
+import { ToastProvider } from './components/Toast/Toast';
+import { useToast } from './components/Toast/useToast';
 import { AppShell } from './components/Layout/AppShell';
 import { MainLayout } from './components/Layout/MainLayout';
 import { Toolbar } from './components/Toolbar/Toolbar';
@@ -289,7 +291,7 @@ function EditorLayout() {
       }
     })();
   // Only run on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, []);
 
   const handleRecoverDocument = useCallback(() => {

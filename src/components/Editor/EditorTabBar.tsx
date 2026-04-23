@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import { useFileDrop } from '../../hooks/useFileDrop';
-import { ContextMenu, useContextMenu, MenuItem, MenuDivider } from '../ContextMenu/ContextMenu';
+import { ContextMenu, type MenuItem, type MenuDivider } from '../ContextMenu/ContextMenu';
+import { useContextMenu } from '../ContextMenu/useContextMenu';
 import { ConfirmDialog } from '../FileDialog/ConfirmDialog';
 import './EditorTabBar.css';
 

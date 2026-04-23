@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TEMPLATES, getTemplateContent } from '../../file/templates';
-import { useEditor } from '../../store/EditorContext';
+import { useEditor } from '../../store/useEditor';
 import './NewDocumentDialog.css';
 
 interface Props {

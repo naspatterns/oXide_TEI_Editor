@@ -8,9 +8,9 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { EditorState } from '@codemirror/state';
-import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import type { CompletionContext } from '@codemirror/autocomplete';
 import { createSchemaCompletionSource } from '../src/components/Editor/completionSource';
-import type { SchemaInfo, ElementSpec, ContentModel } from '../src/types/schema';
+import type { SchemaInfo, ElementSpec } from '../src/types/schema';
 
 // ============================================================================
 // Test Helper: Build Schema with ContentModel

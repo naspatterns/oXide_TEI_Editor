@@ -1,6 +1,7 @@
-import { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
+import { useReducer, useCallback, useMemo, type ReactNode } from 'react';
 import type { FileTreeNode, WorkspaceState } from '../types/workspace';
 import { openDirectory, buildFileTree, supportsDirectoryPicker } from '../file/fileSystemAccess';
+import { WorkspaceContext } from './useWorkspace';
 
 /**
  * Actions for workspace state management.
@@ -43,7 +44,7 @@ function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState
     case 'TOGGLE_DIRECTORY': {
       // Recursively find and toggle the directory
       const toggleDir = (nodes: FileTreeNode[]): FileTreeNode[] =>
-        nodes.map(node => {
+        nodes.map((node) => {
           if (node.path === action.path && node.type === 'directory') {
             return { ...node, isExpanded: !node.isExpanded };
           }
@@ -67,24 +68,6 @@ const initialState: WorkspaceState = {
   fileTree: [],
   isLoading: false,
 };
-
-interface WorkspaceContextValue {
-  state: WorkspaceState;
-  /** Whether directory picker is supported in this browser */
-  isSupported: boolean;
-  /** Open a folder as workspace */
-  openWorkspace: () => Promise<void>;
-  /** Close the current workspace */
-  closeWorkspace: () => void;
-  /** Refresh the file tree (re-scan directory) */
-  refreshFileTree: () => Promise<void>;
-  /** Toggle directory expanded/collapsed state */
-  toggleDirectory: (path: string) => void;
-  /** Find a file node by path */
-  findFileNode: (path: string) => FileTreeNode | null;
-}
-
-const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -143,25 +126,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [state.fileTree],
   );
 
-  return (
-    <WorkspaceContext.Provider
-      value={{
-        state,
-        isSupported,
-        openWorkspace,
-        closeWorkspace,
-        refreshFileTree,
-        toggleDirectory,
-        findFileNode,
-      }}
-    >
-      {children}
-    </WorkspaceContext.Provider>
+  const value = useMemo(
+    () => ({
+      state,
+      isSupported,
+      openWorkspace,
+      closeWorkspace,
+      refreshFileTree,
+      toggleDirectory,
+      findFileNode,
+    }),
+    [state, isSupported, openWorkspace, closeWorkspace, refreshFileTree, toggleDirectory, findFileNode],
   );
-}
 
-export function useWorkspace(): WorkspaceContextValue {
-  const ctx = useContext(WorkspaceContext);
-  if (!ctx) throw new Error('useWorkspace must be used within WorkspaceProvider');
-  return ctx;
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }
