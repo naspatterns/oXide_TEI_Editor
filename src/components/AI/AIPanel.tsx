@@ -5,10 +5,12 @@
  * Displays chat messages, input field, and quick actions.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAI } from '../../ai/useAI';
 import { useEditor } from '../../store/useEditor';
 import { useSchema } from '../../store/useSchema';
+import { useCursor } from '../../store/useCursor';
+import { useEditorActions } from '../../hooks/useEditorActions';
 import { buildXMLContext } from '../../ai/utils/contextBuilder';
 import type { AIAction, QuickAction } from '../../ai/types';
 import { ChatMessage } from './ChatMessage';
@@ -19,11 +21,43 @@ import './AIPanel.css';
 
 export function AIPanel() {
   const { state: aiState, sendMessage, clearMessages, startMockMode, applyAction, setApplyActionHandler } = useAI();
-  const { state: editorState, getSelection, wrapSelection, editorViewRef } = useEditor();
+  const { state: editorState, getSelection } = useEditor();
   const { schema } = useSchema();
+  const { line: cursorLine, column: cursorColumn } = useCursor();
+  const editorActions = useEditorActions();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [hasSelection, setHasSelection] = useState(false);
+
+  // Bounded message rendering. Only the most recent `visibleCount` messages
+  // are placed in the DOM; older ones are revealed on demand via the
+  // "Load older" button. Combined with `content-visibility: auto` on each
+  // ChatMessage (see AIPanel.css), this keeps long sessions responsive
+  // without pulling in a virtualization library — the AI feature is
+  // mock-default-gated and not expected to hold thousands of messages.
+  const MESSAGE_WINDOW_STEP = 50;
+  const [visibleCount, setVisibleCount] = useState(MESSAGE_WINDOW_STEP);
+  const totalMessages = aiState.messages.length;
+  const windowStart = Math.max(0, totalMessages - visibleCount);
+  const visibleMessages = useMemo(
+    () => aiState.messages.slice(windowStart),
+    [aiState.messages, windowStart],
+  );
+  const hiddenOlderCount = windowStart;
+  const loadOlder = useCallback(
+    () => setVisibleCount((prev) => prev + MESSAGE_WINDOW_STEP),
+    [],
+  );
+  // Reset the window when the chat is cleared so the next session starts
+  // at the default window size. Render-time "adjusting state when a prop
+  // changes" pattern (avoids setState-in-effect).
+  const [hadMessages, setHadMessages] = useState(totalMessages > 0);
+  if (totalMessages > 0 && !hadMessages) {
+    setHadMessages(true);
+  } else if (totalMessages === 0 && hadMessages) {
+    setHadMessages(false);
+    setVisibleCount(MESSAGE_WINDOW_STEP);
+  }
 
   // Poll selection state. Using state (not ref) so that AIActions re-renders
   // when selection appears/disappears. The conditional update keeps the
@@ -38,69 +72,43 @@ export function AIPanel() {
     return () => clearInterval(interval);
   }, [getSelection]);
 
-  // Set up the action handler
+  // Set up the action handler. Imperative editor mutations go through
+  // `useEditorActions` so this component never touches `view.dispatch` directly.
   useEffect(() => {
     const handleApplyAction = (action: AIAction) => {
-      const view = editorViewRef.current;
-      if (!view) return;
-
       switch (action.type) {
-        case 'wrap': {
-          if (action.payload.tagName) {
-            wrapSelection(action.payload.tagName);
-          }
+        case 'wrap':
+          if (action.payload.tagName) editorActions.wrapSelection(action.payload.tagName);
           break;
-        }
-        case 'insert': {
-          if (action.payload.xml) {
-            const { from } = view.state.selection.main;
-            view.dispatch({
-              changes: { from, insert: action.payload.xml },
-            });
-            view.focus();
-          }
+        case 'insert':
+          if (action.payload.xml) editorActions.insertAtCursor(action.payload.xml);
           break;
-        }
-        case 'replace': {
-          if (action.payload.xml) {
-            const { from, to } = view.state.selection.main;
-            view.dispatch({
-              changes: { from, to, insert: action.payload.xml },
-            });
-            view.focus();
-          }
+        case 'replace':
+          if (action.payload.xml) editorActions.replaceSelection(action.payload.xml);
           break;
-        }
-        case 'navigate': {
-          if (action.payload.startLine) {
-            const line = view.state.doc.line(action.payload.startLine);
-            view.dispatch({
-              selection: { anchor: line.from },
-              scrollIntoView: true,
-            });
-            view.focus();
-          }
+        case 'navigate':
+          if (action.payload.startLine) editorActions.goToLine(action.payload.startLine);
           break;
-        }
-        // 'explain' doesn't need editor action
+        // 'explain' doesn't need an editor action
       }
     };
 
     setApplyActionHandler(handleApplyAction);
-  }, [editorViewRef, wrapSelection, setApplyActionHandler]);
+  }, [editorActions, setApplyActionHandler]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [aiState.messages]);
 
-  // Build context and send message
+  // Build context and send message. Cursor comes from CursorContext (live);
+  // editorState provides content + errors.
   const handleSendMessage = useCallback(
     async (content: string) => {
       const context = buildXMLContext({
         content: editorState.content,
-        cursorLine: editorState.cursorLine,
-        cursorColumn: editorState.cursorColumn,
+        cursorLine,
+        cursorColumn,
         selection: getSelection() || undefined,
         errors: editorState.errors,
         schemaName: schema?.name,
@@ -108,7 +116,7 @@ export function AIPanel() {
 
       await sendMessage(content, context);
     },
-    [editorState, schema, getSelection, sendMessage],
+    [editorState, cursorLine, cursorColumn, schema, getSelection, sendMessage],
   );
 
   // Handle quick action
@@ -167,7 +175,7 @@ export function AIPanel() {
 
       {/* Messages */}
       <div className="ai-messages">
-        {aiState.messages.length === 0 ? (
+        {totalMessages === 0 ? (
           <div className="ai-welcome">
             <p>안녕하세요! TEI XML 인코딩을 도와드리겠습니다.</p>
             <p className="ai-welcome-hint">
@@ -175,13 +183,26 @@ export function AIPanel() {
             </p>
           </div>
         ) : (
-          aiState.messages.map(message => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              onApplyAction={handleApplyAction}
-            />
-          ))
+          <>
+            {hiddenOlderCount > 0 && (
+              <button
+                type="button"
+                className="ai-load-older"
+                onClick={loadOlder}
+                aria-label={`Load ${Math.min(MESSAGE_WINDOW_STEP, hiddenOlderCount)} older messages`}
+              >
+                ↑ Load {Math.min(MESSAGE_WINDOW_STEP, hiddenOlderCount)} older messages
+                <span className="ai-load-older-total"> ({hiddenOlderCount} hidden)</span>
+              </button>
+            )}
+            {visibleMessages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                message={message}
+                onApplyAction={handleApplyAction}
+              />
+            ))}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>

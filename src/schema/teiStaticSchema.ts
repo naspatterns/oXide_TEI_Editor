@@ -1123,36 +1123,44 @@ export const TEI_FIGURES_ELEMENTS: ElementSpec[] = [
 // ============================================================================
 // P5 Generated Data Integration
 // ============================================================================
+//
+// `teiP5Generated` is ~528 KB of static element/attribute data. We avoid
+// importing it eagerly so that users who only ever load TEI Lite never pay
+// for it. The TEI All loader and the diagnostic counter both go through
+// `loadP5Module()` which lazily fetches the chunk on first use and caches it.
+//
+// The cost is one network round-trip the first time a user picks TEI All
+// (deferred from page-load to schema-load); validation itself is unaffected
+// because the validator runs against an already-built `SchemaInfo` map.
+//
+// Trade-off (P5 lazy load):
+// - TEI Lite no longer enriches its element specs with P5 class-resolved
+//   attributes. It still carries every attribute in `globalAttrs` plus the
+//   element-specific attrs declared in this file. Users who need the full
+//   class-resolved attribute set should switch to TEI All.
 
-import {
-  TEI_P5_ELEMENTS,
-  getElementAttributes as getP5ElementAttributes,
-  getP5Stats,
-} from './teiP5Generated';
+type P5Module = typeof import('./teiP5Generated');
+let p5ModulePromise: Promise<P5Module> | null = null;
+function loadP5Module(): Promise<P5Module> {
+  if (!p5ModulePromise) {
+    p5ModulePromise = import('./teiP5Generated');
+  }
+  return p5ModulePromise;
+}
 
-/**
- * Convert P5 element definition to ElementSpec with resolved attributes
- */
-function p5ToElementSpec(p5El: typeof TEI_P5_ELEMENTS[0]): ElementSpec {
-  return {
+// Cache for converted P5 elements (memoized after first build).
+let cachedP5Elements: ElementSpec[] | null = null;
+
+/** Get all TEI P5 elements with resolved attributes (lazy + cached). */
+async function getP5AllElements(): Promise<ElementSpec[]> {
+  if (cachedP5Elements) return cachedP5Elements;
+  const mod = await loadP5Module();
+  cachedP5Elements = mod.TEI_P5_ELEMENTS.map((p5El) => ({
     name: p5El.name,
     documentation: p5El.documentation,
     children: p5El.children,
-    // Resolve all attributes including inherited class attributes
-    attributes: getP5ElementAttributes(p5El.name),
-  };
-}
-
-// Cache for converted P5 elements
-let cachedP5Elements: ElementSpec[] | null = null;
-
-/**
- * Get all TEI P5 elements with resolved attributes
- */
-function getP5AllElements(): ElementSpec[] {
-  if (cachedP5Elements) return cachedP5Elements;
-
-  cachedP5Elements = TEI_P5_ELEMENTS.map(p5ToElementSpec);
+    attributes: mod.getElementAttributes(p5El.name),
+  }));
   return cachedP5Elements;
 }
 
@@ -1161,38 +1169,24 @@ function getP5AllElements(): ElementSpec[] {
 // ============================================================================
 
 /**
- * Get all TEI Lite elements with P5 attribute class resolution
- * Merges static TEI_LITE_ELEMENTS with P5 attribute data
+ * TEI Lite elements (synchronous, no P5 dependency).
+ *
+ * Returns `TEI_LITE_ELEMENTS` as-is. Each entry already carries
+ * `globalAttrs` plus its element-specific attributes; the previous
+ * P5-class enrichment was dropped to keep TEI Lite truly lightweight
+ * (no 528 KB chunk download for Lite-only users).
  */
 export function getTeiLiteElements(): ElementSpec[] {
-  const p5Elements = getP5AllElements();
-  const p5Map = new Map<string, ElementSpec>();
-  for (const el of p5Elements) {
-    p5Map.set(el.name, el);
-  }
-
-  // Merge: use static definition but enrich with P5 attributes
-  return TEI_LITE_ELEMENTS.map(staticEl => {
-    const p5El = p5Map.get(staticEl.name);
-    if (p5El) {
-      // Merge attributes: P5 class-resolved attrs + static local attrs
-      const mergedAttrs = mergeAttributes(p5El.attributes ?? [], staticEl.attributes ?? []);
-      return {
-        ...staticEl,
-        attributes: mergedAttrs,
-      };
-    }
-    return staticEl;
-  });
+  return TEI_LITE_ELEMENTS;
 }
 
 /**
- * Get all TEI All elements (includes all modules)
- * Now uses P5 generated data for comprehensive 588-element coverage
+ * Get all TEI All elements (includes all modules). Triggers a one-time
+ * dynamic import of `teiP5Generated` on first call.
  */
-export function getTeiAllElements(): ElementSpec[] {
+export async function getTeiAllElements(): Promise<ElementSpec[]> {
   // Use P5 data as the primary source (588 elements, 85 attribute classes)
-  const p5Elements = getP5AllElements();
+  const p5Elements = await getP5AllElements();
 
   // Use a Map to merge: P5 data is primary, static data fills gaps
   const elementMap = new Map<string, ElementSpec>();
@@ -1274,10 +1268,12 @@ function mergeAttributes(primary: AttrSpec[], secondary: AttrSpec[]): AttrSpec[]
 }
 
 /**
- * Get count of elements by module for diagnostics
+ * Get count of elements by module for diagnostics. Async because P5 stats
+ * come from the lazily-loaded P5 module.
  */
-export function getElementCounts(): Record<string, number> {
-  const p5Stats = getP5Stats();
+export async function getElementCounts(): Promise<Record<string, number>> {
+  const mod = await loadP5Module();
+  const p5Stats = mod.getP5Stats();
   return {
     'P5 Elements': p5Stats.elements,
     'P5 Attribute Classes': p5Stats.attrClasses,

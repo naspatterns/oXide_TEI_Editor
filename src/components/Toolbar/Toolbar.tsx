@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useEditor } from '../../store/useEditor';
+import { useWrapSelection } from '../../hooks/useWrapSelection';
 import type { ViewMode } from '../../types/editor';
 import { MenuBar, type MenuDefinition } from './MenuBar';
 import { SchemaSelector } from './SchemaSelector';
@@ -45,7 +46,8 @@ export function Toolbar({
   onKeyboardShortcuts,
   onAbout,
 }: Props) {
-  const { state, setViewMode, getSelection, wrapSelection } = useEditor();
+  const { state, setViewMode, getSelection } = useEditor();
+  const wrapSelection = useWrapSelection();
   const [wrapDialogOpen, setWrapDialogOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedText, setSelectedText] = useState('');

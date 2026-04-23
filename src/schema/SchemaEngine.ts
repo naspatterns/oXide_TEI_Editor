@@ -24,11 +24,13 @@ export class SchemaEngine {
         name = 'TEI Lite';
         break;
       case 'tei_all':
-        elements = getTeiAllElements();
+        // Triggers a one-time dynamic import of teiP5Generated (~528 KB).
+        elements = await getTeiAllElements();
         name = 'TEI All';
         // Log element counts for diagnostics (dev mode only)
         if (import.meta.env.DEV) {
-          console.log('[SchemaEngine] TEI All element counts:', getElementCounts());
+          const counts = await getElementCounts();
+          console.log('[SchemaEngine] TEI All element counts:', counts);
           console.log(`[SchemaEngine] Total unique elements: ${elements.length}`);
         }
         break;

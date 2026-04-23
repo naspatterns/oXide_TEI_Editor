@@ -83,7 +83,6 @@ export interface EditorContextValue {
   /** Alias for scrollToLine - used by XPath search */
   goToLine: (line: number) => void;
   getSelection: () => string;
-  wrapSelection: (tagName: string) => void;
 }
 
 export const EditorContext = createContext<EditorContextValue | null>(null);

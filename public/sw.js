@@ -1,7 +1,11 @@
-// Service Worker for offline support
-// Cache version: increment on each release or use build timestamp
-// Format: oxide-tei-v{major}.{minor}.{patch}-{timestamp}
-const CACHE_VERSION = '0.1.0';
+// Service Worker for offline support.
+// `CACHE_VERSION` is rewritten at build time by the
+// `inject-pwa-cache-version` plugin in vite.config.ts so each production
+// build produces a fresh cache name and old caches are evicted on the next
+// `activate` event. In dev (where `public/` is served verbatim) the literal
+// placeholder string is used, which is fine — it stays stable across dev
+// reloads.
+const CACHE_VERSION = '__BUILD_HASH__';
 const CACHE_NAME = `oxide-tei-v${CACHE_VERSION}`;
 
 // Assets to cache on install

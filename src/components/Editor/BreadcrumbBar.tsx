@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useEditor } from '../../store/useEditor';
+import { useCursor } from '../../store/useCursor';
 import './BreadcrumbBar.css';
 
 interface PathElement {
@@ -60,12 +61,13 @@ function getElementPathAtOffset(content: string, offset: number): PathElement[] 
 }
 
 export function BreadcrumbBar() {
-  const { state, getActiveDocument, scrollToLine } = useEditor();
+  const { getActiveDocument, scrollToLine } = useEditor();
+  // Live cursor (CursorContext) — updates without re-rendering EditorContext
+  // consumers. See C7 in CHANGELOG.
+  const { line: cursorLine, column: cursorColumn } = useCursor();
 
   const activeDoc = getActiveDocument();
   const content = activeDoc?.content ?? '';
-  const cursorLine = activeDoc?.cursorLine ?? state.cursorLine;
-  const cursorColumn = activeDoc?.cursorColumn ?? state.cursorColumn;
 
   // Calculate cursor offset from line and column
   const cursorOffset = useMemo(() => {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } fro
 import { SchemaProvider } from './store/SchemaContext';
 import { EditorProvider } from './store/EditorContext';
 import { useEditor } from './store/useEditor';
+import { CursorProvider } from './store/CursorContext';
 import { WorkspaceProvider } from './store/WorkspaceContext';
 import { AIProvider } from './ai/AIContext';
 import { ToastProvider } from './components/Toast/Toast';
@@ -258,6 +259,23 @@ function EditorLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Surface IndexedDB autosave failures (e.g. Private Mode in Firefox/
+  // Safari, quota exceeded) to the user — but only once per session, since
+  // the same error fires every 30 seconds.
+  const autosaveErrorNotified = useRef(false);
+  const handleAutosaveError = useCallback(
+    (phase: 'save' | 'load') => {
+      if (autosaveErrorNotified.current) return;
+      autosaveErrorNotified.current = true;
+      const message =
+        phase === 'save'
+          ? 'Autosave unavailable in this browser session (often Private/Incognito mode). Save manually before closing.'
+          : 'Could not check for recoverable autosaves (storage unavailable).';
+      toast.warning(message, 8000);
+    },
+    [toast],
+  );
+
   // Autosave - save active document
   useEffect(() => {
     startAutoSave(() => {
@@ -266,9 +284,9 @@ function EditorLayout() {
         content: activeDoc?.content ?? '',
         fileName: activeDoc?.fileName ?? null,
       };
-    });
+    }, handleAutosaveError);
     return stopAutoSave;
-  }, [getActiveDocument]);
+  }, [getActiveDocument, handleAutosaveError]);
 
   // Track if recovery was already attempted (prevents double prompt in Strict Mode)
   const recoveryAttempted = useRef(false);
@@ -280,7 +298,7 @@ function EditorLayout() {
     recoveryAttempted.current = true;
 
     (async () => {
-      const saved = await loadFromIDB();
+      const saved = await loadFromIDB(handleAutosaveError);
       if (saved && saved.content && saved.content.length > 100) {
         // Only offer recovery if the saved content seems meaningful
         const age = Date.now() - saved.timestamp;
@@ -291,8 +309,8 @@ function EditorLayout() {
       }
     })();
   // Only run on mount
-   
-  }, []);
+
+  }, [handleAutosaveError]);
 
   const handleRecoverDocument = useCallback(() => {
     if (recoveryData) {
@@ -399,9 +417,11 @@ export default function App() {
       <SchemaProvider>
         <WorkspaceProvider>
           <EditorProvider>
-            <AIProvider>
-              <EditorLayout />
-            </AIProvider>
+            <CursorProvider>
+              <AIProvider>
+                <EditorLayout />
+              </AIProvider>
+            </CursorProvider>
           </EditorProvider>
         </WorkspaceProvider>
       </SchemaProvider>

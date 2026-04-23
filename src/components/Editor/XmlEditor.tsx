@@ -3,7 +3,9 @@ import CodeMirror from '@uiw/react-codemirror';
 import type { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEditor } from '../../store/useEditor';
 import { useSchema } from '../../store/useSchema';
+import { useCursor } from '../../store/useCursor';
 import { useFileDrop } from '../../hooks/useFileDrop';
+import { useWrapSelection } from '../../hooks/useWrapSelection';
 import { useToast } from '../../components/Toast/useToast';
 import { createEditorExtensions, FILE_DROP_EVENT, QUICK_TAG_MENU_EVENT } from './extensions';
 import { validationErrorsCompartment, validationErrorsFacet } from './scrollbarMarkers';
@@ -29,16 +31,45 @@ export function XmlEditor() {
   const {
     multiTabState,
     getActiveDocument,
+    setContent,
     setCursor,
-    updateContentAndCursor,
     setErrors,
     editorViewRef,
-    wrapSelection,
     openFileAsTab,
   } = useEditor();
   const { schema } = useSchema();
+  const { setLiveCursor } = useCursor();
+  const wrapSelection = useWrapSelection();
   const { isDragOver, resetDragState, dragProps } = useFileDrop();
   const toast = useToast();
+
+  // Cursor handling — see C7 in CHANGELOG. CursorContext is updated on every
+  // selection change for live display (StatusBar / BreadcrumbBar). The
+  // active document's persisted cursor is written on a 500 ms debounce so
+  // tab switches restore the cursor without flooding the reducer.
+  const lastCursorRef = useRef<{ line: number; column: number }>({ line: 1, column: 1 });
+  const cursorPersistTimerRef = useRef<number | null>(null);
+  const persistCursorDebounced = useCallback(() => {
+    if (cursorPersistTimerRef.current !== null) {
+      window.clearTimeout(cursorPersistTimerRef.current);
+    }
+    cursorPersistTimerRef.current = window.setTimeout(() => {
+      cursorPersistTimerRef.current = null;
+      setCursor(lastCursorRef.current.line, lastCursorRef.current.column);
+    }, 500);
+  }, [setCursor]);
+  // Flush any pending cursor write on unmount so tab switches don't lose
+  // the last <500 ms of cursor position. The pending write targets whichever
+  // document was active when the timer was scheduled — that's what we want
+  // because activeDocumentId changes only after this XmlEditor unmounts.
+  useEffect(() => {
+    return () => {
+      if (cursorPersistTimerRef.current !== null) {
+        window.clearTimeout(cursorPersistTimerRef.current);
+        cursorPersistTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Subscribe to theme changes to update syntax highlighting
   const isDarkMode = useSyncExternalStore(subscribeToTheme, getThemeSnapshot);
@@ -65,6 +96,22 @@ export function XmlEditor() {
       contentRef.current = activeDoc.content;
     }
   }, [activeDoc]);
+
+  // On tab switch: push the newly-active doc's saved cursor into
+  // CursorContext so StatusBar / BreadcrumbBar reflect it immediately.
+  // We intentionally key on doc id only — `cursorLine` / `cursorColumn`
+  // updates feed back here and would loop.
+  const activeDocId = activeDoc?.id;
+  useEffect(() => {
+    if (activeDoc) {
+      setLiveCursor(activeDoc.cursorLine, activeDoc.cursorColumn);
+      lastCursorRef.current = {
+        line: activeDoc.cursorLine,
+        column: activeDoc.cursorColumn,
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDocId]);
 
   // Register EditorView with the context when it changes
   const handleCreateEditor = useCallback((view: EditorView) => {
@@ -253,41 +300,47 @@ export function XmlEditor() {
     [],
   );
 
-  // handleUpdate: docChanged와 selectionSet을 한 번에 처리 (dispatch 1회)
+  // handleUpdate: docChanged + selectionSet을 분리 처리.
+  // - 커서 변경: CursorContext에 즉시 반영(narrow consumer만 재렌더), reducer
+  //   쓰기는 디바운스
+  // - 콘텐츠 변경: SET_CONTENT 디스패치 (reducer state는 cursor와 분리)
   const handleUpdate = useCallback(
     (update: ViewUpdate) => {
-      const pos = update.state.selection.main.head;
-      const line = update.state.doc.lineAt(pos);
-      const cursorLine = line.number;
-      const cursorColumn = pos - line.from + 1;
+      if (update.selectionSet || update.docChanged) {
+        const pos = update.state.selection.main.head;
+        const line = update.state.doc.lineAt(pos);
+        const cursorLine = line.number;
+        const cursorColumn = pos - line.from + 1;
+        // Live update — cheap, only re-renders cursor consumers.
+        setLiveCursor(cursorLine, cursorColumn);
+        lastCursorRef.current = { line: cursorLine, column: cursorColumn };
+        // Persist to active document on a 500 ms debounce for tab-switch
+        // restoration.
+        persistCursorDebounced();
+      }
 
-      // 문서 내용 변경 시: content와 cursor를 한 번에 업데이트 (dispatch 1회)
       if (update.docChanged) {
         const content = update.state.doc.toString();
         contentRef.current = content;
-        updateContentAndCursor(content, cursorLine, cursorColumn);
-      } else if (update.selectionSet) {
-        // 커서/선택만 변경 시: cursor만 업데이트
-        setCursor(cursorLine, cursorColumn);
+        setContent(content);
       }
 
-      // Toggle 'has-selection' class based on selection state
-      // This allows CSS to hide activeLine highlight when text is selected
-      // Only update DOM class when selection actually changes (performance optimization)
+      // Toggle 'has-selection' class based on selection state.
+      // Only update DOM class when selection actually changes (perf).
       const { from, to } = update.state.selection.main;
       const hasSelection = from !== to;
       if (update.selectionSet) {
         update.view.dom.classList.toggle('has-selection', hasSelection);
       }
 
-      // Close quick tag menu when selection is cleared
-      // Menu display is handled by mouseup handler only (not by selectionSet)
+      // Close quick tag menu when selection is cleared.
+      // Menu display is handled by mouseup handler only (not by selectionSet).
       if (update.selectionSet && from === to) {
         setMenuPosition(null);
         setSelectedText('');
       }
     },
-    [setCursor, updateContentAndCursor],
+    [setLiveCursor, persistCursorDebounced, setContent],
   );
 
   // Handle tag selection from quick menu

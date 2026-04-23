@@ -98,6 +98,35 @@
   display: flex;
   gap: 10px;
   max-width: 100%;
+  /* Skip layout/paint work on off-screen messages. The intrinsic size hint
+     keeps the scrollbar accurate while the message is virtualized away. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
+}
+
+/* "Load older messages" button shown above the rendered window when there
+   are messages older than the current `visibleCount` window. */
+.ai-load-older {
+  align-self: stretch;
+  margin: 0 0 8px 0;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.ai-load-older:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
+}
+
+.ai-load-older-total {
+  opacity: 0.7;
 }
 
 .chat-message.user {

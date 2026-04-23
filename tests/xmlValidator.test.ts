@@ -4,7 +4,7 @@
  * Tests for ContentModel validation, choice violations, attribute value validation,
  * required children detection, nesting rules, and schema merging.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import {
   validateXml,
   validateContentModel,
@@ -893,8 +893,8 @@ describe('validateContentModel Direct Tests', () => {
 // ============================================================================
 
 describe('TEI Schema Merging', () => {
-  it('should include children from both static and P5 definitions', () => {
-    const teiAllElements = getTeiAllElements();
+  it('should include children from both static and P5 definitions', async () => {
+    const teiAllElements = await getTeiAllElements();
     const elementMap = new Map<string, ElementSpec>();
     for (const el of teiAllElements) {
       elementMap.set(el.name, el);
@@ -912,9 +912,9 @@ describe('TEI Schema Merging', () => {
     expect(lgElement!.children).toContain('lg');
   });
 
-  it('should validate trailer inside lg in TEI All schema', () => {
+  it('should validate trailer inside lg in TEI All schema', async () => {
     // Build TEI All schema from merged elements
-    const teiAllElements = getTeiAllElements();
+    const teiAllElements = await getTeiAllElements();
     const elementMap = new Map<string, ElementSpec>();
     for (const el of teiAllElements) {
       elementMap.set(el.name, el);
@@ -952,9 +952,9 @@ describe('TEI Schema Merging', () => {
     expect(trailerError).toBeUndefined();
   });
 
-  it('should validate lb inside lg in TEI All schema', () => {
+  it('should validate lb inside lg in TEI All schema', async () => {
     // Build TEI All schema from merged elements
-    const teiAllElements = getTeiAllElements();
+    const teiAllElements = await getTeiAllElements();
     const elementMap = new Map<string, ElementSpec>();
     for (const el of teiAllElements) {
       elementMap.set(el.name, el);
@@ -1187,19 +1187,22 @@ describe('Orphan and Unclosed Tag Detection', () => {
   });
 
   describe('TEI P5 Attribute Class Validation', () => {
-    // Build TEI All schema
-    const teiAllElements = getTeiAllElements();
-    const teiAllElementMap = new Map<string, ElementSpec>();
-    for (const el of teiAllElements) {
-      teiAllElementMap.set(el.name, el);
-    }
-    const teiAllSchema: SchemaInfo = {
-      id: 'tei_all',
-      name: 'TEI All',
-      elements: teiAllElements,
-      elementMap: teiAllElementMap,
-      hasSalveGrammar: false,
-    };
+    // Build TEI All schema (P5 lazy-loaded; resolved in beforeAll).
+    let teiAllSchema: SchemaInfo;
+    beforeAll(async () => {
+      const teiAllElements = await getTeiAllElements();
+      const teiAllElementMap = new Map<string, ElementSpec>();
+      for (const el of teiAllElements) {
+        teiAllElementMap.set(el.name, el);
+      }
+      teiAllSchema = {
+        id: 'tei_all',
+        name: 'TEI All',
+        elements: teiAllElements,
+        elementMap: teiAllElementMap,
+        hasSalveGrammar: false,
+      };
+    });
 
     it('should allow @key on <term> (att.canonical)', () => {
       const xml = `<?xml version="1.0"?>
@@ -1268,19 +1271,22 @@ describe('Orphan and Unclosed Tag Detection', () => {
 // ============================================================================
 
 describe('Complete TEI Document Validation', () => {
-  // Build TEI All schema once for all tests in this suite
-  const teiAllElements = getTeiAllElements();
-  const teiAllElementMap = new Map<string, ElementSpec>();
-  for (const el of teiAllElements) {
-    teiAllElementMap.set(el.name, el);
-  }
-  const teiAllSchema: SchemaInfo = {
-    id: 'tei_all',
-    name: 'TEI All',
-    elements: teiAllElements,
-    elementMap: teiAllElementMap,
-    hasSalveGrammar: false,
-  };
+  // Build TEI All schema once for all tests in this suite (P5 lazy-loaded).
+  let teiAllSchema: SchemaInfo;
+  beforeAll(async () => {
+    const teiAllElements = await getTeiAllElements();
+    const teiAllElementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      teiAllElementMap.set(el.name, el);
+    }
+    teiAllSchema = {
+      id: 'tei_all',
+      name: 'TEI All',
+      elements: teiAllElements,
+      elementMap: teiAllElementMap,
+      hasSalveGrammar: false,
+    };
+  });
 
   describe('Scenario 1: Valid TEI Document', () => {
     it('validates minimal valid TEI document with no errors', () => {
@@ -1547,34 +1553,34 @@ describe('Complete TEI Document Validation', () => {
 
   describe('TEI P5 Element Coverage', () => {
     it('has 588 elements in TEI All schema', () => {
-      expect(teiAllElements.length).toBe(588);
+      expect(teiAllSchema.elements.length).toBe(588);
     });
 
     it('includes core TEI elements', () => {
       const coreElements = ['TEI', 'teiHeader', 'fileDesc', 'text', 'body', 'p', 'div'];
       for (const name of coreElements) {
-        expect(teiAllElementMap.has(name)).toBe(true);
+        expect(teiAllSchema.elementMap.has(name)).toBe(true);
       }
     });
 
     it('includes manuscript description elements', () => {
       const msDescElements = ['msDesc', 'msContents', 'msItem', 'physDesc', 'history'];
       for (const name of msDescElements) {
-        expect(teiAllElementMap.has(name)).toBe(true);
+        expect(teiAllSchema.elementMap.has(name)).toBe(true);
       }
     });
 
     it('includes names and dates elements', () => {
       const nameElements = ['persName', 'placeName', 'orgName', 'date', 'birth', 'death'];
       for (const name of nameElements) {
-        expect(teiAllElementMap.has(name)).toBe(true);
+        expect(teiAllSchema.elementMap.has(name)).toBe(true);
       }
     });
 
     it('includes transcription elements', () => {
       const transcrElements = ['add', 'del', 'subst', 'gap', 'unclear', 'supplied'];
       for (const name of transcrElements) {
-        expect(teiAllElementMap.has(name)).toBe(true);
+        expect(teiAllSchema.elementMap.has(name)).toBe(true);
       }
     });
   });
@@ -1585,7 +1591,7 @@ describe('Complete TEI Document Validation', () => {
 // ============================================================================
 
 describe('TEI Lite Schema Validation', () => {
-  // Build TEI Lite schema once for all tests
+  // TEI Lite stays sync (no P5 dependency in v0.2.1+).
   const teiLiteElements = getTeiLiteElements();
   const teiLiteElementMap = new Map<string, ElementSpec>();
   for (const el of teiLiteElements) {
@@ -1599,19 +1605,22 @@ describe('TEI Lite Schema Validation', () => {
     hasSalveGrammar: false,
   };
 
-  // Build TEI All schema for comparison tests
-  const teiAllElements = getTeiAllElements();
-  const teiAllElementMap = new Map<string, ElementSpec>();
-  for (const el of teiAllElements) {
-    teiAllElementMap.set(el.name, el);
-  }
-  const teiAllSchema: SchemaInfo = {
-    id: 'tei_all',
-    name: 'TEI All',
-    elements: teiAllElements,
-    elementMap: teiAllElementMap,
-    hasSalveGrammar: false,
-  };
+  // TEI All needs the lazily-loaded P5 chunk.
+  let teiAllSchema: SchemaInfo;
+  beforeAll(async () => {
+    const teiAllElements = await getTeiAllElements();
+    const teiAllElementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      teiAllElementMap.set(el.name, el);
+    }
+    teiAllSchema = {
+      id: 'tei_all',
+      name: 'TEI All',
+      elements: teiAllElements,
+      elementMap: teiAllElementMap,
+      hasSalveGrammar: false,
+    };
+  });
 
   describe('TEI Lite Element Coverage', () => {
     it('has exactly 106 elements in TEI Lite schema', () => {
@@ -1794,17 +1803,12 @@ describe('TEI Lite Schema Validation', () => {
       expect(dateAttrErrors).toHaveLength(0);
     });
 
-    it('allows @key on term (att.canonical)', () => {
-      const xml = `<?xml version="1.0"?>
-<TEI xmlns="http://www.tei-c.org/ns/1.0">
-  <text><body><p><term key="keyword">Term</term></p></body></text>
-</TEI>`;
-      const errors = validateXml(xml, teiLiteSchema);
-      const keyError = errors.find(e => e.message.includes('key'));
-      expect(keyError).toBeUndefined();
-    });
+    // Note: @key on <term> comes from att.canonical, which is a P5
+    // attribute class. Since v0.2.1 TEI Lite no longer pulls in P5
+    // enrichment, so @key is unknown to TEI Lite. The equivalent
+    // validation lives in the "TEI All Schema" suite. See CHANGELOG.
 
-    it('allows @ref on term (att.canonical)', () => {
+    it('allows @ref on term (statically declared)', () => {
       const xml = `<?xml version="1.0"?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0">
   <text><body><p><term ref="#def1">Term</term></p></body></text>
@@ -2060,25 +2064,25 @@ describe('TEI Lite Schema Validation', () => {
     });
   });
 
-  describe('TEI Lite P5 Attribute Class Integration', () => {
-    it('term element has P5 attribute classes merged', () => {
-      // term should have key and ref from att.canonical class
+  describe('TEI Lite Static Attribute Coverage', () => {
+    // Since v0.2.1 TEI Lite no longer pulls in P5 attribute-class
+    // enrichment (so the 528 KB P5 chunk stays unloaded for Lite-only
+    // users). These tests pin the *statically* declared attribute set
+    // so we notice if a user-visible regression slips in.
+    it('term element keeps its statically declared @ref', () => {
       const termSpec = teiLiteElementMap.get('term');
-      expect(termSpec).toBeDefined();
-      expect(termSpec!.attributes).toBeDefined();
-
-      const attrNames = termSpec!.attributes!.map(a => a.name);
-      expect(attrNames).toContain('key');
-      expect(attrNames).toContain('ref');
+      expect(termSpec?.attributes?.map((a) => a.name)).toContain('ref');
     });
 
-    it('date element has P5 datable attributes merged', () => {
-      // date should have when, notBefore, notAfter from att.datable.w3c
-      const dateSpec = teiLiteElementMap.get('date');
-      expect(dateSpec).toBeDefined();
-      expect(dateSpec!.attributes).toBeDefined();
+    it('term element does NOT carry P5 class-resolved attributes (e.g. @key)', () => {
+      // @key comes from att.canonical, which is P5-only.
+      const termSpec = teiLiteElementMap.get('term');
+      expect(termSpec?.attributes?.map((a) => a.name)).not.toContain('key');
+    });
 
-      const attrNames = dateSpec!.attributes!.map(a => a.name);
+    it('date element keeps its statically declared temporal attributes', () => {
+      const dateSpec = teiLiteElementMap.get('date');
+      const attrNames = dateSpec?.attributes?.map((a) => a.name) ?? [];
       expect(attrNames).toContain('when');
       expect(attrNames).toContain('notBefore');
       expect(attrNames).toContain('notAfter');
@@ -2086,10 +2090,7 @@ describe('TEI Lite Schema Validation', () => {
 
     it('p element has global attributes', () => {
       const pSpec = teiLiteElementMap.get('p');
-      expect(pSpec).toBeDefined();
-      expect(pSpec!.attributes).toBeDefined();
-
-      const attrNames = pSpec!.attributes!.map(a => a.name);
+      const attrNames = pSpec?.attributes?.map((a) => a.name) ?? [];
       expect(attrNames).toContain('xml:id');
       expect(attrNames).toContain('n');
       expect(attrNames).toContain('type');
@@ -2941,18 +2942,21 @@ describe('Custom RNG Schema Validation (TEI Conformant)', () => {
 // ============================================================================
 
 describe('Multi-line Tag Recognition', () => {
-  const teiAllElements = getTeiAllElements();
-  const teiAllElementMap = new Map<string, ElementSpec>();
-  for (const el of teiAllElements) {
-    teiAllElementMap.set(el.name, el);
-  }
-  const teiAllSchema: SchemaInfo = {
-    id: 'tei_all',
-    name: 'TEI All',
-    elements: teiAllElements,
-    elementMap: teiAllElementMap,
-    hasSalveGrammar: false,
-  };
+  let teiAllSchema: SchemaInfo;
+  beforeAll(async () => {
+    const teiAllElements = await getTeiAllElements();
+    const teiAllElementMap = new Map<string, ElementSpec>();
+    for (const el of teiAllElements) {
+      teiAllElementMap.set(el.name, el);
+    }
+    teiAllSchema = {
+      id: 'tei_all',
+      name: 'TEI All',
+      elements: teiAllElements,
+      elementMap: teiAllElementMap,
+      hasSalveGrammar: false,
+    };
+  });
 
   it('should accept opening tag with attributes on next line', () => {
     const xml = `<?xml version="1.0"?>

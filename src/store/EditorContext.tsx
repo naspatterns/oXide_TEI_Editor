@@ -4,9 +4,7 @@ import type { ViewMode } from '../types/editor';
 import type { ValidationError } from '../types/schema';
 import type { OpenDocument, MultiTabEditorState } from '../types/workspace';
 import { generateDocumentId, createNewDocument } from '../types/workspace';
-import { useSchema } from './useSchema';
 import { EditorContext, type LegacyEditorState } from './useEditor';
-import { getRequiredAttributes } from '../schema/schemaQuery';
 
 const DEFAULT_CONTENT = `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_lite.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
@@ -319,7 +317,6 @@ const initialState: MultiTabEditorState = {
 
 export function EditorProvider({ children }: { children: ReactNode }) {
   const [multiTabState, dispatch] = useReducer(reducer, initialState);
-  const { schema } = useSchema();
 
   // Ref to hold the CodeMirror EditorView instance (set by XmlEditor)
   const editorViewRef = useRef<EditorView | null>(null);
@@ -462,51 +459,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     return view.state.doc.sliceString(from, to);
   }, []);
 
-  const wrapSelection = useCallback((tagName: string) => {
-    const view = editorViewRef.current;
-    if (!view) return;
-
-    const { from, to } = view.state.selection.main;
-    const selectedText = view.state.doc.sliceString(from, to);
-
-    // Find required attributes from schema
-    const requiredAttrs = getRequiredAttributes(schema, tagName);
-
-    // Build opening tag with required attributes
-    let openTag = `<${tagName}`;
-    let firstAttrValuePos = -1;
-
-    for (let i = 0; i < requiredAttrs.length; i++) {
-      const attr = requiredAttrs[i];
-      openTag += ` ${attr.name}=""`;
-      // Remember position of first attribute value for cursor placement
-      if (i === 0) {
-        // Position is: from + '<tagName '.length + 'attrName="'.length
-        firstAttrValuePos = from + tagName.length + 2 + attr.name.length + 2;
-      }
-    }
-    openTag += '>';
-
-    const closeTag = `</${tagName}>`;
-    const wrappedText = `${openTag}${selectedText}${closeTag}`;
-
-    // If there are required attributes, place cursor in first attribute value
-    // Otherwise, select the wrapped text as before
-    if (firstAttrValuePos > 0) {
-      view.dispatch({
-        changes: { from, to, insert: wrappedText },
-        selection: { anchor: firstAttrValuePos },
-      });
-    } else {
-      view.dispatch({
-        changes: { from, to, insert: wrappedText },
-        selection: { anchor: from + openTag.length, head: from + openTag.length + selectedText.length },
-      });
-    }
-
-    view.focus();
-  }, [schema]);
-
   const value = useMemo(
     () => ({
       multiTabState,
@@ -536,7 +488,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       scrollToLine,
       goToLine: scrollToLine, // Alias for XPath search
       getSelection,
-      wrapSelection,
     }),
     [
       multiTabState,
@@ -565,7 +516,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       editorViewRef,
       scrollToLine,
       getSelection,
-      wrapSelection,
     ],
   );
 
