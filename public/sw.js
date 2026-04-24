@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-first strategy for HTML
+  // Network-first strategy for HTML navigation requests
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => caches.match('./index.html'))
@@ -41,13 +41,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for Google Fonts (long-lived cache)
+  // Only GET requests are cacheable.
+  if (event.request.method !== 'GET') return;
+
+  // Cache-first for Google Fonts (long-lived, well-known immutable URLs).
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     event.respondWith(
       caches.match(event.request).then((cached) =>
         cached || fetch(event.request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
           return response;
         })
       )
@@ -55,14 +60,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for other assets
-  event.respondWith(
-    caches.match(event.request).then((cached) =>
-      cached || fetch(event.request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
-      })
-    )
-  );
+  // Cache-first for OUR OWN assets (same origin only). We deliberately do
+  // not cache arbitrary cross-origin responses: a malicious TEI document
+  // that referenced `<graphic url="https://attacker.com/...">` used to be
+  // able to permanently poison this cache with attacker-controlled
+  // responses. Now those requests fall through to the browser's default
+  // network handling and are not retained by the service worker.
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(event.request).then((cached) =>
+        cached || fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+      )
+    );
+    return;
+  }
+
+  // Other cross-origin requests: don't intercept.
 });

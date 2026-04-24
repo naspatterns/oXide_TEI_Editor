@@ -5,6 +5,124 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-04-25 — Security patch
+
+Fixes the issues discovered in the v0.2.3 security review of the TEI
+preview rendering, service-worker caching, and HTML headers. **All
+users should upgrade.** No data migration needed.
+
+### Security fixes
+
+#### Critical
+
+- **[CRIT-1] Stored XSS via `<ref target>` link-text fallback in
+  preview** (`src/components/Preview/teiTransform.ts:240`).
+  When a `<ref>` element had no child content, its `target` attribute
+  was used verbatim as the link's text and inserted into the preview
+  via `dangerouslySetInnerHTML`. A document containing
+  `<ref target="<img src=x onerror=alert(1)>"/>` triggered alert
+  execution as soon as the preview rendered.
+  Fix: the link-text fallback now passes `target` through `escapeHtml`.
+
+- **[CRIT-2] `javascript:` href execution via `<ref>` / `<ptr>`**
+  (`src/components/Preview/teiTransform.ts:241`). The previous
+  `escapeAttr` only escaped `& " < >`, so `<ref target="javascript:…">`
+  produced a clickable link that executed JavaScript.
+  Fix: a new `safeHref` whitelist allows only `http(s):`, `mailto:`,
+  same-page anchors, and relative paths; everything else (including
+  `javascript:`, `data:`, `vbscript:`, `file:`, `ftp:`) is rewritten
+  to `#`.
+
+- **[CRIT-3] No Content Security Policy.** Without CSP, any XSS in the
+  preview path could execute arbitrary scripts.
+  Fix: a new `injectCsp` Vite plugin emits a strict
+  `Content-Security-Policy` `<meta>` tag into the production
+  `index.html`. Key directives:
+  - `script-src 'self'` (no inline / external scripts)
+  - `style-src 'self' 'unsafe-inline' fonts.googleapis.com`
+    (`'unsafe-inline'` is required by CodeMirror)
+  - `font-src 'self' fonts.gstatic.com`
+  - `img-src * data: blob:` (TEI `<graphic>` URLs are already
+    scheme-filtered upstream)
+  - `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`
+  Build-only — dev still runs without CSP so Vite HMR is unaffected.
+
+#### Medium
+
+- **[MED-1] Privacy via `<graphic url>` arbitrary external URL**
+  (`teiTransform.ts:209`). A malicious TEI document could embed a
+  tracking pixel: viewing the preview leaked the user's IP and User
+  Agent to the document author.
+  Fix: a new `safeImgSrc` whitelist permits `http(s):`, `data:image/*`,
+  and relative paths; unsafe schemes render a `[blocked image]`
+  placeholder. Allowed images additionally carry
+  `referrerpolicy="no-referrer"` and `loading="lazy"` to minimize
+  passive tracking.
+
+- **[MED-2] Service-worker cross-origin cache poisoning**
+  (`public/sw.js`). The `fetch` handler used a cache-first strategy
+  for **all** requests. A `<graphic url="https://attacker.com/...">`
+  in a previewed document caused the SW to permanently cache an
+  attacker-controlled response, persisting beyond the session.
+  Fix: cache-first is now restricted to same-origin assets (the app
+  bundle) plus the well-known Google Fonts hosts. Other cross-origin
+  requests fall through to the browser's default network handling and
+  are not retained.
+
+- **[MED-3] Dev-server vulnerabilities (`undici`, `vite ≤ 6.4.1`).**
+  `npm audit` flagged 4 high + 1 moderate dev-only advisories
+  (WebSocket overflow, request smuggling, path traversal in dev
+  server). Production bundle was unaffected, but the dev server was
+  exploitable from a hostile local network.
+  Fix: `npm audit fix` upgraded the affected packages. `npm audit`
+  now reports **0 vulnerabilities**.
+
+#### Low
+
+- **[LOW-1] `target="_blank"` without `rel="noopener noreferrer"`**.
+  Modern browsers default to `noopener` for `target="_blank"` since
+  Chrome 88 / Firefox 79, but explicit is safer for older browsers
+  and removes referrer leakage.
+  Fix: `<ref>` and `<ptr>` link tags now emit
+  `rel="noopener noreferrer"`.
+
+### Tests
+
+- New `tests/teiTransform.test.ts` (26 cases) covering:
+  - `safeHref` and `safeImgSrc` scheme whitelists
+  - XSS regressions for `<ref>` (CRIT-1, CRIT-2, LOW-1)
+  - `<graphic>` URL hardening (MED-1)
+  - Plain-text content escaping
+  - Parser-error rendering
+
+Suite: 305 → **331 passing**. Lint clean, build clean, 0 npm
+vulnerabilities.
+
+### Notes for users / contributors
+
+- The CSP applies only to the **production** build. If you load a
+  page served by `npm run dev`, no CSP is enforced — that's
+  intentional (Vite HMR uses dynamic module patterns that some CSPs
+  block). To verify CSP behavior locally, run `npm run build &&
+  npm run preview`.
+- The new `safeHref` / `safeImgSrc` helpers in
+  `src/components/Preview/teiTransform.ts` are exported for unit
+  testing but are also reusable if any other preview-style renderer
+  is added later. Keep them as the single source of truth for
+  link/image scheme validation.
+
+### Rebuild instructions (after `git clone` of v0.2.3)
+
+```bash
+npm install            # picks up the npm audit fix bumps
+npm run build          # clean
+npm run test:run       # 331 passing
+npm run lint           # 0 errors / 0 warnings
+npm audit              # 0 vulnerabilities
+npm run dev            # http://localhost:5173 (no CSP, HMR works)
+npm run preview        # production build with CSP enforced
+```
+
 ## [0.2.2] - 2026-04-25
 
 Bug-fix release. Fixes the two latent `createTagSyncExtension` defects

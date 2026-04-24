@@ -30,8 +30,57 @@ function injectPwaCacheVersion(): Plugin {
   };
 }
 
+/**
+ * Inject a Content Security Policy `<meta>` tag into the production
+ * `index.html`. Defense-in-depth against XSS that slips past the
+ * preview sanitizer.
+ *
+ *   - `script-src 'self'` blocks inline scripts and external scripts —
+ *     even an injected `<script>` tag would not execute.
+ *   - `style-src 'unsafe-inline'` is required by CodeMirror, which
+ *     generates inline styles at runtime. We accept the trade-off.
+ *   - `font-src` allows the Google Fonts domains we use.
+ *   - `img-src '*'` allows TEI `<graphic>` URLs (already scheme-filtered
+ *     by `teiTransform.safeImgSrc`).
+ *   - `object-src 'none'` blocks `<object>`/`<embed>`/`<applet>`.
+ *   - `base-uri 'self'` blocks `<base>` hijacking.
+ *   - `form-action 'self'` restricts form submissions.
+ *
+ * Build-only: in dev Vite injects HMR client modules and dynamic
+ * imports that some CSPs would block. Applying CSP only at build time
+ * keeps dev fast and prod safe.
+ */
+function injectCsp(): Plugin {
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src * data: blob:",
+    "connect-src 'self'",
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ') + ';';
+  return {
+    name: 'inject-csp',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        return html.replace(
+          '<meta name="theme-color"',
+          `<meta http-equiv="Content-Security-Policy" content="${csp}" />\n    <meta name="theme-color"`,
+        );
+      },
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), injectPwaCacheVersion()],
+  plugins: [react(), injectPwaCacheVersion(), injectCsp()],
   base: './',
   // Inject the package version as a build-time constant so user-visible
   // surfaces (About dialog, etc.) stay in lockstep with package.json.

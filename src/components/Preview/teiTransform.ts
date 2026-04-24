@@ -205,8 +205,16 @@ function transformNode(node: Node): string {
   }
   if (localName === 'space') return '<span class="tei-space">&nbsp;&nbsp;</span>';
   if (localName === 'graphic') {
-    const url = el.getAttribute('url') ?? '';
-    return `<img class="tei-graphic" src="${escapeAttr(url)}" alt="[graphic]" />`;
+    const rawUrl = el.getAttribute('url') ?? '';
+    const url = safeImgSrc(rawUrl);
+    if (!url) {
+      // Unsafe scheme (e.g. javascript:, data:text/html, ...) or empty —
+      // render a placeholder instead of letting the browser fetch.
+      return `<span class="tei-graphic-blocked" title="${escapeAttr(rawUrl)}">[blocked image]</span>`;
+    }
+    // `referrerpolicy=no-referrer` and `loading=lazy` reduce the privacy
+    // surface of arbitrary external image URLs in user-supplied TEI.
+    return `<img class="tei-graphic" src="${escapeAttr(url)}" alt="[graphic]" loading="lazy" referrerpolicy="no-referrer" />`;
   }
 
   // Handle <choice>: show first child, tooltip with second
@@ -234,11 +242,20 @@ function transformNode(node: Node): string {
   const type = el.getAttribute('type');
   const typeAttr = type ? ` data-type="${escapeAttr(type)}"` : '';
 
-  // Special handling for ref/ptr → make them links
+  // Special handling for ref/ptr → make them links.
+  // Defenses (CRIT-1, CRIT-2, LOW-1):
+  //   - `linkText` falls back to `escapeHtml(target)` so a malicious
+  //     target like `<img src=x onerror=alert(1)>` is rendered as text,
+  //     not as live HTML.
+  //   - `href` is whitelisted to safe schemes via `safeHref`, so
+  //     `javascript:` and friends become `#`.
+  //   - `rel="noopener noreferrer"` defeats reverse-tabnabbing on the
+  //     `target="_blank"` link.
   if (localName === 'ref' || localName === 'ptr') {
     const target = el.getAttribute('target') ?? '';
-    const linkText = childHtml || target || '[link]';
-    return `<a class="${classes.join(' ')}" href="${escapeAttr(target)}" target="_blank"${typeAttr}>${linkText}</a>`;
+    const linkText = childHtml || escapeHtml(target) || '[link]';
+    const href = safeHref(target);
+    return `<a class="${classes.join(' ')}" href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer"${typeAttr}>${linkText}</a>`;
   }
 
   // Special handling for <note> with @place
@@ -292,6 +309,53 @@ function escapeAttr(text: string): string {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+/**
+ * Whitelist link `href` schemes for `<ref>` / `<ptr>` rendering.
+ * Returns the original target if it is safe, otherwise `'#'`. Blocks
+ * `javascript:`, `data:`, `vbscript:`, etc. — which would otherwise
+ * execute when a user clicks a malicious preview link.
+ *
+ * Allowed:
+ * - same-page anchors (`#section`)
+ * - relative paths (`./foo`, `../bar`, `/abs`)
+ * - absolute URLs with `http(s):` or `mailto:`
+ */
+export function safeHref(target: string): string {
+  if (!target) return '#';
+  const trimmed = target.trim();
+  if (!trimmed) return '#';
+  if (trimmed.startsWith('#') || trimmed.startsWith('/') || trimmed.startsWith('./') || trimmed.startsWith('../')) {
+    return trimmed;
+  }
+  if (/^(?:https?|mailto):/i.test(trimmed)) {
+    return trimmed;
+  }
+  // Anything else (javascript:, data:, vbscript:, file:, ftp:, ...) is
+  // considered unsafe for an interactive link inside the preview.
+  return '#';
+}
+
+/**
+ * Whitelist `<graphic url>` schemes. Same idea as `safeHref` but tuned
+ * for image sources: also allow `data:image/...` (commonly used for
+ * inline previews); deny everything else.
+ *
+ * Returns the original URL or `''`. Empty string is rendered as a broken
+ * image placeholder rather than causing the browser to reach out to an
+ * attacker-controlled URL.
+ */
+export function safeImgSrc(url: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('/') || trimmed.startsWith('./') || trimmed.startsWith('../')) {
+    return trimmed;
+  }
+  if (/^https?:/i.test(trimmed)) return trimmed;
+  if (/^data:image\//i.test(trimmed)) return trimmed;
+  return '';
 }
 
 export function teiToHtml(xmlStr: string): string {
