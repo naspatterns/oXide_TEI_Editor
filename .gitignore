@@ -21,6 +21,22 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Secrets / certs / private keys — defensive. Nothing of this kind
+# should ever exist in this repo; the patterns are ignored so that an
+# accidentally-dropped file cannot be staged.
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/
+*.local
+
+# Other AI / coding-assistant local state
+.aider*
+.cursor*
+.continue/
+
 # Logs
 *.log
 npm-debug.log*
