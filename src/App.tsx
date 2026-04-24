@@ -386,7 +386,7 @@ function EditorLayout() {
       <AlertDialog
         open={aboutOpen}
         logo={logoUrl}
-        message={'v0.1.0\n\nA lightweight, browser-based TEI XML editor for Digital Humanities researchers.\n\n• Schema-aware autocomplete\n• Real-time validation\n• Multiple document tabs\n• Dark/Light themes'}
+        message={`v${__APP_VERSION__}\n\nA lightweight, browser-based TEI XML editor for Digital Humanities researchers.\n\n• Schema-aware autocomplete\n• Real-time validation\n• Multiple document tabs\n• Dark/Light themes`}
         onClose={() => setAboutOpen(false)}
       />
       <ConfirmDialog

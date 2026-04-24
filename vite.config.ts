@@ -33,6 +33,11 @@ function injectPwaCacheVersion(): Plugin {
 export default defineConfig({
   plugins: [react(), injectPwaCacheVersion()],
   base: './',
+  // Inject the package version as a build-time constant so user-visible
+  // surfaces (About dialog, etc.) stay in lockstep with package.json.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   esbuild: {
     drop: ['console', 'debugger'],  // Remove console.* and debugger in production
   },
