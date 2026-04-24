@@ -301,50 +301,60 @@ function findMatchingOpeningTag(text: string, closingTag: TagInfo): TagInfo | nu
  */
 export function createTagSyncExtension(): Extension {
   return [
-    // Handle document changes - sync tag names
+    // Handle document changes — sync tag names.
+    //
+    // The matching tag is looked up in `update.startState` (where both tags
+    // still share the OLD name) and its position is mapped forward to the
+    // new doc via `update.changes.mapPos`. Looking up the matching tag in
+    // the new doc instead would fail for in-place rename, because by then
+    // the user has changed the name and `findMatchingTag` (which searches
+    // by name) no longer matches.
     EditorView.updateListener.of((update) => {
       if (!update.docChanged) return;
 
-      // Skip if this change is a sync operation
+      // Skip if this change is itself a sync operation.
       if (update.transactions.some((tr) => tr.annotation(syncAnnotation))) {
         return;
       }
 
-      // Get the cursor position after the change
+      // Cursor in the post-change doc — this tells us which tag the user
+      // just edited.
       const cursorPos = update.state.selection.main.head;
-
-      // Find tag at current cursor position
       const currentTag = findTagAtPosition(update.state.doc, cursorPos);
+      if (!currentTag || currentTag.type === 'self-closing') return;
 
-      if (!currentTag || currentTag.type === 'self-closing') {
-        return;
-      }
-
-      // Check if we're still editing within a tag name
+      // Only sync when the cursor is inside the tag's NAME region.
       if (cursorPos < currentTag.nameStart || cursorPos > currentTag.nameEnd) {
-        // Cursor is in attributes or elsewhere, not tag name
         return;
       }
 
-      // Find matching tag in the updated document
-      const matchingTag = findMatchingTag(update.state.doc, currentTag);
+      // Map cursor back to the pre-change doc to find the original tag.
+      // The original tag still has the OLD name, so findMatchingTag works.
+      const oldCursorPos = update.changes.invertedDesc.mapPos(cursorPos, -1);
+      const originalTag = findTagAtPosition(update.startState.doc, oldCursorPos);
+      if (!originalTag || originalTag.type !== currentTag.type) return;
 
-      if (!matchingTag) {
-        return;
-      }
+      // No rename = nothing to sync.
+      if (originalTag.name === currentTag.name) return;
 
-      // Check if tag names differ - need to sync
-      if (currentTag.name !== matchingTag.name) {
-        // Apply the sync change
-        update.view.dispatch({
-          changes: {
-            from: matchingTag.nameStart,
-            to: matchingTag.nameEnd,
-            insert: currentTag.name,
-          },
-          annotations: syncAnnotation.of(true),
-        });
-      }
+      // Find the matching tag in the OLD doc (where names still agree).
+      const originalMatching = findMatchingTag(update.startState.doc, originalTag);
+      if (!originalMatching) return;
+
+      // Translate the matching tag's name region into post-change doc
+      // positions so we don't overwrite the wrong characters.
+      const newNameStart = update.changes.mapPos(originalMatching.nameStart, 1);
+      const newNameEnd = update.changes.mapPos(originalMatching.nameEnd, -1);
+      if (newNameEnd <= newNameStart) return; // sanity — region collapsed
+
+      update.view.dispatch({
+        changes: {
+          from: newNameStart,
+          to: newNameEnd,
+          insert: currentTag.name,
+        },
+        annotations: syncAnnotation.of(true),
+      });
     }),
 
     // Handle closing tag "/" deletion - when </tag> becomes <tag>
@@ -520,9 +530,17 @@ export function createTagSyncExtension(): Extension {
           // Check if a complete tag exists at the new position
           const newTag = findTagAtPosition(update.state.doc, Math.min(newPos, update.state.doc.length));
 
-          // If no tag exists where there was one before, and the original tag had a match,
-          // we should delete the orphaned matching tag
-          if (!newTag || (newTag.type !== originalTag.type) || (newTag.name !== originalTag.name)) {
+          // If no tag exists where there was one before (or its kind
+          // changed — opening/closing/self-closing), the tag was destroyed
+          // and we should clean up its matching pair.
+          //
+          // A name-only difference is a *rename*, not a destruction —
+          // the rename listener above handles it. Including the
+          // name-mismatch branch here used to dispatch a sibling deletion
+          // that conflicted with the rename, wiping the matching tag
+          // entirely (the v0.2.1 characterization tests captured the
+          // resulting "<bar>x" / "x</bar>" outputs).
+          if (!newTag || newTag.type !== originalTag.type) {
             // The tag was destroyed - check if we need to clean up the matching tag
             // But only if the original tag was complete (had a name)
             if (originalTag.name && (originalTag.type === 'opening' || originalTag.type === 'closing')) {

@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-04-25
+
+Bug-fix release. Fixes the two latent `createTagSyncExtension` defects
+that were discovered (and pinned with characterization tests) during the
+v0.2.1 coverage sprint. **User-visible improvement**: opening and closing
+XML tag names now stay in sync as you type or paste a rename, both
+character-by-character and via whole-name replacement.
+
+### Fixed
+
+- **tagSync rename listener never actually synced sibling tags**
+  (`src/components/Editor/tagSync.ts`). The listener queried
+  `findMatchingTag` against the *new* (mid-rename) tag name, which by
+  construction had no match in the document, so the sync silently
+  no-oped on every interactive edit. Real-time UX appeared to work only
+  because CodeMirror's `autoCloseTags` extension creates the matching
+  closing tag at `>` time.
+
+  The listener now resolves the matching tag in `update.startState.doc`
+  (where both sides still share the OLD name) and translates its
+  position into the post-change document via `update.changes.mapPos`.
+  Single-character typing, backspacing, and whole-name paste-rename all
+  propagate correctly to the sibling tag.
+
+- **Progressive-deletion listener interfered with renames**. When a
+  multi-character `replace` (a paste, programmatic dispatch, or
+  select-and-type) changed a tag's name, the progressive-deletion
+  listener interpreted the name change as "the original tag was
+  destroyed" and dispatched a sibling deletion that conflicted with
+  the rename listener's sibling rename. The result was that the matching
+  tag got wiped instead of renamed (the v0.2.1 characterization tests
+  pinned the resulting `<bar>x` / `x</bar>` outputs).
+
+  The listener's destruction predicate no longer fires when the tag at
+  the same position is the same kind (opening / closing / self-closing)
+  but has a different name — that is a rename and is handled by the
+  rename listener.
+
+### Test changes
+
+- `tests/tagSyncExtension.test.ts` — the two characterization tests that
+  pinned the buggy outputs are now behavioral assertions of the correct
+  outputs. Added five new tests for previously-broken scenarios:
+  single-character grow / shrink in opening and closing tags, and a
+  nested same-name rename (`<div><div>x</div></div>` → rename outer to
+  `box` keeps the inner pair untouched).
+
+### Project metrics
+
+| Metric | 0.2.1 | 0.2.2 |
+|---|---|---|
+| Tests | 286 → 300 (coverage sprint) | **305** |
+| Line coverage | ~89% | ~89% |
+| `tagSync.ts` line coverage | 88% | 88% |
+| Known tagSync bugs | 2 (documented) | **0** |
+
+### Rebuild instructions (after `git clone` of v0.2.2)
+
+No new dev dependencies versus v0.2.1.
+
+```bash
+npm install
+npm run build
+npm run test:run       # 305 passing
+npm run lint           # 0 errors / 0 warnings
+npm run dev            # http://localhost:5173
+```
+
 ## [0.2.1] - 2026-04-24
 
 Second-wave architectural refactor following the v0.2.0 sprints. All seven

@@ -1,31 +1,25 @@
 /**
- * Characterization tests for `createTagSyncExtension`.
+ * Behavioral tests for `createTagSyncExtension`.
  *
- * These tests mount a real CodeMirror `EditorView` in jsdom and dispatch
+ * Mounts a real CodeMirror `EditorView` in jsdom and dispatches
  * transactions to exercise the four listeners returned by
- * `createTagSyncExtension`. They pin the *currently observed* behavior so
- * any future change is caught — they are NOT a behavioral specification.
+ * `createTagSyncExtension`. Both the single-character "live typing" path
+ * and the multi-character "paste rename" path keep opening and closing
+ * tags synchronized.
  *
- * What is NOT covered (and should not be inferred to "work"):
+ * Background: in v0.2.1 these tests were characterization tests pinning
+ * two latent bugs:
+ *   (1) the rename listener could not sync via single-character typing
+ *       because it looked up the matching tag by the NEW name (which by
+ *       construction had no match yet);
+ *   (2) the progressive-deletion listener treated a name change as a
+ *       "tag destroyed" event and dispatched a sibling deletion that
+ *       conflicted with the rename listener's sibling rename.
  *
- * - Sync of an opening tag's name when the user types into it character by
- *   character. The rename listener queries `findMatchingTag` against the
- *   *new* name, which by construction has no match in the document, so the
- *   sync silently no-ops. Real-time UX is propped up by CodeMirror's
- *   `autoCloseTags` extension creating the closing tag at the moment the
- *   opening tag's `>` is typed; once both exist with matching names, the
- *   sync only handles whole-name replacements (e.g. paste-rename) cleanly.
- *
- * - Sync where two listeners would otherwise step on each other (multi-
- *   character `replace` operations land in this category). The progressive-
- *   deletion listener interprets a name change as "the original tag was
- *   destroyed" and dispatches a sibling deletion that conflicts with the
- *   rename listener's sibling rename. Single-character inserts avoid this
- *   because of the listener's `toA <= fromA` early return.
- *
- * Both findings are documented in CHANGELOG and CLAUDE.md as "tagSync
- * extension has known sync gaps". Adding behavioral tests here would
- * mean fixing the implementation first.
+ * v0.2.2 fixed both: the rename listener now resolves the matching tag in
+ * `update.startState.doc` (where names still agree) and translates its
+ * positions forward via `update.changes.mapPos`; the progressive-deletion
+ * listener no longer fires on a name-only difference.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { EditorState } from '@codemirror/state';
@@ -164,44 +158,83 @@ describe('createTagSyncExtension — sync-annotation guard', () => {
   });
 });
 
-describe('createTagSyncExtension — known quirks (characterization)', () => {
-  // The four listeners currently fire independently on the same update.
-  // For multi-character `replace` operations the rename listener and the
-  // progressive-deletion listener step on each other. These tests pin the
-  // observed (surprising) behavior so we notice if the implementation
-  // changes — they are NOT what users should rely on.
-
-  it('typing one character into an opening tag name does NOT sync the closing tag (sync gap)', () => {
-    // The rename listener looks up a matching tag with the *new* name,
-    // which by construction does not exist yet, so it bails. Real UX is
-    // covered by `autoCloseTags` creating the pair at `>` time; this
-    // characterization documents what tagSync alone does.
+describe('createTagSyncExtension — single-character rename via typing (v0.2.2 fix)', () => {
+  it('typing one character into the opening tag name extends the closing tag', () => {
     mount('<foo>x</foo>', 4);
     view.dispatch({
       changes: { from: 4, to: 4, insert: 's' },
       selection: { anchor: 5 },
     });
-    expect(view.state.doc.toString()).toBe('<foos>x</foo>');
+    expect(view.state.doc.toString()).toBe('<foos>x</foos>');
   });
 
-  it('replacing the closing-tag name in one shot wipes the opening tag (listener interference)', () => {
-    mount('<foo>x</foo>');
+  it('backspacing one character from the opening tag name shrinks the closing tag', () => {
+    mount('<foos>x</foos>', 5);
     view.dispatch({
-      changes: { from: 8, to: 11, insert: 'bar' },
-      selection: { anchor: 11 },
+      changes: { from: 4, to: 5, insert: '' },
+      selection: { anchor: 4 },
     });
-    expect(view.state.doc.toString()).toBe('x</bar>');
+    expect(view.state.doc.toString()).toBe('<foo>x</foo>');
   });
 
-  it('replacing the opening-tag name in one shot wipes the closing tag (listener interference)', () => {
+  it('typing one character into the closing tag name extends the opening tag', () => {
+    mount('<foo>x</foo>', 11);
+    view.dispatch({
+      changes: { from: 11, to: 11, insert: 's' },
+      selection: { anchor: 12 },
+    });
+    expect(view.state.doc.toString()).toBe('<foos>x</foos>');
+  });
+
+  it('backspacing one character from the closing tag name shrinks the opening tag', () => {
+    // <foos>x</foos>: cursor at 13 (just before '>'), backspace removes
+    // the trailing 's' at position 12 → closing becomes </foo>, and the
+    // opening should also shrink to <foo>.
+    mount('<foos>x</foos>', 13);
+    view.dispatch({
+      changes: { from: 12, to: 13, insert: '' },
+      selection: { anchor: 12 },
+    });
+    expect(view.state.doc.toString()).toBe('<foo>x</foo>');
+  });
+
+  it('mirrors a sequence of one-character insertions in the opening tag', () => {
+    mount('<a>x</a>', 2);
+    view.dispatch({ changes: { from: 2, to: 2, insert: 'b' }, selection: { anchor: 3 } });
+    view.dispatch({ changes: { from: 3, to: 3, insert: 'a' }, selection: { anchor: 4 } });
+    view.dispatch({ changes: { from: 4, to: 4, insert: 'r' }, selection: { anchor: 5 } });
+    expect(view.state.doc.toString()).toBe('<abar>x</abar>');
+  });
+});
+
+describe('createTagSyncExtension — multi-character paste rename (v0.2.2 fix)', () => {
+  it('replacing the entire opening-tag name in one shot syncs the closing tag', () => {
     mount('<foo>x</foo>');
     view.dispatch({
       changes: { from: 1, to: 4, insert: 'bar' },
       selection: { anchor: 4 },
     });
-    // Mirror image of the closing-rename quirk above: the progressive-
-    // deletion listener interprets the opening rename as "tag destroyed"
-    // and the rename listener also runs, with the deletion winning.
-    expect(view.state.doc.toString()).toBe('<bar>x');
+    expect(view.state.doc.toString()).toBe('<bar>x</bar>');
+  });
+
+  it('replacing the entire closing-tag name in one shot syncs the opening tag', () => {
+    mount('<foo>x</foo>');
+    view.dispatch({
+      changes: { from: 8, to: 11, insert: 'bar' },
+      selection: { anchor: 11 },
+    });
+    expect(view.state.doc.toString()).toBe('<bar>x</bar>');
+  });
+
+  it('keeps inner-tag and outer-tag pairs independent under nested same-name renaming', () => {
+    // Renaming the OUTER opening must rename the OUTER closing (the last
+    // </div>), not the INNER closing.
+    mount('<div><div>x</div></div>', 4);
+    // Replace outer opening name "div" (positions 1..4) with "box".
+    view.dispatch({
+      changes: { from: 1, to: 4, insert: 'box' },
+      selection: { anchor: 4 },
+    });
+    expect(view.state.doc.toString()).toBe('<box><div>x</div></box>');
   });
 });
