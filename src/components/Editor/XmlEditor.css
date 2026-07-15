@@ -52,13 +52,13 @@
   font-size: var(--editor-font-size, 14px) !important;
 }
 
-/* Visual line numbers gutter */
-.cm-visual-lineNumbers {
+/* Line numbers gutter */
+.xml-editor .cm-lineNumbers {
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
 }
 
-.cm-visual-lineNumber {
+.xml-editor .cm-lineNumbers .cm-gutterElement {
   color: var(--color-text-secondary);
   padding: 0 8px 0 4px;
   min-width: 32px;

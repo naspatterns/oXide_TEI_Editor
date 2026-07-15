@@ -10,13 +10,16 @@ interface Props {
 
 export function NewDocumentDialog({ open, onClose }: Props) {
   const [selected, setSelected] = useState('minimal');
-  const { loadDocument } = useEditor();
+  const { createNewTab } = useEditor();
 
   if (!open) return null;
 
   const handleCreate = () => {
     const content = getTemplateContent(selected);
-    loadDocument(content, null, null);
+    // Always open the template in a NEW tab: replacing the active tab would
+    // silently destroy unsaved work, and with zero tabs open there is no
+    // active tab to replace at all.
+    createNewTab(content);
     onClose();
   };
 

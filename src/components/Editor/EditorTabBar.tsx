@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useEditor } from '../../store/useEditor';
 import { useFileDrop } from '../../hooks/useFileDrop';
+import { useConfirmedTabClose } from '../../hooks/useConfirmedTabClose';
 import { ContextMenu, type MenuItem, type MenuDivider } from '../ContextMenu/ContextMenu';
 import { useContextMenu } from '../ContextMenu/useContextMenu';
 import { ConfirmDialog } from '../FileDialog/ConfirmDialog';
@@ -19,8 +20,9 @@ export function EditorTabBar() {
   const contextMenu = useContextMenu();
   const [contextTabId, setContextTabId] = useState<string | null>(null);
 
-  // Close confirmation dialog state
-  const [closeConfirm, setCloseConfirm] = useState<{ id: string; fileName: string } | null>(null);
+  // Tab closing with dirty-document confirmation (shared with App-level
+  // Close Tab entry points)
+  const { pending: closeConfirm, requestClose, confirm: confirmClose, cancel: cancelClose } = useConfirmedTabClose();
 
   const handleTabClick = useCallback(
     (id: string) => {
@@ -37,24 +39,12 @@ export function EditorTabBar() {
     [contextMenu],
   );
 
-  const doCloseTab = useCallback(
-    (id: string) => {
-      const doc = getDocument(id);
-      if (doc?.isDirty) {
-        setCloseConfirm({ id, fileName: doc.fileName });
-      } else {
-        closeTab(id);
-      }
-    },
-    [closeTab, getDocument],
-  );
-
   const handleCloseTab = useCallback(
     (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
-      doCloseTab(id);
+      requestClose(id);
     },
-    [doCloseTab],
+    [requestClose],
   );
 
   const handleCloseOthers = useCallback(() => {
@@ -97,7 +87,7 @@ export function EditorTabBar() {
           label: 'Close',
           shortcut: 'Ctrl+W',
           icon: '✕',
-          action: () => doCloseTab(contextTabId),
+          action: () => requestClose(contextTabId),
         },
         {
           id: 'close-others',
@@ -201,13 +191,8 @@ export function EditorTabBar() {
         confirmLabel="Close"
         cancelLabel="Cancel"
         variant="danger"
-        onConfirm={() => {
-          if (closeConfirm) {
-            closeTab(closeConfirm.id);
-            setCloseConfirm(null);
-          }
-        }}
-        onCancel={() => setCloseConfirm(null)}
+        onConfirm={confirmClose}
+        onCancel={cancelClose}
       />
     </div>
   );

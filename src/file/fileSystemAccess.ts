@@ -13,6 +13,16 @@ const XML_FILE_TYPES = [
   },
 ];
 
+/**
+ * True when an open/save rejection came from the user backing out of the
+ * picker rather than a real I/O failure. Every picker path (FSA and the
+ * legacy <input> fallback) rejects with an AbortError DOMException, so
+ * callers can silently ignore these and surface everything else.
+ */
+export function isUserCancelledError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
 /** File extensions to include in file tree */
 const XML_EXTENSIONS = ['.xml', '.tei', '.rng'];
 
@@ -114,14 +124,14 @@ function openWithInput(): Promise<{
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) {
-        reject(new Error('No file selected'));
+        reject(new DOMException('No file selected', 'AbortError'));
         return;
       }
       const content = await file.text();
       resolve({ content, fileName: file.name, fileHandle: null });
     };
 
-    input.oncancel = () => reject(new Error('File selection cancelled'));
+    input.oncancel = () => reject(new DOMException('File selection cancelled', 'AbortError'));
     input.click();
   });
 }

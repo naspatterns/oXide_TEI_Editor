@@ -5,6 +5,98 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — P0 fixes from the 2026-07-16 comprehensive audit
+
+Fixes the data-loss and coordinate-system defect clusters that the
+2026-07 audit identified as blocking real-project adoption. All were
+reproduced live in the browser before fixing and re-verified after.
+
+### Fixed — data loss
+
+- **Dirty documents can no longer be discarded without confirmation.**
+  File → Close Tab, Ctrl+W, and the command palette previously called
+  `closeTab` directly (`src/App.tsx`); only the tab-bar × was guarded.
+  All close entry points now route through a shared
+  `useConfirmedTabClose` hook (`src/hooks/useConfirmedTabClose.ts`)
+  that opens a ConfirmDialog when the document is dirty. EditorTabBar
+  was refactored onto the same hook.
+- **New Document now always opens a new tab** instead of overwriting
+  the active tab's content in place
+  (`src/components/FileDialog/NewDocumentDialog.tsx` now calls
+  `createNewTab`). This also fixes the zero-tab case, where
+  `LOAD_DOCUMENT`'s `if (!activeDocumentId) return state` guard made
+  New Document a silent no-op — the empty-state screen's "Press Ctrl+N"
+  hint did nothing.
+- **Autosave redesigned** (`src/file/autoSave.ts`):
+  - Snapshots **all dirty tabs** each tick, not just the active one
+    (multi-tab crash recovery; single-slot design was v0.1 era).
+  - The App-side interval is created **once** with a ref-based snapshot
+    reader (`src/App.tsx`). Previously the effect depended on
+    `getActiveDocument`, whose identity changed on every keystroke /
+    cursor move / lint pass — each change restarted the 30s timer, so
+    autosave effectively never fired while the user was working.
+  - Recovery opens autosaved documents in **new dirty tabs** instead of
+    overwriting the active tab; the multi-document dialog lists file
+    names; the `content.length > 100` recovery gate is gone.
+  - Discarding recovery now actually calls `clearAutoSave()` (was
+    exported but never called), so the prompt doesn't reappear forever.
+  - Legacy single-document autosave records are migrated on read.
+  - An empty snapshot (nothing dirty) clears the stored record.
+  - `navigator.storage.persist()` is requested on startup so the
+    recovery copy is less likely to be evicted.
+- **Real save/open failures are no longer swallowed as "cancelled"**
+  (`src/App.tsx`). User cancellation is now detected via
+  `isUserCancelledError` (AbortError; the legacy `<input>` fallback was
+  normalized to reject with AbortError too,
+  `src/file/fileSystemAccess.ts`) — anything else (revoked permission,
+  locked file, disk full) surfaces as an error toast while the document
+  stays dirty.
+
+### Fixed — coordinates
+
+- **Line-number gutter now shows logical line numbers**
+  (`lineNumbers()` from @codemirror/view). The custom
+  `visualLineNumbers` gutter (deleted) numbered wrapped visual rows and
+  only counted `viewportLineBlocks`, so numbers drifted +1 per wrapped
+  line and reset to ~1 when scrolled — at the end of a 4,514-line
+  document the gutter read 24–49 while the status bar read Ln 4514.
+  Gutter, status bar, goToLine, and validation-error positions now
+  agree.
+- **XPath search navigates to the right match.** After locating the nth
+  occurrence, the line scan kept going and later occurrences overwrote
+  the result, so every match was labeled with — and clicking navigated
+  to — the LAST occurrence's line (all 2,400 `//l` matches showed
+  "Ln 4509"). The scan now returns immediately; the logic lives in
+  `findNthTagLine` in the new `src/components/Toolbar/xpathEvaluator.ts`
+  (pure evaluation code split out of `XPathSearch.tsx` for Fast Refresh
+  and testability).
+
+### Fixed — dev environment
+
+- **Service worker no longer registers in dev** (`src/main.tsx`,
+  `import.meta.env.PROD` guard). The unstamped dev SW cached Vite
+  module responses cache-first and kept serving stale code across
+  edits — discovered when verification kept loading pre-fix modules.
+
+### Tests
+
+- 331 → **354 passing**. New suites: `tests/autoSave.test.ts`
+  (interval semantics, multi-doc snapshot, empty-snapshot clear, legacy
+  migration, error paths), `tests/xpathSearch.test.ts` (nth-occurrence
+  line attribution, prefix collisions l/lg, same-line siblings),
+  `tests/confirmedTabClose.test.tsx` (dirty guard, confirm/cancel,
+  unknown ids).
+
+### Known limitations (unchanged, tracked for P1+)
+
+- Completion context window (2,000 chars) still degrades schema
+  filtering in large documents.
+- Validator's attribute scanner is still quote-blind (false "Unknown
+  attribute" warnings on URLs with query strings).
+- Custom RNG re-upload still returns the cached parse.
+- Two app instances still race on the single autosave record
+  (last-writer-wins).
+
 ## [0.2.3] - 2026-04-25 — Security patch
 
 Fixes the issues discovered in the v0.2.3 security review of the TEI

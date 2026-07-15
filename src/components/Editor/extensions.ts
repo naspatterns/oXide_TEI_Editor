@@ -9,7 +9,7 @@ import type { ValidationError } from '../../types/schema';
 import { createSchemaCompletionSource } from './completionSource';
 import { createValidationLinter } from './validationLinter';
 import { teiEditorTheme, teiEditorThemeLight } from './theme';
-import { visualLineNumbers } from './visualLineNumbers';
+import { lineNumbers } from '@codemirror/view';
 import { paragraphIndentation } from './paragraphIndent';
 import { INTERNAL_DRAG_TYPE } from '../../utils/dragDropUtils';
 import { createTagSyncExtension } from './tagSync';
@@ -154,8 +154,10 @@ export function createEditorExtensions(
   const editorTheme = dark ? teiEditorTheme : teiEditorThemeLight;
 
   return [
-    // Visual line numbers (each wrapped line gets its own number)
-    visualLineNumbers(),
+    // Logical line numbers. These must agree with the status bar, goToLine,
+    // and validation-error positions — a previous "visual" (per wrapped row)
+    // numbering scheme drifted from all of them and broke when scrolled.
+    lineNumbers(),
     // XML language support
     xml(),
     // Auto-close tags when typing > or /

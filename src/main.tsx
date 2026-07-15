@@ -22,11 +22,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
-// Register service worker for offline support
-if ('serviceWorker' in navigator) {
+// Register service worker for offline support — production builds only.
+// In dev, public/sw.js is served verbatim (unstamped cache name) and its
+// cache-first strategy keeps serving STALE module responses across code
+// changes, which breaks both HMR-adjacent workflows and manual testing.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {
-      // SW registration failed (e.g., dev server) — not critical
+      // SW registration failed — not critical
     });
   });
 }

@@ -24,8 +24,10 @@ import { ConfirmDialog } from './components/FileDialog/ConfirmDialog';
 import { HelpDialog } from './components/Toolbar/HelpDialog';
 import logoUrl from '../imgs/logo-oxygen-style-transparent.svg';
 import type { Command } from './components/CommandPalette/CommandPalette';
-import { openFile, saveFile, saveAsFile } from './file/fileSystemAccess';
-import { startAutoSave, stopAutoSave, loadFromIDB } from './file/autoSave';
+import { openFile, saveFile, saveAsFile, isUserCancelledError } from './file/fileSystemAccess';
+import { startAutoSave, stopAutoSave, loadFromIDB, clearAutoSave, type AutosaveData } from './file/autoSave';
+import { createNewDocument } from './types/workspace';
+import { useConfirmedTabClose } from './hooks/useConfirmedTabClose';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from './utils/schemaDetector';
 import { undo, redo } from '@codemirror/commands';
 import { openSearchPanel } from '@codemirror/search';
@@ -46,13 +48,12 @@ function EditorLayout() {
   const {
     state,
     multiTabState,
-    loadDocument,
     setFile,
     markSaved,
+    openTab,
     openFileAsTab,
     createNewTab,
     getActiveDocument,
-    closeTab,
     setActiveTab,
     editorViewRef,
   } = useEditor();
@@ -62,8 +63,10 @@ function EditorLayout() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [showExplorer, setShowExplorer] = useState(true);
-  const [recoveryData, setRecoveryData] = useState<{ content: string; fileName: string | null; timestamp: number } | null>(null);
+  const [recoveryData, setRecoveryData] = useState<AutosaveData | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  // Dirty-guarded tab closing shared by menu / Ctrl+W / command palette
+  const { pending: pendingTabClose, requestClose, confirm: confirmTabClose, cancel: cancelTabClose } = useConfirmedTabClose();
 
   // ═══════════════════════════════════════════════════════════
   // Shared action handlers (used by both menus and keyboard shortcuts)
@@ -83,7 +86,11 @@ function EditorLayout() {
           setTimeout(() => setAlertMessage(message), 100);
         }
       }
-    } catch { /* cancelled */ }
+    } catch (error) {
+      if (!isUserCancelledError(error)) {
+        toast.error(`Could not open file: ${error instanceof Error ? error.message : 'unknown error'}`, 8000);
+      }
+    }
   }, [openFileAsTab, toast]);
 
   const handleSave = useCallback(async () => {
@@ -94,7 +101,14 @@ function EditorLayout() {
       setFile(result.fileName, result.fileHandle);
       markSaved();
       toast.success(`Saved ${result.fileName}`);
-    } catch { /* cancelled */ }
+    } catch (error) {
+      if (!isUserCancelledError(error)) {
+        // Real failure (revoked permission, locked/removed file, disk full):
+        // the document stays dirty — tell the user instead of pretending
+        // the save was cancelled.
+        toast.error(`Save failed: ${error instanceof Error ? error.message : 'unknown error'}`, 8000);
+      }
+    }
   }, [getActiveDocument, setFile, markSaved, toast]);
 
   const handleSaveAs = useCallback(async () => {
@@ -105,14 +119,18 @@ function EditorLayout() {
       setFile(result.fileName, result.fileHandle);
       markSaved();
       toast.success(`Saved as ${result.fileName}`);
-    } catch { /* cancelled */ }
+    } catch (error) {
+      if (!isUserCancelledError(error)) {
+        toast.error(`Save failed: ${error instanceof Error ? error.message : 'unknown error'}`, 8000);
+      }
+    }
   }, [getActiveDocument, setFile, markSaved, toast]);
 
   const handleCloseTab = useCallback(() => {
     if (multiTabState.activeDocumentId) {
-      closeTab(multiTabState.activeDocumentId);
+      requestClose(multiTabState.activeDocumentId);
     }
-  }, [multiTabState.activeDocumentId, closeTab]);
+  }, [multiTabState.activeDocumentId, requestClose]);
 
   const handleToggleExplorer = useCallback(() => {
     setShowExplorer(prev => !prev);
@@ -276,17 +294,33 @@ function EditorLayout() {
     [toast],
   );
 
-  // Autosave - save active document
+  // Autosave — snapshot ALL dirty tabs. The snapshot reader goes through a
+  // ref so this effect (and therefore the 30s interval) is created exactly
+  // once: depending on document state here would restart the timer on every
+  // keystroke and autosave would only ever fire after 30s of inactivity.
+  const openDocumentsRef = useRef(multiTabState.openDocuments);
   useEffect(() => {
-    startAutoSave(() => {
-      const activeDoc = getActiveDocument();
-      return {
-        content: activeDoc?.content ?? '',
-        fileName: activeDoc?.fileName ?? null,
-      };
-    }, handleAutosaveError);
+    openDocumentsRef.current = multiTabState.openDocuments;
+  });
+
+  useEffect(() => {
+    startAutoSave(
+      () =>
+        openDocumentsRef.current
+          .filter(doc => doc.isDirty)
+          .map(doc => ({ fileName: doc.fileName, content: doc.content })),
+      handleAutosaveError,
+    );
     return stopAutoSave;
-  }, [getActiveDocument, handleAutosaveError]);
+  }, [handleAutosaveError]);
+
+  // Ask the browser not to evict our origin's storage under pressure —
+  // the autosave in IndexedDB is the only crash-recovery copy.
+  useEffect(() => {
+    try {
+      void navigator.storage?.persist?.().catch(() => { /* denied or unsupported */ });
+    } catch { /* older browsers without navigator.storage */ }
+  }, []);
 
   // Track if recovery was already attempted (prevents double prompt in Strict Mode)
   const recoveryAttempted = useRef(false);
@@ -299,8 +333,7 @@ function EditorLayout() {
 
     (async () => {
       const saved = await loadFromIDB(handleAutosaveError);
-      if (saved && saved.content && saved.content.length > 100) {
-        // Only offer recovery if the saved content seems meaningful
+      if (saved && saved.documents.length > 0) {
         const age = Date.now() - saved.timestamp;
         if (age < 24 * 60 * 60 * 1000) {
           // Less than 24 hours old - show recovery dialog
@@ -313,14 +346,26 @@ function EditorLayout() {
   }, [handleAutosaveError]);
 
   const handleRecoverDocument = useCallback(() => {
-    if (recoveryData) {
-      loadDocument(recoveryData.content, recoveryData.fileName, null);
-      toast.success('Document recovered successfully');
-      setRecoveryData(null);
-    }
-  }, [recoveryData, loadDocument, toast]);
+    if (!recoveryData) return;
+    // Recover into NEW tabs (never overwrite whatever is currently active)
+    // and keep them dirty — the recovered content exists nowhere on disk.
+    recoveryData.documents.forEach(saved => {
+      const doc = createNewDocument(saved.fileName ?? 'Recovered.xml', saved.content);
+      doc.isDirty = true;
+      openTab(doc);
+    });
+    toast.success(
+      recoveryData.documents.length === 1
+        ? 'Document recovered successfully'
+        : `${recoveryData.documents.length} documents recovered successfully`,
+    );
+    setRecoveryData(null);
+  }, [recoveryData, openTab, toast]);
 
   const handleDiscardRecovery = useCallback(() => {
+    // The user chose to drop the recovery copy — clear it so the prompt
+    // doesn't reappear on every launch.
+    void clearAutoSave();
     setRecoveryData(null);
   }, []);
 
@@ -391,12 +436,28 @@ function EditorLayout() {
       />
       <ConfirmDialog
         open={recoveryData !== null}
-        title="Recover Document"
-        message={`Found autosaved document${recoveryData?.fileName ? ` (${recoveryData.fileName})` : ''} from ${recoveryData ? new Date(recoveryData.timestamp).toLocaleString() : ''}. Would you like to recover it?`}
+        title={recoveryData && recoveryData.documents.length > 1 ? 'Recover Documents' : 'Recover Document'}
+        message={
+          recoveryData
+            ? `Found ${recoveryData.documents.length} autosaved document${recoveryData.documents.length > 1 ? 's' : ''} (${recoveryData.documents
+                .map(d => d.fileName ?? 'Untitled')
+                .join(', ')}) from ${new Date(recoveryData.timestamp).toLocaleString()}. Recover ${recoveryData.documents.length > 1 ? 'them' : 'it'} into new tab${recoveryData.documents.length > 1 ? 's' : ''}?`
+            : ''
+        }
         confirmLabel="Recover"
         cancelLabel="Discard"
         onConfirm={handleRecoverDocument}
         onCancel={handleDiscardRecovery}
+      />
+      <ConfirmDialog
+        open={pendingTabClose !== null}
+        title="Unsaved Changes"
+        message={`"${pendingTabClose?.fileName}" has unsaved changes. Close anyway?`}
+        confirmLabel="Close"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={confirmTabClose}
+        onCancel={cancelTabClose}
       />
       {commandPaletteOpen && (
         <Suspense fallback={null}>
