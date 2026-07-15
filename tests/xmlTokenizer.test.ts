@@ -115,3 +115,83 @@ describe('parseAttributes', () => {
     expect(parseAttributes('expr="a>b"')).toEqual({ expr: 'a>b' });
   });
 });
+
+// ============================================================================
+// P1 (2026-07 audit): quote-aware attribute scan + stack-with-children
+// ============================================================================
+
+import { scanAttributeNames, getOpenElementStackWithChildren } from '../src/schema/xmlTokenizer';
+
+describe('scanAttributeNames', () => {
+  it('extracts simple attribute names with their offsets', () => {
+    const text = 'type="poem" n="3"';
+    expect(scanAttributeNames(text)).toEqual([
+      { name: 'type', index: 0 },
+      { name: 'n', index: 12 },
+    ]);
+  });
+
+  it('ignores name= patterns inside double-quoted values', () => {
+    const text = 'target="https://en.wikipedia.org/w/index.php?title=Worm&oldid=5"';
+    expect(scanAttributeNames(text).map(a => a.name)).toEqual(['target']);
+  });
+
+  it('ignores name= patterns inside single-quoted values', () => {
+    const text = "target='?a=1&b=2' rend='x=y'";
+    expect(scanAttributeNames(text).map(a => a.name)).toEqual(['target', 'rend']);
+  });
+
+  it('handles whitespace around =', () => {
+    const text = 'type = "poem"  n ="3"';
+    expect(scanAttributeNames(text).map(a => a.name)).toEqual(['type', 'n']);
+  });
+
+  it('an unterminated quote swallows the rest (mid-typing state)', () => {
+    const text = 'target="https://example.com/?id=5&lang=';
+    expect(scanAttributeNames(text).map(a => a.name)).toEqual(['target']);
+  });
+
+  it('does not treat bare words without = as attributes', () => {
+    const text = 'checked type="a"';
+    expect(scanAttributeNames(text).map(a => a.name)).toEqual(['type']);
+  });
+
+  it('returns empty for empty input', () => {
+    expect(scanAttributeNames('')).toEqual([]);
+  });
+});
+
+describe('getOpenElementStackWithChildren', () => {
+  it('reports the open ancestor chain with per-instance children', () => {
+    const xml = '<TEI><teiHeader><fileDesc></fileDesc></teiHeader><text><body><div><head/><lg><l>a</l><l>b</l>';
+    const stack = getOpenElementStackWithChildren(xml);
+    expect(stack.map(f => f.name)).toEqual(['TEI', 'text', 'body', 'div', 'lg']);
+    const top = stack[stack.length - 1];
+    expect(top.children).toEqual(['l', 'l']);
+    // div saw head (self-close) and lg — not the l's inside lg
+    expect(stack[3].children).toEqual(['head', 'lg']);
+  });
+
+  it('scopes children to the CURRENT instance, not earlier same-named elements', () => {
+    // Two sibling divs: the first is closed with children; the second is
+    // open and empty. The open one must not inherit the first one's children.
+    const xml = '<body><div><head/><p>x</p></div><div>';
+    const stack = getOpenElementStackWithChildren(xml);
+    expect(stack.map(f => f.name)).toEqual(['body', 'div']);
+    expect(stack[stack.length - 1].children).toEqual([]);
+    expect(stack[0].children).toEqual(['div', 'div']);
+  });
+
+  it('skips comments, PIs and CDATA', () => {
+    const xml = '<a><?pi x?><!-- <fake> --><![CDATA[<fake2>]]><b>';
+    const stack = getOpenElementStackWithChildren(xml);
+    expect(stack.map(f => f.name)).toEqual(['a', 'b']);
+    expect(stack[0].children).toEqual(['b']);
+  });
+
+  it('tolerates mismatched closes like getOpenElementStack', () => {
+    const xml = '<a><b></c>';
+    const stack = getOpenElementStackWithChildren(xml);
+    expect(stack.map(f => f.name)).toEqual(['a', 'b']);
+  });
+});

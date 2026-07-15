@@ -5,11 +5,52 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — P0 fixes from the 2026-07-16 comprehensive audit
+## [Unreleased] — P0+P1 fixes from the 2026-07-16 comprehensive audit
 
-Fixes the data-loss and coordinate-system defect clusters that the
-2026-07 audit identified as blocking real-project adoption. All were
-reproduced live in the browser before fixing and re-verified after.
+Fixes the data-loss, coordinate-system, and accuracy defect clusters
+that the 2026-07 audit identified as blocking real-project adoption.
+All were reproduced live in the browser before fixing and re-verified
+after.
+
+### Fixed — completion & validation accuracy (P1)
+
+- **Schema-aware completion now works at any document size.** The
+  completion context (parent element + its existing children) was
+  computed from a 2,000-character window before the cursor, so in
+  virtually every real TEI document the parent had opened outside the
+  window and completions silently degraded to the unfiltered element
+  list. The open-element stack is now computed from the document start
+  with `getOpenElementStackWithChildren` (one tokenizer pass that also
+  yields the current parent instance's children for required-child ★
+  detection — previously children of *other* same-named elements
+  leaked in). Verified: at the end of a 4,514-line document, typing
+  `<t` between `</text>` and `</TEI>` now offers exactly teiHeader/text
+  instead of 8 unfiltered matches. The scan is computed lazily, so
+  keystrokes that trigger no completion never pay for it.
+- **Quote-aware attribute scanning** (new `scanAttributeNames` in
+  `xmlTokenizer.ts`, shared by validator and completion). The validator
+  scanned raw `name=` patterns, so any attribute value containing `=` —
+  URLs with query strings, routine in TEI `@target` linking — produced
+  false `Unknown attribute` warnings (`target="…?title=X&amp;oldid=5"`
+  reported bogus `title`/`oldid`). Completion's used-attribute filter
+  had the same flaw. Both now skip quoted values.
+- **Re-uploading an edited custom RNG takes effect immediately**
+  (`SchemaEngine.loadCustomRng` cache is now keyed by content hash, not
+  file name, and bounded). Previously the stale first parse was served
+  until a full page reload — breaking the edit-schema/re-validate loop.
+- **QuickTagMenu no longer destroys the selection when you type.**
+  With the menu open (editor still focused), the first typed character
+  was inserted into the DOCUMENT, replacing the selected text the user
+  was about to wrap. Printable keys are now intercepted at the document
+  level (preventDefault) and routed into the filter; ↑↓/Enter/Tab drive
+  menu navigation instead of moving the editor cursor; Escape closes
+  the menu but PRESERVES the editor selection (it used to deselect).
+  Ctrl/Cmd+C still copies the editor selection (input is not
+  auto-focused). Known limitation: text entered through an IME
+  composition (e.g. Korean input) bypasses keydown and can still reach
+  the editor.
+
+### Fixed — data loss
 
 ### Fixed — data loss
 
@@ -80,22 +121,29 @@ reproduced live in the browser before fixing and re-verified after.
 
 ### Tests
 
-- 331 → **354 passing**. New suites: `tests/autoSave.test.ts`
+- 331 → **382 passing**. New suites: `tests/autoSave.test.ts`
   (interval semantics, multi-doc snapshot, empty-snapshot clear, legacy
   migration, error paths), `tests/xpathSearch.test.ts` (nth-occurrence
   line attribution, prefix collisions l/lg, same-line siblings),
   `tests/confirmedTabClose.test.tsx` (dirty guard, confirm/cancel,
-  unknown ids).
+  unknown ids), `tests/schemaEngine.test.ts` (content-keyed RNG cache),
+  `tests/quickTagMenu.test.tsx` (keyboard routing, copy passthrough),
+  plus new describes in `xmlTokenizer` (scanAttributeNames,
+  stack-with-children), `completionSource` (large-document context,
+  URL-value attribute filter), and `xmlValidator` (quote-aware
+  attribute regression).
 
-### Known limitations (unchanged, tracked for P1+)
+### Known limitations (tracked for P2+)
 
-- Completion context window (2,000 chars) still degrades schema
-  filtering in large documents.
-- Validator's attribute scanner is still quote-blind (false "Unknown
-  attribute" warnings on URLs with query strings).
-- Custom RNG re-upload still returns the cached parse.
 - Two app instances still race on the single autosave record
   (last-writer-wins).
+- Schema is app-global while documents are per-tab; no Schematron
+  layer; no corpus-wide batch validation.
+- IME composition input can bypass the QuickTagMenu keyboard routing
+  (see above).
+- Suspected duplicated CodeMirror domEventHandlers after repeated
+  schema switches (a mouseup dispatched the quick-tag-menu event 9× in
+  one long session) — under investigation.
 
 ## [0.2.3] - 2026-04-25 — Security patch
 

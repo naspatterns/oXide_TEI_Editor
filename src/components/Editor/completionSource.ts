@@ -2,7 +2,7 @@ import type { CompletionContext, CompletionResult, Completion } from '@codemirro
 import { snippetCompletion } from '@codemirror/autocomplete';
 import type { SchemaInfo, ElementSpec } from '../../types/schema';
 import { getRequiredChildren } from '../../schema/xmlValidator';
-import { getOpenElementStack, tokenizeXmlTags } from '../../schema/xmlTokenizer';
+import { getOpenElementStackWithChildren, scanAttributeNames, type OpenElementFrame } from '../../schema/xmlTokenizer';
 import { getAttribute, getAttributes, getElement } from '../../schema/schemaQuery';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -22,8 +22,6 @@ const SPACE_IN_TAG_REGEX = /<([a-zA-Z_][\w.:_-]*)(?:\s[^>]*)?\s$/;
 const CLOSING_TAG_REGEX = /<\/([a-zA-Z_][\w.:_-]*)$/;
 /** 열린 태그 패턴: <tag attrs... */
 const OPEN_TAG_REGEX = /<([a-zA-Z_][\w.:_-]*)(\s[^>]*)?$/;
-/** 속성 추출 패턴 (g 플래그 - lastIndex 리셋 필요) */
-const ATTR_EXTRACT_REGEX = /([a-zA-Z_][\w.:_-]*)\s*=/g;
 /** 등호 직후 패턴 */
 const AFTER_EQUALS_REGEX = /=\s*$/;
 
@@ -42,25 +40,33 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
     if (!schema) return null;
 
     const { state, pos } = context;
+    // Local window for the trigger-pattern regexes only — these are
+    // inherently local (partial tag/attribute being typed at the cursor).
     const textBefore = state.doc.sliceString(Math.max(0, pos - 2000), pos);
 
-    // Parse element stack up to cursor for context awareness
-    const elementStack = getOpenElementStack(textBefore);
-    const parentName = elementStack.length > 0 ? elementStack[elementStack.length - 1] : null;
-    const parentSpec = parentName ? getElement(schema, parentName) : null;
-
-    // Get existing children for required element detection
-    const existingChildren = getExistingChildren(textBefore, parentName);
+    // Element context (parent + its children so far) must see the WHOLE
+    // document before the cursor: the parent element usually opened far
+    // beyond any fixed window (a 2,000-char window silently degraded
+    // completions to the unfiltered element list in real-sized documents).
+    // Computed lazily so keystrokes that trigger no completion — ordinary
+    // text content — never pay for the full-document scan.
+    let cachedStack: OpenElementFrame[] | null = null;
+    const getStack = (): OpenElementFrame[] =>
+      (cachedStack ??= getOpenElementStackWithChildren(state.doc.sliceString(0, pos)));
 
     // 요소명 자동완성: '<' 뒤에서 요소명 타이핑 중
     const elementMatch = textBefore.match(ELEMENT_START_REGEX);
     if (elementMatch) {
-      return completeElementName(schema, elementMatch[1], pos - elementMatch[1].length, parentSpec, existingChildren);
+      const top = getStack()[getStack().length - 1];
+      const parentSpec = top ? getElement(schema, top.name) : null;
+      return completeElementName(schema, elementMatch[1], pos - elementMatch[1].length, parentSpec, top?.children ?? []);
     }
 
     // 요소 시작: '<' 직후 (닫는 태그 제외)
     if (textBefore.endsWith('<') && !textBefore.endsWith('</')) {
-      return completeElementName(schema, '', pos, parentSpec, existingChildren);
+      const top = getStack()[getStack().length - 1];
+      const parentSpec = top ? getElement(schema, top.name) : null;
+      return completeElementName(schema, '', pos, parentSpec, top?.children ?? []);
     }
 
     // 속성값 자동완성: attr="value 입력 중 (속성명보다 먼저 체크)
@@ -87,11 +93,11 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
     // 닫는 태그 자동완성: '</' 뒤에서 타이핑 중
     const closingMatch = textBefore.match(CLOSING_TAG_REGEX);
     if (closingMatch) {
-      return completeClosingTag(closingMatch[1], pos - closingMatch[1].length, elementStack);
+      return completeClosingTag(closingMatch[1], pos - closingMatch[1].length, getStack().map(f => f.name));
     }
 
     if (textBefore.endsWith('</')) {
-      return completeClosingTag('', pos, elementStack);
+      return completeClosingTag('', pos, getStack().map(f => f.name));
     }
 
     return null;
@@ -101,18 +107,17 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
 /**
  * 현재 열린 태그에서 이미 사용된 속성명 추출
  * (중복 속성 제안 방지용)
+ *
+ * Quote-aware: `name=` patterns inside quoted attribute VALUES (URLs with
+ * query strings, etc.) are not mistaken for attribute names.
  */
 function getUsedAttributes(text: string): Set<string> {
   const used = new Set<string>();
   // 닫히지 않은 마지막 여는 태그 찾기
   const tagMatch = text.match(OPEN_TAG_REGEX);
   if (tagMatch && tagMatch[2]) {
-    const attrString = tagMatch[2];
-    // g 플래그 정규식은 재사용 전 lastIndex 리셋 필수
-    ATTR_EXTRACT_REGEX.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = ATTR_EXTRACT_REGEX.exec(attrString)) !== null) {
-      used.add(m[1]);
+    for (const occ of scanAttributeNames(tagMatch[2])) {
+      used.add(occ.name);
     }
   }
   return used;
@@ -166,39 +171,6 @@ function makeElementCompletion(el: ElementSpec, boost: number, isRequired: boole
     detail,
     boost,
   });
-}
-
-/**
- * Get existing children of the current parent element from the text before cursor.
- * Used to determine which required children are still missing.
- */
-function getExistingChildren(text: string, parentName: string | null): string[] {
-  if (!parentName) return [];
-
-  const children: string[] = [];
-  const stack: string[] = [];
-
-  for (const tok of tokenizeXmlTags(text)) {
-    if (tok.kind === 'pi' || tok.kind === 'comment' || tok.kind === 'cdata') continue;
-
-    if (tok.kind === 'close') {
-      if (stack[stack.length - 1] === tok.name) {
-        stack.pop();
-      }
-    } else if (tok.kind === 'open') {
-      if (stack[stack.length - 1] === parentName) {
-        children.push(tok.name);
-      }
-      stack.push(tok.name);
-    } else {
-      // self-close: also a child if we're in the parent
-      if (stack[stack.length - 1] === parentName) {
-        children.push(tok.name);
-      }
-    }
-  }
-
-  return children;
 }
 
 /**

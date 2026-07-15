@@ -163,15 +163,58 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
     };
   }, [onClose]);
 
-  // Handle keyboard shortcuts at document level
-  // - Escape: close menu and deselect text in editor
+  const handleTagClick = useCallback((tagName: string) => {
+    recordTagUsage(tagName);
+    onSelectTag(tagName);
+    onClose();
+  }, [onSelectTag, onClose]);
+
+  // Shared navigation logic for both the input's onKeyDown and the
+  // document-level listener. Returns true when the key was handled.
+  const handleNavigationKey = useCallback((key: string, shiftKey: boolean): boolean => {
+    switch (key) {
+      case 'ArrowDown':
+        setSelectedIndex(prev => Math.min(prev + 1, filteredTags.length - 1));
+        return true;
+      case 'ArrowUp':
+        setSelectedIndex(prev => Math.max(prev - 1, 0));
+        return true;
+      case 'Enter':
+        if (filteredTags.length > 0 && selectedIndex < filteredTags.length) {
+          handleTagClick(filteredTags[selectedIndex].name);
+        } else if (filter && filter.match(/^[a-zA-Z_][\w.:_-]*$/)) {
+          // Valid XML tag name - use custom tag
+          handleTagClick(filter);
+        }
+        return true;
+      case 'Tab':
+        // Tab cycles through options
+        if (shiftKey) {
+          setSelectedIndex(prev => (prev - 1 + filteredTags.length) % filteredTags.length);
+        } else {
+          setSelectedIndex(prev => (prev + 1) % filteredTags.length);
+        }
+        return true;
+      default:
+        return false;
+    }
+  }, [filter, filteredTags, selectedIndex, handleTagClick]);
+
+  // Handle keyboard shortcuts at document level (while the editor still has
+  // focus — the input is NOT auto-focused so Ctrl+C keeps copying the
+  // editor's selected text).
+  // - Escape: close menu (the editor selection is preserved by the caller)
   // - Ctrl+C/Cmd+C: allow default copy behavior (don't intercept)
-  // - Typing: focus input field to start filtering
+  // - ↑↓/Enter/Tab: navigate the menu, NOT the editor — without this the
+  //   arrows moved the editor cursor and silently collapsed the selection
+  // - Typing: focus the input and route the character into the FILTER.
+  //   preventDefault is essential: previously the first character reached
+  //   the editor and replaced the selected text.
   useEffect(() => {
     if (!position) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape: close menu and deselect text
+      // Escape: close menu, keep the editor selection
       if (e.key === 'Escape') {
         e.preventDefault();
         if (onEscape) {
@@ -182,36 +225,35 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
         return;
       }
 
+      // When the input has focus, its own onKeyDown handles everything —
+      // don't double-handle the bubbled event here.
+      if (!inputRef.current || document.activeElement === inputRef.current) {
+        return;
+      }
+
       // Allow Ctrl+C/Cmd+C to pass through for copy
       // (Don't intercept - let browser handle it)
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         return;
       }
 
-      // If typing a regular character and input is not focused, focus it
-      // This allows users to start filtering without clicking the input
-      if (
-        e.key.length === 1 &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.altKey &&
-        inputRef.current &&
-        document.activeElement !== inputRef.current
-      ) {
+      if (handleNavigationKey(e.key, e.shiftKey)) {
+        e.preventDefault();
+        return;
+      }
+
+      // Typing a regular character: route it into the filter
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
         inputRef.current.focus();
-        // Don't prevent default - let the character be typed
+        const ch = e.key;
+        setFilter(prev => prev + ch);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [position, onClose, onEscape]);
-
-  // Note: We intentionally do NOT auto-focus the input when menu appears.
-  // This allows Ctrl+C to copy the editor's selected text instead of
-  // copying from the empty input field. Users can start typing to
-  // filter tags, and the document-level keydown handler will focus
-  // the input automatically.
+  }, [position, onClose, onEscape, handleNavigationKey]);
 
   // Reset filter when menu closes (render-time pattern)
   const [prevPosition, setPrevPosition] = useState(position);
@@ -233,42 +275,11 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
     }
   }, [selectedIndex]);
 
-  const handleTagClick = useCallback((tagName: string) => {
-    recordTagUsage(tagName);
-    onSelectTag(tagName);
-    onClose();
-  }, [onSelectTag, onClose]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev => Math.min(prev + 1, filteredTags.length - 1));
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => Math.max(prev - 1, 0));
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (filteredTags.length > 0 && selectedIndex < filteredTags.length) {
-          handleTagClick(filteredTags[selectedIndex].name);
-        } else if (filter && filter.match(/^[a-zA-Z_][\w.:_-]*$/)) {
-          // Valid XML tag name - use custom tag
-          handleTagClick(filter);
-        }
-        break;
-      case 'Tab':
-        e.preventDefault();
-        // Tab cycles through options
-        if (e.shiftKey) {
-          setSelectedIndex(prev => (prev - 1 + filteredTags.length) % filteredTags.length);
-        } else {
-          setSelectedIndex(prev => (prev + 1) % filteredTags.length);
-        }
-        break;
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (handleNavigationKey(e.key, e.shiftKey)) {
+      e.preventDefault();
     }
-  }, [filter, filteredTags, selectedIndex, handleTagClick]);
+  }, [handleNavigationKey]);
 
   if (!position) return null;
 
@@ -311,7 +322,7 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onKeyDown={handleInputKeyDown}
           placeholder="Filter tags... (↑↓ to navigate)"
           className="quick-tag-input"
         />

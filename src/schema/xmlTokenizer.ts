@@ -232,6 +232,102 @@ export function getOpenElementStack(xml: string, offset: number = xml.length): s
   return stack;
 }
 
+/**
+ * One open element on the cursor's ancestor chain, together with the child
+ * elements seen so far inside THIS instance (not other same-named elements).
+ */
+export interface OpenElementFrame {
+  name: string;
+  children: string[];
+}
+
+/**
+ * Like {@link getOpenElementStack}, but each frame also records the child
+ * elements encountered so far inside that specific open instance. The
+ * completion source uses the top frame to know both the parent element at
+ * the cursor AND which required children are already present — computed in
+ * a single pass over the document.
+ */
+export function getOpenElementStackWithChildren(xml: string, offset: number = xml.length): OpenElementFrame[] {
+  const stack: OpenElementFrame[] = [];
+  for (const tok of tokenizeXmlTags(xml)) {
+    if (tok.offset >= offset) break;
+    if (tok.kind === 'pi' || tok.kind === 'comment' || tok.kind === 'cdata') continue;
+
+    if (tok.kind === 'close') {
+      // Only pop if the top matches; otherwise leave stack intact so that
+      // completions in malformed regions still see a sensible parent.
+      if (stack[stack.length - 1]?.name === tok.name) {
+        stack.pop();
+      }
+    } else if (tok.kind === 'open') {
+      if (stack.length > 0) {
+        stack[stack.length - 1].children.push(tok.name);
+      }
+      stack.push({ name: tok.name, children: [] });
+    } else {
+      // self-close: a child of the current parent, never enters the stack
+      if (stack.length > 0) {
+        stack[stack.length - 1].children.push(tok.name);
+      }
+    }
+  }
+  return stack;
+}
+
+const ATTR_NAME_START = /[a-zA-Z_]/;
+const ATTR_NAME_BODY = /[\w.:-]/;
+const WHITESPACE = /\s/;
+
+/** One attribute-name occurrence inside a tag's attribute text. */
+export interface AttributeNameOccurrence {
+  name: string;
+  /** 0-based index of the name within the attribute text. */
+  index: number;
+}
+
+/**
+ * Scan a tag's attribute text for attribute NAMES, quote-aware.
+ *
+ * Unlike a naive `name=` regex, `name=value` patterns INSIDE quoted
+ * attribute values are ignored — `target="…?title=Worm&amp;oldid=5"` yields
+ * only `target`, not the URL's query parameters. An unterminated quote
+ * (mid-typing) swallows the rest of the text, which is the safe reading.
+ */
+export function scanAttributeNames(attrText: string): AttributeNameOccurrence[] {
+  const out: AttributeNameOccurrence[] = [];
+  const n = attrText.length;
+  let i = 0;
+
+  while (i < n) {
+    const ch = attrText[i];
+
+    if (ch === '"' || ch === "'") {
+      const close = attrText.indexOf(ch, i + 1);
+      i = close === -1 ? n : close + 1;
+      continue;
+    }
+
+    if (ATTR_NAME_START.test(ch)) {
+      let j = i + 1;
+      while (j < n && ATTR_NAME_BODY.test(attrText[j])) j++;
+      let k = j;
+      while (k < n && WHITESPACE.test(attrText[k])) k++;
+      if (attrText[k] === '=') {
+        out.push({ name: attrText.slice(i, j), index: i });
+        i = k + 1; // continue right after '=' so the value quote is skipped next
+      } else {
+        i = j;
+      }
+      continue;
+    }
+
+    i++;
+  }
+
+  return out;
+}
+
 const ATTR_PAIR_REGEX = /([a-zA-Z_][\w.:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
 /**

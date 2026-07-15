@@ -358,17 +358,11 @@ export function XmlEditor() {
     setSelectedText('');
   }, []);
 
-  // Handle Escape from quick tag menu - close and move cursor to selection start
+  // Handle Escape from quick tag menu — close it but KEEP the editor
+  // selection. The user dismissed the menu, not their selection; follow-up
+  // actions (replace-typing, copy, the toolbar Wrap button) still need it.
   const handleMenuEscape = useCallback(() => {
-    const view = editorViewRef.current;
-    if (view) {
-      const { from } = view.state.selection.main;
-      // Move cursor to selection start (deselect)
-      view.dispatch({
-        selection: { anchor: from },
-      });
-      view.focus();
-    }
+    editorViewRef.current?.focus();
     setMenuPosition(null);
     setSelectedText('');
   }, [editorViewRef]);

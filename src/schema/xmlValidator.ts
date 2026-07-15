@@ -1,5 +1,8 @@
 import type { ValidationError, ContentModel, ContentItem, ElementSpec } from '../types/schema';
 import type { SchemaInfo } from '../types/schema';
+// NOTE: the validator keeps its own well-formedness path (see file header);
+// only the quote-aware attribute-name scanner is shared with the tokenizer.
+import { scanAttributeNames } from './xmlTokenizer';
 
 /**
  * XML validator that provides two levels of checking:
@@ -494,17 +497,17 @@ function checkSchemaConformance(
       if (attrString) {
         // Offset in xmlStr where the attribute string begins
         const attrStringStart = match.index + match[0].indexOf(attrString);
-        const attrRegex = /([a-zA-Z_][\w.:_-]*)\s*=/g;
-        let attrMatch: RegExpExecArray | null;
-        while ((attrMatch = attrRegex.exec(attrString)) !== null) {
-          const attrName = attrMatch[1];
+        // Quote-aware scan: `name=` patterns inside quoted attribute VALUES
+        // (URLs with query strings — routine in TEI @target/@url linking)
+        // must not be mistaken for attribute names.
+        for (const { name: attrName, index: attrIndex } of scanAttributeNames(attrString)) {
           presentAttrs.add(attrName);
           // Skip xmlns attributes for unknown check
           if (attrName === 'xmlns' || attrName.startsWith('xmlns:')) continue;
 
           const attrSpec = elSpec.attributes?.find((a) => a.name === attrName);
           if (!attrSpec) {
-            const attrPos = offsetToLineCol(lineStarts, attrStringStart + attrMatch.index);
+            const attrPos = offsetToLineCol(lineStarts, attrStringStart + attrIndex);
             errors.push({
               message: `Unknown attribute "${attrName}" on <${tagName}>`,
               line: attrPos.line,
@@ -517,7 +520,7 @@ function checkSchemaConformance(
             if (actualValue && !attrSpec.values.includes(actualValue)) {
               const allowedPreview = attrSpec.values.slice(0, 5).join(', ');
               const suffix = attrSpec.values.length > 5 ? '...' : '';
-              const attrPos = offsetToLineCol(lineStarts, attrStringStart + attrMatch.index);
+              const attrPos = offsetToLineCol(lineStarts, attrStringStart + attrIndex);
               errors.push({
                 message: `Invalid value "${actualValue}" for @${attrName}. Allowed: ${allowedPreview}${suffix}`,
                 line: attrPos.line,

@@ -3718,3 +3718,56 @@ describe('Multi-line Tag Recognition', () => {
     });
   });
 });
+
+// ============================================================================
+// Quote-aware attribute scanning (P1, 2026-07 audit fix)
+// ============================================================================
+
+describe('Quote-aware attribute scanning', () => {
+  let teiLite: SchemaInfo;
+
+  beforeAll(() => {
+    teiLite = buildTestSchema(getTeiLiteElements());
+  });
+
+  it('does not report URL query parameters as unknown attributes', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target="https://en.wikipedia.org/w/index.php?title=Worm&amp;oldid=5">worm</ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    const bogus = errors.filter(e => e.message.includes('Unknown attribute'));
+    expect(bogus).toEqual([]);
+  });
+
+  it('ignores name= patterns in single-quoted values too', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target='https://example.com/?id=5&amp;lang=en'>x</ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    expect(errors.filter(e => e.message.includes('Unknown attribute'))).toEqual([]);
+  });
+
+  it('still reports a genuinely unknown attribute following a URL value', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target="https://example.com/?id=5&amp;lang=en" bogusattr="x">x</ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    const unknown = errors.filter(e => e.message.includes('Unknown attribute'));
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].message).toContain('"bogusattr"');
+  });
+
+  it('still detects required attributes when a URL-valued attribute precedes them', () => {
+    // presentAttrs must be populated from the quote-aware scan: @target is
+    // present, so no "missing required" style regression for known attrs.
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ptr target="https://example.com/?a=1&amp;b=2"/></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    expect(errors.filter(e => e.message.includes('Unknown attribute'))).toEqual([]);
+  });
+});

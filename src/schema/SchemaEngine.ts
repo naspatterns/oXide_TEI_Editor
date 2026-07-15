@@ -44,12 +44,22 @@ export class SchemaEngine {
   /** Load a custom schema from RNG XML string */
   async loadCustomRng(rngXml: string, name: string): Promise<SchemaInfo> {
     const id = `custom_${name}`;
-    const cached = this.customCache.get(id);
+    // Cache by CONTENT, not by name: re-uploading an edited schema with the
+    // same file name must reflect the edits (previously it returned the
+    // stale first parse until a full page reload).
+    const cacheKey = `${id}#${hashString(rngXml)}`;
+    const cached = this.customCache.get(cacheKey);
     if (cached) return cached;
 
     const elements = parseRng(rngXml);
     const info = this.buildSchemaInfo(id, name, elements);
-    this.customCache.set(id, info);
+
+    // Bound the cache — schema-iteration workflows would otherwise
+    // accumulate one entry per edit for the whole session.
+    if (this.customCache.size >= 8) {
+      this.customCache.clear();
+    }
+    this.customCache.set(cacheKey, info);
     return info;
   }
 
@@ -68,6 +78,15 @@ export class SchemaEngine {
       hasSalveGrammar: false,
     };
   }
+}
+
+/** djb2 — cheap, stable content fingerprint for the custom-schema cache. */
+function hashString(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  }
+  return (h >>> 0).toString(36);
 }
 
 /** Singleton engine instance */

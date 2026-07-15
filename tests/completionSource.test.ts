@@ -550,3 +550,103 @@ describe('Completion Edge Cases', () => {
     expect(encodingDescOption).toBeDefined();
   });
 });
+
+// ============================================================================
+// P1 (2026-07 audit): completion context must survive real document sizes
+// ============================================================================
+
+describe('Large-document context awareness', () => {
+  /** A TEI-root spec plus decoys that share the "t" prefix but are NOT
+   *  valid children of TEI. If the context is lost, these leak in. */
+  const teiRootSpec: ElementSpec = {
+    name: 'TEI',
+    documentation: 'Root element',
+    children: ['teiHeader', 'text'],
+    attributes: [],
+  };
+  const teiHeaderChild: ElementSpec = { name: 'teiHeader', documentation: 'Header', children: ['fileDesc'], attributes: [] };
+  const textChild: ElementSpec = { name: 'text', documentation: 'Text body', children: ['body'], attributes: [] };
+  const tableDecoy: ElementSpec = { name: 'table', documentation: 'Table', children: ['row'], attributes: [] };
+  const termDecoy: ElementSpec = { name: 'term', documentation: 'Term', children: [], attributes: [] };
+  const trailerDecoy: ElementSpec = { name: 'trailer', documentation: 'Trailer', children: [], attributes: [] };
+  const pChild: ElementSpec = { name: 'p', documentation: 'Paragraph', children: ['term'], attributes: [] };
+  const bodyChild: ElementSpec = { name: 'body', documentation: 'Body', children: ['p', 'table', 'trailer'], attributes: [] };
+
+  const schema = buildTestSchema([
+    teiRootSpec, teiHeaderChild, textChild, bodyChild, pChild,
+    tableDecoy, termDecoy, trailerDecoy,
+  ]);
+  const source = createSchemaCompletionSource(schema);
+
+  /** Build a document whose parent context opened FAR beyond any fixed
+   *  window: >5,000 chars of paragraph content between <TEI> and cursor. */
+  function buildLargeDoc(): string {
+    const filler = Array.from({ length: 60 }, (_, i) =>
+      `    <p>Paragraph ${i} — ${'lorem ipsum dolor sit amet '.repeat(3)}</p>`
+    ).join('\n');
+    return `<TEI>\n  <teiHeader><fileDesc/></teiHeader>\n  <text>\n  <body>\n${filler}\n  </body>\n  </text>\n  <t`;
+  }
+
+  it('filters element completions by the parent even when it opened >2000 chars back', () => {
+    const doc = buildLargeDoc();
+    expect(doc.length).toBeGreaterThan(4000);
+
+    const result = source(createMockContext(doc));
+    expect(result).not.toBeNull();
+    const labels = result!.options.map(o => o.label.replace(' ★', ''));
+
+    // Cursor is between </text> and </TEI>: only TEI's children may appear.
+    expect(labels).toContain('teiHeader');
+    expect(labels).toContain('text');
+    expect(labels).not.toContain('table');
+    expect(labels).not.toContain('term');
+    expect(labels).not.toContain('trailer');
+  });
+
+  it('suggests the distant open ancestor for closing-tag completion', () => {
+    const filler = Array.from({ length: 60 }, (_, i) => `  <p>filler ${i} ${'x'.repeat(40)}</p>`).join('\n');
+    const doc = `<TEI>\n  <text>\n  <body>\n${filler}\n  </body>\n  </text>\n</`;
+    expect(doc.length).toBeGreaterThan(2500);
+
+    const result = source(createMockContext(doc));
+    expect(result).not.toBeNull();
+    expect(result!.options.map(o => o.label)).toContain('TEI');
+  });
+
+  it('scopes required-child detection to the current parent instance', () => {
+    // body requires nothing here, but existing-children scoping matters for
+    // the ★ boost: children of EARLIER same-named parents must not count.
+    // First p contains a term; the second (open) p does not — term must
+    // still be offered inside the second p.
+    const doc = `<TEI><text><body><p><term>x</term></p><p><t`;
+    const result = source(createMockContext(doc));
+    expect(result).not.toBeNull();
+    const labels = result!.options.map(o => o.label.replace(' ★', ''));
+    expect(labels).toContain('term');
+  });
+
+  it('does not mistake URL query parameters for used attributes', () => {
+    const attrSchema = buildTestSchema([
+      {
+        name: 'ref',
+        documentation: 'Reference',
+        children: [],
+        attributes: [
+          { name: 'target', documentation: 'Target', required: false },
+          { name: 'title', documentation: 'Title', required: false },
+          { name: 'rend', documentation: 'Rendition', required: false },
+        ],
+      },
+    ]);
+    const attrSource = createSchemaCompletionSource(attrSchema);
+    // @title appears inside the URL VALUE — it is NOT used on the element,
+    // so it must still be offered as an attribute completion.
+    const doc = `<ref target="https://en.wikipedia.org/w/index.php?title=Worm&oldid=5" `;
+    const result = attrSource(createMockContext(doc));
+    expect(result).not.toBeNull();
+    const labels = result!.options.map(o => o.label);
+    expect(labels).toContain('title');
+    expect(labels).toContain('rend');
+    expect(labels).not.toContain('target'); // genuinely used
+  });
+});
