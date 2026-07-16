@@ -200,21 +200,43 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
     }
   }, [filter, filteredTags, selectedIndex, handleTagClick]);
 
-  // Handle keyboard shortcuts at document level (while the editor still has
-  // focus — the input is NOT auto-focused so Ctrl+C keeps copying the
-  // editor's selected text).
-  // - Escape: close menu (the editor selection is preserved by the caller)
-  // - Ctrl+C/Cmd+C: allow default copy behavior (don't intercept)
-  // - ↑↓/Enter/Tab: navigate the menu, NOT the editor — without this the
-  //   arrows moved the editor cursor and silently collapsed the selection
-  // - Typing: focus the input and route the character into the FILTER.
-  //   preventDefault is essential: previously the first character reached
-  //   the editor and replaced the selected text.
+  // Copy the editor's selected text to the clipboard. With the filter input
+  // focused (see the focus effect below), a bare Ctrl/Cmd+C would copy the
+  // input's content instead — so the menu owns the copy shortcut and copies
+  // the wrap target explicitly.
+  const copySelection = useCallback(() => {
+    try {
+      void navigator.clipboard?.writeText(selectedText);
+    } catch {
+      // Clipboard unavailable (permissions / older browser) — ignore.
+    }
+  }, [selectedText]);
+
+  // Focus the filter input as soon as the menu opens. This is the linchpin
+  // of the input-routing model: while the menu is open the EDITOR does not
+  // hold focus, so no keystroke — regular OR IME composition (keyCode 229,
+  // which document-level keydown interception cannot reliably catch) — can
+  // reach the document and replace the selected text. Typing filters; the
+  // editor selection is untouched and restored on close.
+  useEffect(() => {
+    if (position) inputRef.current?.focus();
+  }, [position]);
+
+  // Document-level handler for keys that must work regardless of which
+  // element holds focus. It owns Escape exclusively (so it fires whether the
+  // input, a tag button, or nothing is focused, and cannot double-fire with
+  // the input's handler). Navigation/typing/copy are handled by the focused
+  // input's onKeyDown and are deliberately NOT duplicated here: a selected
+  // tag's wrap calls view.focus(), which moves focus to the editor mid-event
+  // — so an activeElement guard here would race and process the same Enter a
+  // second time (double-wrap).
   useEffect(() => {
     if (!position) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape: close menu, keep the editor selection
+      // Leave IME composition alone (Escape cancels the candidate, etc.)
+      if (e.isComposing || e.keyCode === 229) return;
+
       if (e.key === 'Escape') {
         e.preventDefault();
         if (onEscape) {
@@ -222,38 +244,12 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
         } else {
           onClose();
         }
-        return;
-      }
-
-      // When the input has focus, its own onKeyDown handles everything —
-      // don't double-handle the bubbled event here.
-      if (!inputRef.current || document.activeElement === inputRef.current) {
-        return;
-      }
-
-      // Allow Ctrl+C/Cmd+C to pass through for copy
-      // (Don't intercept - let browser handle it)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        return;
-      }
-
-      if (handleNavigationKey(e.key, e.shiftKey)) {
-        e.preventDefault();
-        return;
-      }
-
-      // Typing a regular character: route it into the filter
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault();
-        inputRef.current.focus();
-        const ch = e.key;
-        setFilter(prev => prev + ch);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [position, onClose, onEscape, handleNavigationKey]);
+  }, [position, onClose, onEscape]);
 
   // Reset filter when menu closes (render-time pattern)
   const [prevPosition, setPrevPosition] = useState(position);
@@ -276,10 +272,21 @@ export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onE
   }, [selectedIndex]);
 
   const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Never act on keystrokes that are part of an in-progress IME
+    // composition — let the input compose normally. (Escape is owned by the
+    // document-level handler so it fires regardless of which element has
+    // focus, and without double-firing here.)
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+      e.preventDefault();
+      copySelection();
+      return;
+    }
     if (handleNavigationKey(e.key, e.shiftKey)) {
       e.preventDefault();
     }
-  }, [handleNavigationKey]);
+  }, [handleNavigationKey, copySelection]);
 
   if (!position) return null;
 

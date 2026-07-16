@@ -1,13 +1,14 @@
 /**
- * QuickTagMenu keyboard-routing tests (P1, 2026-07).
+ * QuickTagMenu keyboard-routing tests (P1 + P2, 2026-07).
  *
- * Pins the focus-trap fix: with the menu open and the editor still focused,
- * typing must go into the FILTER (with the default prevented so the editor
- * never sees the character — previously the first keystroke replaced the
- * selected text in the document), and ↑↓/Enter must drive menu navigation
- * instead of moving the editor cursor.
+ * Model: when the menu opens, the filter INPUT is auto-focused, so the
+ * editor never holds focus while the menu is up. That is what prevents any
+ * keystroke — regular OR IME composition (keyCode 229, which document-level
+ * keydown interception cannot reliably catch) — from reaching the document
+ * and replacing the selected wrap target. The menu owns Ctrl/Cmd+C so copy
+ * still yields the editor selection rather than the (empty) filter.
  */
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, cleanup, fireEvent, screen } from '@testing-library/react';
 import { QuickTagMenu } from '../src/components/Editor/QuickTagMenu';
 
@@ -27,10 +28,17 @@ vi.mock('../src/store/useSchema', () => ({
   }),
 }));
 
-// jsdom does not implement scrollIntoView (used by the menu's
-// keep-selected-item-visible effect)
+// jsdom does not implement scrollIntoView (used by the keep-selected-visible effect)
 Element.prototype.scrollIntoView = vi.fn();
 
+let writeText: ReturnType<typeof vi.fn>;
+beforeEach(() => {
+  writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText },
+    configurable: true,
+  });
+});
 afterEach(cleanup);
 
 function renderMenu(overrides: Partial<Parameters<typeof QuickTagMenu>[0]> = {}) {
@@ -47,76 +55,93 @@ function renderMenu(overrides: Partial<Parameters<typeof QuickTagMenu>[0]> = {})
       {...overrides}
     />,
   );
-  return { onSelectTag, onClose, onEscape };
+  const input = screen.getByPlaceholderText(/Filter tags/) as HTMLInputElement;
+  return { onSelectTag, onClose, onEscape, input };
 }
 
-describe('QuickTagMenu document-level keyboard routing', () => {
-  it('routes printable characters into the filter and prevents the default', () => {
-    renderMenu();
-    const input = screen.getByPlaceholderText(/Filter tags/) as HTMLInputElement;
-    expect(document.activeElement).not.toBe(input);
-
-    // fireEvent returns false when preventDefault was called
-    const notPrevented = fireEvent.keyDown(document, { key: 'n' });
-
-    expect(notPrevented).toBe(false); // default prevented — editor never sees it
-    expect(input.value).toBe('n');
+describe('QuickTagMenu focus + keyboard model', () => {
+  it('auto-focuses the filter input on open (IME-safety linchpin)', () => {
+    const { input } = renderMenu();
     expect(document.activeElement).toBe(input);
   });
 
-  it('ArrowDown/ArrowUp navigate the list without reaching the editor', () => {
-    renderMenu();
+  it('typing into the focused input filters the list without touching the editor', () => {
+    const { input } = renderMenu();
+    fireEvent.change(input, { target: { value: 'pers' } });
+    expect(input.value).toBe('pers');
+    // Only persName matches "pers"
+    const items = Array.from(document.querySelectorAll('.quick-tag-item .quick-tag-name')).map(e => e.textContent);
+    expect(items).toEqual(['<persName>']);
+  });
 
+  it('ArrowDown on the input navigates the list', () => {
+    const { input } = renderMenu();
     const first = document.querySelector('.quick-tag-item.selected');
-    expect(first).not.toBeNull();
-
-    const notPrevented = fireEvent.keyDown(document, { key: 'ArrowDown' });
-    expect(notPrevented).toBe(false);
-
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
     const second = document.querySelector('.quick-tag-item.selected');
-    expect(second).not.toBeNull();
     expect(second).not.toBe(first);
   });
 
-  it('Enter applies the selected tag', () => {
-    const { onSelectTag, onClose } = renderMenu();
-
-    fireEvent.keyDown(document, { key: 'Enter' });
-
+  it('Enter on the input applies the selected tag', () => {
+    const { onSelectTag, onClose, input } = renderMenu();
+    fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSelectTag).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('Escape closes via onEscape (selection preservation is the caller contract)', () => {
-    const { onEscape, onClose } = renderMenu();
+  it('Enter wraps EXACTLY ONCE even when applying moves focus off the input', () => {
+    // Regression: the real wrapSelection calls view.focus(), moving focus to
+    // the editor mid-event. If the document-level handler also processed
+    // Enter behind an activeElement guard, the guard would race (focus已moved)
+    // and wrap a second time. onSelectTag here blurs the input to reproduce.
+    let inputEl: HTMLInputElement | null = null;
+    const onSelectTag = vi.fn(() => inputEl?.blur());
+    render(
+      <QuickTagMenu
+        position={{ x: 100, y: 100 }}
+        selectedText="Rose"
+        onSelectTag={onSelectTag}
+        onClose={vi.fn()}
+        onEscape={vi.fn()}
+      />,
+    );
+    inputEl = screen.getByPlaceholderText(/Filter tags/) as HTMLInputElement;
+    fireEvent.keyDown(inputEl, { key: 'Enter' });
+    expect(onSelectTag).toHaveBeenCalledTimes(1);
+  });
 
-    fireEvent.keyDown(document, { key: 'Escape' });
-
+  it('Escape closes via onEscape exactly once (document handler owns it, no double-fire)', () => {
+    const { onEscape, onClose, input } = renderMenu();
+    fireEvent.keyDown(input, { key: 'Escape' });
     expect(onEscape).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('does not intercept Ctrl+C / Cmd+C (copy must keep working)', () => {
-    renderMenu();
-    const input = screen.getByPlaceholderText(/Filter tags/) as HTMLInputElement;
-
-    const notPrevented = fireEvent.keyDown(document, { key: 'c', ctrlKey: true });
-
-    expect(notPrevented).toBe(true); // default NOT prevented
-    expect(input.value).toBe('');
-    expect(document.activeElement).not.toBe(input);
+  it('Ctrl/Cmd+C on the input copies the EDITOR selection, not the filter', () => {
+    const { input } = renderMenu();
+    const notPrevented = fireEvent.keyDown(input, { key: 'c', ctrlKey: true });
+    expect(notPrevented).toBe(false); // default prevented
+    expect(writeText).toHaveBeenCalledWith('Rose');
   });
 
-  it('does not double-handle keys when the input already has focus', () => {
-    renderMenu();
-    const input = screen.getByPlaceholderText(/Filter tags/) as HTMLInputElement;
-    input.focus();
+  it('ignores keydowns that are part of an IME composition', () => {
+    const { onSelectTag, input } = renderMenu();
+    // A composing Enter (isComposing) must NOT commit a tag — it confirms the
+    // IME candidate instead.
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(onSelectTag).not.toHaveBeenCalled();
 
-    fireEvent.keyDown(input, { key: 'ArrowDown' });
-
-    // One step down exactly (input handler), not two (input + document)
+    // keyCode 229 (composition-in-progress) is likewise ignored
+    fireEvent.keyDown(input, { key: 'ArrowDown', keyCode: 229 });
+    // selection index unchanged (first item still selected)
     const items = Array.from(document.querySelectorAll('.quick-tag-item'));
-    const selectedIndex = items.findIndex(el => el.classList.contains('selected'));
-    expect(selectedIndex).toBe(1);
+    expect(items[0].classList.contains('selected')).toBe(true);
+  });
+
+  it('document-level Escape still closes when the input is not focused', () => {
+    const { onEscape, input } = renderMenu();
+    input.blur();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onEscape).toHaveBeenCalledTimes(1);
   });
 });

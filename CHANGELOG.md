@@ -5,12 +5,53 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — P0+P1 fixes from the 2026-07-16 comprehensive audit
+## [Unreleased] — P0+P1+P2 fixes from the 2026-07-16 comprehensive audit
 
 Fixes the data-loss, coordinate-system, and accuracy defect clusters
-that the 2026-07 audit identified as blocking real-project adoption.
-All were reproduced live in the browser before fixing and re-verified
-after.
+that the 2026-07 audit identified as blocking real-project adoption,
+plus the first slice of P2 (editor hot-path performance + the
+QuickTagMenu IME hole). All were reproduced live in the browser before
+fixing and re-verified after.
+
+### Fixed — editor hot-path performance (P2)
+
+- **Preview no longer re-transforms synchronously on every keystroke**
+  (`src/components/Preview/PreviewPanel.tsx`). `teiToHtml(state.content)`
+  now runs off `useDeferredValue(state.content)`, mirroring OutlinePanel
+  — the full DOMParser + recursive transform is de-prioritized behind
+  the urgent keystroke render. Verified: edits still reach the preview
+  (deferred), with typing latency removed on large docs in split mode.
+- **tagSync stops materializing the whole document per keystroke**
+  (`src/components/Editor/tagSync.ts`). `findTagAtPosition` used
+  `doc.toString()` (a full-rope allocation) on every doc change, up to
+  ~3–5× per keystroke via the sync listeners. It now scans outward from
+  the cursor in 4,096-char slices (`findTagStartBefore` /
+  `findTagEndAfter`), bounding allocation to O(tag length). Behavior is
+  identical — all 32 existing tagSync tests pass unchanged, plus 4 new
+  chunk-boundary tests (a tag whose `<`/`>` lies beyond one chunk).
+
+### Fixed — QuickTagMenu IME hole + focus model (P2)
+
+- **Typing while the wrap menu is open can no longer destroy the
+  selection — including under an IME** (`src/components/Editor/
+  QuickTagMenu.tsx`). The P1 fix routed document-level keydowns into the
+  filter, but IME composition (keyCode 229 / `isComposing`) delivers
+  composed text through `beforeinput`/`textInput` to the focused
+  editor, which keydown interception cannot stop. The menu now
+  **auto-focuses its filter input** on open, so the editor never holds
+  focus while the menu is up: no keystroke — regular or composed —
+  reaches the document. The wrap still targets the correct range
+  (CodeMirror preserves `state.selection` across blur), Escape closes
+  the menu while **preserving** the editor selection, and the menu owns
+  Ctrl/Cmd+C to copy the wrap target (since the input, not the editor,
+  is focused). This removes the "IME composition input still bypasses
+  this" limitation noted under P1.
+- Along the way, fixed a **double-wrap bubble race**: the apply path
+  calls `view.focus()`, moving focus to the editor mid-event; a
+  document-level backstop that re-checked `activeElement` then processed
+  the same Enter a second time. The document handler now owns only
+  Escape; navigation/apply/copy belong to the focused input. Pinned by a
+  regression test.
 
 ### Fixed — completion & validation accuracy (P1)
 
@@ -46,11 +87,8 @@ after.
   menu navigation instead of moving the editor cursor; Escape closes
   the menu but PRESERVES the editor selection (it used to deselect).
   Ctrl/Cmd+C still copies the editor selection (input is not
-  auto-focused). Known limitation: text entered through an IME
-  composition (e.g. Korean input) bypasses keydown and can still reach
-  the editor.
-
-### Fixed — data loss
+  auto-focused). The IME-composition bypass noted here was subsequently
+  closed by the P2 auto-focus redesign above.
 
 ### Fixed — data loss
 
@@ -121,7 +159,7 @@ after.
 
 ### Tests
 
-- 331 → **382 passing**. New suites: `tests/autoSave.test.ts`
+- 331 → **389 passing**. New suites: `tests/autoSave.test.ts`
   (interval semantics, multi-doc snapshot, empty-snapshot clear, legacy
   migration, error paths), `tests/xpathSearch.test.ts` (nth-occurrence
   line attribution, prefix collisions l/lg, same-line siblings),
@@ -130,20 +168,24 @@ after.
   `tests/quickTagMenu.test.tsx` (keyboard routing, copy passthrough),
   plus new describes in `xmlTokenizer` (scanAttributeNames,
   stack-with-children), `completionSource` (large-document context,
-  URL-value attribute filter), and `xmlValidator` (quote-aware
-  attribute regression).
+  URL-value attribute filter), `xmlValidator` (quote-aware attribute
+  regression), `tagSync` (chunk-boundary), and rewritten
+  `quickTagMenu` (auto-focus model, IME-guard, bubble-race).
 
 ### Known limitations (tracked for P2+)
 
 - Two app instances still race on the single autosave record
-  (last-writer-wins).
-- Schema is app-global while documents are per-tab; no Schematron
-  layer; no corpus-wide batch validation.
-- IME composition input can bypass the QuickTagMenu keyboard routing
-  (see above).
-- Suspected duplicated CodeMirror domEventHandlers after repeated
-  schema switches (a mouseup dispatched the quick-tag-menu event 9× in
-  one long session) — under investigation.
+  (last-writer-wins) — a multi-instance isolation design is pending a
+  decision (per-instance keys vs BroadcastChannel leader election).
+- Schema is app-global while documents are per-tab (per-document schema
+  is designed but deferred as a large multi-file refactor); no Schematron
+  layer (feasible via native XSLTProcessor, wants per-doc schema first);
+  no corpus-wide batch validation (self-contained but its FSA directory
+  flow can't be end-to-end verified in the headless preview).
+- (Resolved) The suspected duplicated CodeMirror domEventHandlers after
+  repeated schema switches was investigated and found NOT to be a bug —
+  `reconfigure` replaces the config; the 9× count was a measurement
+  artifact.
 
 ## [0.2.3] - 2026-04-25 — Security patch
 

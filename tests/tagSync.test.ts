@@ -350,3 +350,62 @@ describe('Edge Cases', () => {
     expect(result!.name).toBe('my-element');
   });
 });
+
+// ============================================================================
+// Chunk-boundary crossing (P2, 2026-07): findTagAtPosition now scans the
+// document in SCAN_CHUNK (4096) slices instead of materializing the whole
+// rope. These pin that a tag whose boundary lies beyond one chunk from the
+// cursor is still found correctly (same result as the old full-string scan).
+// ============================================================================
+
+describe('findTagAtPosition — chunk-boundary crossing', () => {
+  it('finds the opening < when it is >4096 chars behind the cursor', () => {
+    // A single opening tag with a very long attribute run: the cursor sits
+    // near the closing '>', so the backward scan for '<' must cross several
+    // 4096-char chunks.
+    const longAttrs = 'a'.repeat(5000);
+    const doc = Text.of([`<div ${longAttrs}>text</div>`]);
+    const gtPos = doc.toString().indexOf('>'); // inside the tag, just before '>'
+    const result = findTagAtPosition(doc, gtPos);
+
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('opening');
+    expect(result!.name).toBe('div');
+    expect(result!.tagStart).toBe(0);
+    expect(result!.tagEnd).toBe(gtPos + 1);
+  });
+
+  it('finds the closing > when it is >4096 chars ahead of the cursor', () => {
+    // Cursor just inside the tag name; the '>' is far ahead (long attr run).
+    const longAttrs = 'b'.repeat(5000);
+    const doc = Text.of([`<section ${longAttrs}>body</section>`]);
+    const result = findTagAtPosition(doc, 3); // inside "section"
+
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('opening');
+    expect(result!.name).toBe('section');
+    expect(result!.tagEnd).toBe(doc.toString().indexOf('>') + 1);
+  });
+
+  it('still returns null (no tag) when a > precedes the < across chunks', () => {
+    // >4096 chars of plain text before the cursor with the nearest angle
+    // bracket being the previous tag close '>': cursor is in text content.
+    const filler = 'x'.repeat(5000);
+    const doc = Text.of([`<p>${filler}cursor</p>`]);
+    const pos = doc.toString().indexOf('cursor') + 2; // inside the text run
+    expect(findTagAtPosition(doc, pos)).toBeNull();
+  });
+
+  it('agrees with the tag name for a cursor deep in a long multi-line doc', () => {
+    // Build a doc where the target tag sits well past the first chunk.
+    const lines = [];
+    for (let i = 0; i < 400; i++) lines.push(`  <l n="${i}">verse line number ${i} padding padding</l>`);
+    lines.push('  <persName>Blake</persName>');
+    const doc = Text.of(['<lg>', ...lines, '</lg>']);
+    const idx = doc.toString().indexOf('<persName>');
+    const result = findTagAtPosition(doc, idx + 3); // inside "persName"
+    expect(result).not.toBeNull();
+    expect(result!.name).toBe('persName');
+    expect(result!.type).toBe('opening');
+  });
+});

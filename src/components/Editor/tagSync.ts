@@ -41,6 +41,57 @@ const syncAnnotation = Annotation.define<boolean>();
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * Number of characters read per slice when scanning outward for a tag
+ * boundary. A single tag virtually always fits in one chunk; scanning in
+ * chunks bounds allocation to O(tag length) instead of materializing the
+ * whole document (`doc.toString()`) on every keystroke — the hot path that
+ * caused typing lag on multi-MB documents.
+ */
+const SCAN_CHUNK = 4096;
+
+/**
+ * Scan backward from `pos` (exclusive) for the nearest '<'.
+ * Returns its absolute index, or -1 if a '>' is hit first or the document
+ * start is reached — identical semantics to a backward walk over the full
+ * string, just read in chunks.
+ */
+function findTagStartBefore(doc: Text, pos: number): number {
+  let hi = pos;
+  while (hi > 0) {
+    const lo = Math.max(0, hi - SCAN_CHUNK);
+    const chunk = doc.sliceString(lo, hi);
+    for (let i = chunk.length - 1; i >= 0; i--) {
+      const c = chunk[i];
+      if (c === '<') return lo + i;
+      if (c === '>') return -1;
+    }
+    hi = lo;
+  }
+  return -1;
+}
+
+/**
+ * Scan forward from `pos` for the nearest '>'.
+ * Returns the absolute index AFTER the '>' (the tag end), or -1 if a '<' is
+ * hit first or the document end is reached.
+ */
+function findTagEndAfter(doc: Text, pos: number): number {
+  const len = doc.length;
+  let lo = pos;
+  while (lo < len) {
+    const hi = Math.min(len, lo + SCAN_CHUNK);
+    const chunk = doc.sliceString(lo, hi);
+    for (let i = 0; i < chunk.length; i++) {
+      const c = chunk[i];
+      if (c === '>') return lo + i + 1;
+      if (c === '<') return -1;
+    }
+    lo = hi;
+  }
+  return -1;
+}
+
+/**
  * Find the tag at the given cursor position.
  *
  * @param doc - CodeMirror Text object
@@ -48,40 +99,16 @@ const syncAnnotation = Annotation.define<boolean>();
  * @returns TagInfo if cursor is inside a tag, null otherwise
  */
 export function findTagAtPosition(doc: Text, pos: number): TagInfo | null {
-  const text = doc.toString();
-
-  // Find the nearest '<' before pos
-  let tagStart = -1;
-  for (let i = pos - 1; i >= 0; i--) {
-    if (text[i] === '<') {
-      tagStart = i;
-      break;
-    }
-    // If we hit '>' before '<', cursor is not inside a tag
-    if (text[i] === '>') {
-      return null;
-    }
-  }
-
+  // Find the nearest '<' before pos (stopping if a '>' is hit first)
+  const tagStart = findTagStartBefore(doc, pos);
   if (tagStart === -1) return null;
 
-  // Find the nearest '>' after pos
-  let tagEnd = -1;
-  for (let i = pos; i < text.length; i++) {
-    if (text[i] === '>') {
-      tagEnd = i + 1;
-      break;
-    }
-    // If we hit '<' before '>', cursor is not inside a well-formed tag
-    if (text[i] === '<') {
-      return null;
-    }
-  }
-
+  // Find the nearest '>' after pos (stopping if a '<' is hit first)
+  const tagEnd = findTagEndAfter(doc, pos);
   if (tagEnd === -1) return null;
 
   // Extract the tag content
-  const tagContent = text.slice(tagStart, tagEnd);
+  const tagContent = doc.sliceString(tagStart, tagEnd);
 
   // Check for comments, CDATA, processing instructions
   if (tagContent.startsWith('<!--') || tagContent.startsWith('<![') || tagContent.startsWith('<?')) {
