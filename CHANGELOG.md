@@ -13,6 +13,26 @@ plus the first slice of P2 (editor hot-path performance + the
 QuickTagMenu IME hole). All were reproduced live in the browser before
 fixing and re-verified after.
 
+### Fixed — autosave multi-instance isolation (P2)
+
+- **Two browser tabs of the app no longer clobber each other's recovery
+  copy** (`src/file/autoSave.ts`). The autosave was a single IndexedDB
+  key (`tei-editor-autosave`); a second tab's 30s tick overwrote the
+  first's, and a freshly-opened tab could offer to "recover" a document
+  another tab was actively editing. Each app instance now owns a
+  per-page-load record, `tei-editor-autosave:<instanceId>`. Recovery
+  offers only records whose owning instance is **not currently alive** —
+  liveness is detected with a `BroadcastChannel` ping/pong
+  (`initAutosaveLiveness` + `getLiveInstanceIds`), NOT a timestamp
+  heuristic: a just-crashed instance's record is recent yet must still
+  be offered (verified live — reload after a dirty edit still recovers),
+  while a live sibling's record is recent and must not be (verified live
+  — a second tab does not prompt for the first tab's open doc). Records
+  older than 24h are GC'd; the pre-P2 single-key and pre-v0.2.4
+  single-doc formats are migrated on read. `pickRecoverable` /
+  `collectSnapshots` are pure and unit-tested; Discard/Recover clear the
+  specific source record (`clearSnapshotByKey`).
+
 ### Fixed — editor hot-path performance (P2)
 
 - **Preview no longer re-transforms synchronously on every keystroke**
@@ -159,7 +179,7 @@ fixing and re-verified after.
 
 ### Tests
 
-- 331 → **389 passing**. New suites: `tests/autoSave.test.ts`
+- 331 → **396 passing**. New suites: `tests/autoSave.test.ts`
   (interval semantics, multi-doc snapshot, empty-snapshot clear, legacy
   migration, error paths), `tests/xpathSearch.test.ts` (nth-occurrence
   line attribution, prefix collisions l/lg, same-line siblings),
@@ -174,9 +194,6 @@ fixing and re-verified after.
 
 ### Known limitations (tracked for P2+)
 
-- Two app instances still race on the single autosave record
-  (last-writer-wins) — a multi-instance isolation design is pending a
-  decision (per-instance keys vs BroadcastChannel leader election).
 - Schema is app-global while documents are per-tab (per-document schema
   is designed but deferred as a large multi-file refactor); no Schematron
   layer (feasible via native XSLTProcessor, wants per-doc schema first);

@@ -25,7 +25,7 @@ import { HelpDialog } from './components/Toolbar/HelpDialog';
 import logoUrl from '../imgs/logo-oxygen-style-transparent.svg';
 import type { Command } from './components/CommandPalette/CommandPalette';
 import { openFile, saveFile, saveAsFile, isUserCancelledError } from './file/fileSystemAccess';
-import { startAutoSave, stopAutoSave, loadFromIDB, clearAutoSave, type AutosaveData } from './file/autoSave';
+import { startAutoSave, stopAutoSave, loadRecoverableSnapshots, clearSnapshotByKey, initAutosaveLiveness, type RecoverableSnapshot } from './file/autoSave';
 import { createNewDocument } from './types/workspace';
 import { useConfirmedTabClose } from './hooks/useConfirmedTabClose';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from './utils/schemaDetector';
@@ -63,7 +63,7 @@ function EditorLayout() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [showExplorer, setShowExplorer] = useState(true);
-  const [recoveryData, setRecoveryData] = useState<AutosaveData | null>(null);
+  const [recoveryData, setRecoveryData] = useState<RecoverableSnapshot | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   // Dirty-guarded tab closing shared by menu / Ctrl+W / command palette
   const { pending: pendingTabClose, requestClose, confirm: confirmTabClose, cancel: cancelTabClose } = useConfirmedTabClose();
@@ -325,15 +325,19 @@ function EditorLayout() {
   // Track if recovery was already attempted (prevents double prompt in Strict Mode)
   const recoveryAttempted = useRef(false);
 
-  // Check for autosaved content on mount
+  // Check for a recoverable autosave from a CRASHED/closed instance on mount.
+  // Answering liveness pings (initAutosaveLiveness) must be running so that a
+  // sibling tab is not mistaken for a dead one.
   useEffect(() => {
     // Prevent double execution in React Strict Mode
     if (recoveryAttempted.current) return;
     recoveryAttempted.current = true;
 
+    initAutosaveLiveness();
+
     (async () => {
-      const saved = await loadFromIDB(handleAutosaveError);
-      if (saved && saved.documents.length > 0) {
+      const saved = await loadRecoverableSnapshots(handleAutosaveError);
+      if (saved) {
         const age = Date.now() - saved.timestamp;
         if (age < 24 * 60 * 60 * 1000) {
           // Less than 24 hours old - show recovery dialog
@@ -359,15 +363,18 @@ function EditorLayout() {
         ? 'Document recovered successfully'
         : `${recoveryData.documents.length} documents recovered successfully`,
     );
+    // Drop the crashed instance's record — its docs now live in this
+    // instance's tabs (and will be re-snapshotted under our own key).
+    void clearSnapshotByKey(recoveryData.sourceKey);
     setRecoveryData(null);
   }, [recoveryData, openTab, toast]);
 
   const handleDiscardRecovery = useCallback(() => {
-    // The user chose to drop the recovery copy — clear it so the prompt
-    // doesn't reappear on every launch.
-    void clearAutoSave();
+    // The user chose to drop the recovery copy — clear that specific record
+    // so the prompt doesn't reappear on every launch.
+    if (recoveryData) void clearSnapshotByKey(recoveryData.sourceKey);
     setRecoveryData(null);
-  }, []);
+  }, [recoveryData]);
 
   // Warn before closing with unsaved changes
   useEffect(() => {
