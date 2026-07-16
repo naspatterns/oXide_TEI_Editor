@@ -179,7 +179,10 @@ fixing and re-verified after.
 
 ### Tests
 
-- 331 → **396 passing**. New suites: `tests/autoSave.test.ts`
+- 331 → **399 passing**. Merged from the extension investigation:
+  `tests/editorExtensions.test.ts` (pins single-instance CM extensions
+  across schema switches — `reconfigure` replaces, never appends).
+  New suites: `tests/autoSave.test.ts`
   (interval semantics, multi-doc snapshot, empty-snapshot clear, legacy
   migration, error paths), `tests/xpathSearch.test.ts` (nth-occurrence
   line attribution, prefix collisions l/lg, same-line siblings),
