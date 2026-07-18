@@ -5,13 +5,29 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — P0+P1+P2 fixes from the 2026-07-16 comprehensive audit
+## [0.3.0] - 2026-07-17 — 2026-07 audit roadmap complete
 
-Fixes the data-loss, coordinate-system, and accuracy defect clusters
-that the 2026-07 audit identified as blocking real-project adoption,
-plus the first slice of P2 (editor hot-path performance + the
-QuickTagMenu IME hole). All were reproduced live in the browser before
-fixing and re-verified after.
+The 2026-07-16 comprehensive audit (hands-on encoding sessions + code
+audit + an oXygen TEI-workflow gap analysis) rated the project
+"partially achieved" and identified three defect clusters blocking
+real-project adoption: silent data loss, a broken coordinate system
+(line numbers / XPath navigation), and headline features degrading on
+real-sized documents. This release completes the entire remediation
+roadmap (P0 → P1 → P2), then closes the team-workflow gaps on top:
+
+- **Fixed**: all data-loss paths (unconfirmed tab close, New Document
+  overwrite, an autosave that never fired while typing), logical line
+  numbers, XPath match navigation, completion context at any document
+  size, quote-aware attribute validation, custom-RNG re-upload, the
+  QuickTagMenu IME/selection hole, editor hot-path performance
+  (Preview defer + tagSync windowing), and autosave multi-instance
+  isolation.
+- **Added**: per-document schema association (M3), a Schematron
+  project-rules validation layer, and corpus-wide batch validation with
+  a Problems panel.
+
+Every fix was reproduced live in the browser before implementation and
+re-verified after. Tests: 331 → 428.
 
 ### Added — batch (corpus) validation + Problems panel (P2)
 
