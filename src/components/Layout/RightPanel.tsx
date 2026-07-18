@@ -5,8 +5,9 @@ import './RightPanel.css';
 // Lazy load heavy panels to reduce initial bundle size
 const PreviewPanel = lazy(() => import('../Preview/PreviewPanel').then(m => ({ default: m.PreviewPanel })));
 const AIPanel = lazy(() => import('../AI/AIPanel').then(m => ({ default: m.AIPanel })));
+const ProblemsPanel = lazy(() => import('../Problems/ProblemsPanel').then(m => ({ default: m.ProblemsPanel })));
 
-type PanelMode = 'outline' | 'preview' | 'ai';
+type PanelMode = 'outline' | 'preview' | 'problems' | 'ai';
 
 /** Loading fallback for lazy-loaded panels */
 function PanelLoader() {
@@ -19,7 +20,8 @@ function PanelLoader() {
 }
 
 /**
- * Right panel wrapper that allows toggling between Outline, Preview, and AI
+ * Right panel wrapper that allows toggling between Outline, Preview,
+ * Problems (corpus validation), and AI.
  * Used in split mode to give users flexibility in what they see
  */
 export function RightPanel() {
@@ -47,6 +49,13 @@ export function RightPanel() {
           Preview
         </button>
         <button
+          className={`right-panel-tab ${mode === 'problems' ? 'right-panel-tab-active' : ''}`}
+          onClick={() => handleModeChange('problems')}
+          title="Validate every file in the workspace"
+        >
+          Problems
+        </button>
+        <button
           className={`right-panel-tab ${mode === 'ai' ? 'right-panel-tab-active' : ''}`}
           onClick={() => handleModeChange('ai')}
           title="AI Assistant for TEI encoding"
@@ -59,6 +68,11 @@ export function RightPanel() {
         {mode === 'preview' && (
           <Suspense fallback={<PanelLoader />}>
             <PreviewPanel />
+          </Suspense>
+        )}
+        {mode === 'problems' && (
+          <Suspense fallback={<PanelLoader />}>
+            <ProblemsPanel />
           </Suspense>
         )}
         {mode === 'ai' && (

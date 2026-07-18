@@ -13,6 +13,37 @@ plus the first slice of P2 (editor hot-path performance + the
 QuickTagMenu IME hole). All were reproduced live in the browser before
 fixing and re-verified after.
 
+### Added — batch (corpus) validation + Problems panel (P2)
+
+- **"Validate workspace" checks every XML file in the project tree** —
+  the last item on the audit's team-workflow list. The core
+  (`src/file/batchValidation.ts`) reuses the exact validators the editor
+  runs live: each file is validated against its OWN detected schema
+  (M3's `detectSchemaIdFromContent`; TEI-All files load the lazy P5
+  chunk once per run) plus the active Schematron ruleset, so the corpus
+  report always agrees with what the editor shows per-file. Unreadable
+  files yield a synthetic error instead of aborting the run; the loop
+  yields to the UI between files so progress stays visible on large
+  corpora.
+- **Problems panel** (new RightPanel tab, lazy-loaded): run button with
+  live progress (n/total), summary (files / errors / warnings), results
+  grouped by file with a per-file schema badge, and click-to-navigate —
+  clicking a diagnostic opens the file (deduped by workspace path via
+  the existing OPEN_TAB logic, so an already-open dirty tab is activated
+  rather than overwritten) and jumps to the offending line, with a
+  deferred retry to cover the editor remount when the tab is new.
+- State plumbing: batch state lives in `WorkspaceContext`
+  (`batch`/`startBatch`/`reportBatchProgress`/`finishBatch`/`clearBatch`);
+  the run logic is the join hook `useBatchValidation` (Workspace tree +
+  SchemaContext registry + Schematron), keeping the providers decoupled.
+- Verified end-to-end in the browser against an OPFS-backed workspace
+  (picker monkey-patched to a real `FileSystemDirectoryHandle`): 4-file
+  corpus with a nested directory → "4 files checked · 1 error · 1
+  warning", schema violations and `[Schematron]` diagnostics on the
+  right lines, click-through opened `broken.xml` at :4 and :5 with no
+  duplicate tab on the second click. 7 new unit tests drive the core
+  with fake handles + the real TEI Lite schema.
+
 ### Added — Schematron project-rules layer (P2)
 
 - **Second validation layer for team "house rules"** — the capability the
@@ -246,7 +277,7 @@ fixing and re-verified after.
 
 ### Tests
 
-- 331 → **421 passing**. Merged from the extension investigation:
+- 331 → **428 passing**. Merged from the extension investigation:
   `tests/editorExtensions.test.ts` (pins single-instance CM extensions
   across schema switches — `reconfigure` replaces, never appends).
   New suites: `tests/autoSave.test.ts`
@@ -264,8 +295,6 @@ fixing and re-verified after.
 
 ### Known limitations (tracked for P2+)
 
-- No corpus-wide batch validation yet (self-contained but its FSA
-  directory flow can't be end-to-end verified in the headless preview).
 - Schematron subset: no phases/abstract patterns/<let>/<value-of>;
   rules are app-level (not per-document); jsdom cannot test the
   namespaced evaluation path (browser-verified instead).

@@ -1,7 +1,10 @@
-import { useReducer, useCallback, useMemo, type ReactNode } from 'react';
+import { useReducer, useCallback, useMemo, useState, type ReactNode } from 'react';
 import type { FileTreeNode, WorkspaceState } from '../types/workspace';
+import type { BatchFileResult } from '../file/batchValidation';
 import { openDirectory, buildFileTree, supportsDirectoryPicker } from '../file/fileSystemAccess';
-import { WorkspaceContext } from './useWorkspace';
+import { WorkspaceContext, type BatchValidationState } from './useWorkspace';
+
+const IDLE_BATCH: BatchValidationState = { running: false, done: 0, total: 0, results: null };
 
 /**
  * Actions for workspace state management.
@@ -73,6 +76,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const isSupported = supportsDirectoryPicker();
 
+  // ─── Batch validation state (the RUN logic lives in useBatchValidation,
+  //     which joins this provider with SchemaContext — A1 boundary) ───
+  const [batch, setBatch] = useState<BatchValidationState>(IDLE_BATCH);
+
+  const startBatch = useCallback((total: number) => {
+    setBatch({ running: true, done: 0, total, results: null });
+  }, []);
+
+  const reportBatchProgress = useCallback((done: number) => {
+    setBatch(prev => (prev.running ? { ...prev, done } : prev));
+  }, []);
+
+  const finishBatch = useCallback((results: BatchFileResult[]) => {
+    setBatch(prev => ({ running: false, done: prev.total, total: prev.total, results }));
+  }, []);
+
+  const clearBatch = useCallback(() => setBatch(IDLE_BATCH), []);
+
   const openWorkspace = useCallback(async () => {
     try {
       const { handle, name } = await openDirectory();
@@ -135,8 +156,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       refreshFileTree,
       toggleDirectory,
       findFileNode,
+      batch,
+      startBatch,
+      reportBatchProgress,
+      finishBatch,
+      clearBatch,
     }),
-    [state, isSupported, openWorkspace, closeWorkspace, refreshFileTree, toggleDirectory, findFileNode],
+    [state, isSupported, openWorkspace, closeWorkspace, refreshFileTree, toggleDirectory, findFileNode, batch, startBatch, reportBatchProgress, finishBatch, clearBatch],
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
