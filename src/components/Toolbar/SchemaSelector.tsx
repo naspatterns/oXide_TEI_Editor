@@ -1,10 +1,25 @@
 import { useCallback, useRef } from 'react';
 import { useSchema } from '../../store/useSchema';
+import { useEditor } from '../../store/useEditor';
 import { schemaEngine } from '../../schema/SchemaEngine';
 
+/**
+ * Schema selector for the ACTIVE document (M3 per-document schema).
+ *
+ * The selection reads/writes the active tab's `schemaId` — switching tabs
+ * switches the displayed schema, and picking a schema here affects only the
+ * current document. Uploaded custom schemas are registered app-wide (any tab
+ * may select them) but are only ASSIGNED to the active document.
+ */
 export function SchemaSelector() {
-  const { schema, availableSchemas, isLoading, loadSchema, setSchema } = useSchema();
+  const { schemasById, availableSchemas, isLoading, ensureSchema, registerCustomSchema } = useSchema();
+  const { getActiveDocument, setDocumentSchemaId } = useEditor();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeDoc = getActiveDocument();
+  const activeSchemaId = activeDoc?.schemaId ?? 'tei_lite';
+
+  const customSchemaIds = Object.keys(schemasById).filter(id => !availableSchemas.includes(id));
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -12,12 +27,14 @@ export function SchemaSelector() {
       if (value === '__upload__') {
         fileInputRef.current?.click();
         // Reset select to current value so "Upload" doesn't stay selected
-        e.target.value = schema?.id ?? '';
+        e.target.value = activeSchemaId;
         return;
       }
-      loadSchema(value);
+      if (!activeDoc) return;
+      void ensureSchema(value);
+      setDocumentSchemaId(activeDoc.id, value);
     },
-    [loadSchema, schema],
+    [activeDoc, activeSchemaId, ensureSchema, setDocumentSchemaId],
   );
 
   const handleFileUpload = useCallback(
@@ -42,7 +59,10 @@ export function SchemaSelector() {
         const rngXml = await file.text();
         const name = file.name.replace(/\.(rng|xml)$/i, '');
         const info = await schemaEngine.loadCustomRng(rngXml, name);
-        setSchema(info);
+        registerCustomSchema(info);
+        if (activeDoc) {
+          setDocumentSchemaId(activeDoc.id, info.id);
+        }
       } catch (err) {
         alert(`Failed to load schema: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
@@ -50,16 +70,16 @@ export function SchemaSelector() {
       // Reset input so the same file can be re-selected
       e.target.value = '';
     },
-    [setSchema],
+    [activeDoc, registerCustomSchema, setDocumentSchemaId],
   );
 
   return (
     <>
       <select
-        value={schema?.id ?? ''}
+        value={activeSchemaId}
         onChange={handleChange}
-        disabled={isLoading}
-        title="Select TEI schema"
+        disabled={isLoading || !activeDoc}
+        title="Select TEI schema for the current document"
       >
         <option value="" disabled>
           Schema...
@@ -69,9 +89,14 @@ export function SchemaSelector() {
             {id === 'tei_lite' ? 'TEI Lite' : id === 'tei_all' ? 'TEI All' : id}
           </option>
         ))}
-        {/* Show custom schema if loaded */}
-        {schema && !availableSchemas.includes(schema.id) && (
-          <option value={schema.id}>{schema.name}</option>
+        {customSchemaIds.map((id) => (
+          <option key={id} value={id}>
+            {schemasById[id].name}
+          </option>
+        ))}
+        {/* The active doc may reference a custom schema not (yet) registered */}
+        {!availableSchemas.includes(activeSchemaId) && !customSchemaIds.includes(activeSchemaId) && (
+          <option value={activeSchemaId}>{activeSchemaId.replace(/^custom_/, '')}</option>
         )}
         <option value="__upload__">Upload .rng...</option>
       </select>

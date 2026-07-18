@@ -33,6 +33,14 @@ export interface OpenDocument {
   documentVersion: number;
   /** Scroll position (top line) for state restoration */
   scrollTop?: number;
+  /**
+   * Schema this document validates/completes against — a built-in id
+   * ('tei_lite' | 'tei_all') or a custom id ('custom_<name>'). Undefined
+   * (e.g. docs created before this field existed) resolves to the default
+   * 'tei_lite'. Not persisted by autosave: recovery re-detects it from the
+   * document's own xml-model declaration.
+   */
+  schemaId?: string;
 }
 
 /**
@@ -101,6 +109,7 @@ export function generateDocumentId(): string {
 export function createNewDocument(
   fileName: string = 'Untitled.xml',
   content: string = '',
+  schemaId?: string,
 ): OpenDocument {
   return {
     id: generateDocumentId(),
@@ -114,5 +123,6 @@ export function createNewDocument(
     errors: [],
     isValidating: false,
     documentVersion: 0,
+    schemaId,
   };
 }

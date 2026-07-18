@@ -72,6 +72,8 @@ export interface EditorContextValue {
   updateTabContent: (id: string, content: string) => void;
   markTabSaved: (id: string) => void;
   setTabErrors: (id: string, errors: ValidationError[]) => void;
+  /** Associate a schema id with a specific document (M3 per-doc schema) */
+  setDocumentSchemaId: (id: string, schemaId: string) => void;
 
   // Global settings
   setEditorFontSize: (size: number) => void;

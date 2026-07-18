@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useEditor } from '../store/useEditor';
-import { useSchema } from '../store/useSchema';
+import { useActiveSchema } from './useActiveSchema';
 import { getRequiredAttributes } from '../schema/schemaQuery';
 
 /**
@@ -15,7 +15,7 @@ import { getRequiredAttributes } from '../schema/schemaQuery';
  */
 export function useWrapSelection(): (tagName: string) => void {
   const { editorViewRef } = useEditor();
-  const { schema } = useSchema();
+  const schema = useActiveSchema();
 
   return useCallback(
     (tagName: string) => {

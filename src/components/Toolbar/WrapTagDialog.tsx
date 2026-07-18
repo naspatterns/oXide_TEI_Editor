@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSchema } from '../../store/useSchema';
+import { useActiveSchema } from '../../hooks/useActiveSchema';
 import './WrapTagDialog.css';
 
 interface Props {
@@ -18,7 +18,7 @@ const COMMON_INLINE_TAGS = [
 ];
 
 export function WrapTagDialog({ open, onClose, onWrap, selectedText }: Props) {
-  const { schema } = useSchema();
+  const schema = useActiveSchema();
   const [tagName, setTagName] = useState('');
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);

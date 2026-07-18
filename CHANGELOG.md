@@ -13,6 +13,38 @@ plus the first slice of P2 (editor hot-path performance + the
 QuickTagMenu IME hole). All were reproduced live in the browser before
 fixing and re-verified after.
 
+### Added — per-document schema association (P2 / audit M3)
+
+- **Each document now validates, completes, and wraps against its OWN
+  schema.** Previously one app-global schema governed every tab: tab A
+  (TEI Lite) and tab B (TEI All or a custom RNG) were both checked
+  against whichever was selected last — spurious "Unknown element"
+  errors or silent under-validation.
+  - `OpenDocument.schemaId` (`src/types/workspace.ts`) carries the
+    association; every open/create path stamps it by running the pure
+    `detectSchemaIdFromContent` (`src/utils/schemaDetector.ts`) over the
+    document's `<?xml-model?>` declaration (tei_all/tei_lite hrefs map
+    to the built-ins; anything else falls back to tei_lite). Crash
+    recovery re-detects from content — schemaId is deliberately not
+    persisted in autosave records.
+  - `SchemaContext` became an id-keyed **registry** (`schemasById`,
+    `ensureSchema`, `resolveSchema`, `registerCustomSchema`); TEI All
+    keeps its lazy ~528KB dynamic import and loads only when a tab
+    actually needs it. The legacy single-`schema` field remains for
+    backward compatibility.
+  - New `useActiveSchema()` join hook (`src/hooks/useActiveSchema.ts`)
+    resolves the active tab's schema; XmlEditor, StatusBar, AIPanel,
+    WrapTagDialog, QuickTagMenu, and useWrapSelection now consume it —
+    the status bar, tag lists, and completion all follow the active tab.
+  - `SchemaSelector` reads/writes the ACTIVE document's schema
+    (`SET_TAB_SCHEMA` / `setDocumentSchemaId`); uploading a custom .rng
+    registers it app-wide but assigns it only to the current document.
+  - Verified live: tab A on tinyPoem (2 elements) while tab B stays on
+    TEI All (588); switching tabs flips the status bar, selector, and
+    QuickTagMenu tag count (106 vs 588) with no cross-contamination.
+    The merged `editorExtensions` regression suite stays green — the
+    extension set is still swapped by replace-style reconfigure.
+
 ### Fixed — autosave multi-instance isolation (P2)
 
 - **Two browser tabs of the app no longer clobber each other's recovery
@@ -179,7 +211,7 @@ fixing and re-verified after.
 
 ### Tests
 
-- 331 → **399 passing**. Merged from the extension investigation:
+- 331 → **409 passing**. Merged from the extension investigation:
   `tests/editorExtensions.test.ts` (pins single-instance CM extensions
   across schema switches — `reconfigure` replaces, never appends).
   New suites: `tests/autoSave.test.ts`
@@ -197,11 +229,14 @@ fixing and re-verified after.
 
 ### Known limitations (tracked for P2+)
 
-- Schema is app-global while documents are per-tab (per-document schema
-  is designed but deferred as a large multi-file refactor); no Schematron
-  layer (feasible via native XSLTProcessor, wants per-doc schema first);
-  no corpus-wide batch validation (self-contained but its FSA directory
-  flow can't be end-to-end verified in the headless preview).
+- No Schematron layer yet (feasible via native XSLTProcessor; its
+  per-doc-schema precondition is now met); no corpus-wide batch
+  validation (self-contained but its FSA directory flow can't be
+  end-to-end verified in the headless preview).
+- A per-document schema is auto-detected only at open/create/recovery;
+  editing the xml-model PI in an open document does not re-associate
+  (use the schema selector). A manual selector override is not written
+  back into the document's xml-model PI.
 - (Resolved) The suspected duplicated CodeMirror domEventHandlers after
   repeated schema switches was investigated and found NOT to be a bug —
   `reconfigure` replaces the config; the 9× count was a measurement

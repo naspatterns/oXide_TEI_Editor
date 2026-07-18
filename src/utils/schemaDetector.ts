@@ -70,6 +70,30 @@ function isLocalPath(href: string): boolean {
 }
 
 /**
+ * Map a document's schema declarations to a built-in schema id.
+ *
+ * Pure — usable from EditorContext without importing SchemaContext (keeps
+ * the providers decoupled). Returns null when nothing recognizable is
+ * declared (caller falls back to the default schema); a local/custom .rng
+ * reference also returns null — we cannot load it from disk automatically,
+ * and the existing alert flow already tells the user to upload it.
+ */
+export function resolveSchemaIdFromDeclarations(declarations: SchemaDeclaration[]): string | null {
+  for (const decl of declarations) {
+    if (decl.format !== 'rng') continue;
+    const href = decl.href.toLowerCase();
+    if (/tei_all/.test(href)) return 'tei_all';
+    if (/tei_lite|tei_minimal|tei_bare|teilite/.test(href)) return 'tei_lite';
+  }
+  return null;
+}
+
+/** Convenience: detect + resolve in one call from raw document content. */
+export function detectSchemaIdFromContent(xmlContent: string): string | null {
+  return resolveSchemaIdFromDeclarations(detectSchemaDeclarations(xmlContent));
+}
+
+/**
  * Analyze schema declarations and return user-friendly messages
  */
 export function analyzeSchemaDeclarations(declarations: SchemaDeclaration[]): {

@@ -28,7 +28,7 @@ import { openFile, saveFile, saveAsFile, isUserCancelledError } from './file/fil
 import { startAutoSave, stopAutoSave, loadRecoverableSnapshots, clearSnapshotByKey, initAutosaveLiveness, type RecoverableSnapshot } from './file/autoSave';
 import { createNewDocument } from './types/workspace';
 import { useConfirmedTabClose } from './hooks/useConfirmedTabClose';
-import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage } from './utils/schemaDetector';
+import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage, detectSchemaIdFromContent } from './utils/schemaDetector';
 import { undo, redo } from '@codemirror/commands';
 import { openSearchPanel } from '@codemirror/search';
 
@@ -353,8 +353,15 @@ function EditorLayout() {
     if (!recoveryData) return;
     // Recover into NEW tabs (never overwrite whatever is currently active)
     // and keep them dirty — the recovered content exists nowhere on disk.
+    // schemaId is re-detected from the content's xml-model PI: autosave
+    // deliberately does not persist it (a manual override without a PI is
+    // lost across recovery — acceptable).
     recoveryData.documents.forEach(saved => {
-      const doc = createNewDocument(saved.fileName ?? 'Recovered.xml', saved.content);
+      const doc = createNewDocument(
+        saved.fileName ?? 'Recovered.xml',
+        saved.content,
+        detectSchemaIdFromContent(saved.content) ?? 'tei_lite',
+      );
       doc.isDirty = true;
       openTab(doc);
     });

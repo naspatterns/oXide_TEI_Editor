@@ -4,6 +4,10 @@ import type { ViewMode } from '../types/editor';
 import type { ValidationError } from '../types/schema';
 import type { OpenDocument, MultiTabEditorState } from '../types/workspace';
 import { generateDocumentId, createNewDocument } from '../types/workspace';
+// Pure content→schema-id detection (keeps EditorProvider decoupled from
+// SchemaContext — the A1 boundary): every open/create path stamps the
+// document's schemaId here, and useActiveSchema resolves it later.
+import { detectSchemaIdFromContent } from '../utils/schemaDetector';
 import { EditorContext, type LegacyEditorState } from './useEditor';
 
 const DEFAULT_CONTENT = `<?xml version="1.0" encoding="UTF-8"?>
@@ -46,6 +50,7 @@ function createInitialDocument(): OpenDocument {
     errors: [],
     isValidating: false,
     documentVersion: 0,
+    schemaId: 'tei_lite', // matches DEFAULT_CONTENT's tei_lite xml-model PI
   };
 }
 
@@ -69,6 +74,7 @@ type Action =
   | { type: 'UPDATE_TAB_CONTENT'; id: string; content: string }
   | { type: 'MARK_TAB_SAVED'; id: string }
   | { type: 'SET_TAB_ERRORS'; id: string; errors: ValidationError[] }
+  | { type: 'SET_TAB_SCHEMA'; id: string; schemaId: string }
   // Global settings
   | { type: 'SET_EDITOR_FONT_SIZE'; size: number }
   | { type: 'SET_OUTLINE_FONT_SIZE'; size: number }
@@ -280,6 +286,14 @@ function reducer(state: MultiTabEditorState, action: Action): MultiTabEditorStat
         }),
       };
 
+    case 'SET_TAB_SCHEMA':
+      return {
+        ...state,
+        openDocuments: updateDocument(state.openDocuments, action.id, {
+          schemaId: action.schemaId,
+        }),
+      };
+
     case 'INCREMENT_DOCUMENT_VERSION': {
       const doc = state.openDocuments.find(d => d.id === action.id);
       if (!doc) return state;
@@ -388,7 +402,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const openFileAsTab = useCallback(
     (content: string, fileName: string, fileHandle: FileSystemFileHandle | null, filePath: string | null = null) => {
-      const doc = createNewDocument(fileName, content);
+      const doc = createNewDocument(fileName, content, detectSchemaIdFromContent(content) ?? 'tei_lite');
       doc.fileHandle = fileHandle;
       doc.filePath = filePath;
       dispatch({ type: 'OPEN_TAB', document: doc });
@@ -397,7 +411,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   );
 
   const createNewTab = useCallback((content: string = DEFAULT_CONTENT, fileName: string = 'Untitled.xml') => {
-    const doc = createNewDocument(fileName, content);
+    const doc = createNewDocument(fileName, content, detectSchemaIdFromContent(content) ?? 'tei_lite');
     dispatch({ type: 'OPEN_TAB', document: doc });
   }, []);
 
@@ -423,6 +437,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const updateTabContent = useCallback((id: string, content: string) => dispatch({ type: 'UPDATE_TAB_CONTENT', id, content }), []);
   const markTabSaved = useCallback((id: string) => dispatch({ type: 'MARK_TAB_SAVED', id }), []);
   const setTabErrors = useCallback((id: string, errors: ValidationError[]) => dispatch({ type: 'SET_TAB_ERRORS', id, errors }), []);
+  const setDocumentSchemaId = useCallback((id: string, schemaId: string) => dispatch({ type: 'SET_TAB_SCHEMA', id, schemaId }), []);
 
   // ─── Global settings ───
 
@@ -482,6 +497,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       updateTabContent,
       markTabSaved,
       setTabErrors,
+      setDocumentSchemaId,
       setEditorFontSize,
       setOutlineFontSize,
       editorViewRef,
@@ -511,6 +527,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       updateTabContent,
       markTabSaved,
       setTabErrors,
+      setDocumentSchemaId,
       setEditorFontSize,
       setOutlineFontSize,
       editorViewRef,

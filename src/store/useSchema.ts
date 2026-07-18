@@ -2,16 +2,24 @@ import { createContext, useContext } from 'react';
 import type { SchemaInfo } from '../types/schema';
 
 export interface SchemaContextValue {
-  /** Currently active schema */
+  /** Legacy app-level schema (the default). Prefer useActiveSchema(). */
   schema: SchemaInfo | null;
-  /** Available schema IDs */
+  /** Registry of loaded schemas, keyed by schema id (M3). */
+  schemasById: Record<string, SchemaInfo>;
+  /** Available built-in schema IDs */
   availableSchemas: string[];
-  /** Whether schema is loading */
+  /** Whether a schema is loading */
   isLoading: boolean;
-  /** Load a schema by ID */
+  /** Legacy: load a builtin and make it the app-level schema */
   loadSchema: (id: string) => Promise<void>;
-  /** Set schema directly (for custom uploads) */
+  /** Legacy: register + select a custom schema */
   setSchema: (schema: SchemaInfo) => void;
+  /** Idempotently load a builtin schema into the registry */
+  ensureSchema: (id: string) => Promise<SchemaInfo | null>;
+  /** Sync registry read — null while loading; undefined id → default */
+  resolveSchema: (id: string | undefined) => SchemaInfo | null;
+  /** Put an uploaded custom schema into the registry */
+  registerCustomSchema: (info: SchemaInfo) => void;
 }
 
 export const SchemaContext = createContext<SchemaContextValue | null>(null);

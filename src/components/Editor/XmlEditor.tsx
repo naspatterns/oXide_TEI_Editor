@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useEffect, useState, useSyncExternalStore
 import CodeMirror from '@uiw/react-codemirror';
 import type { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEditor } from '../../store/useEditor';
-import { useSchema } from '../../store/useSchema';
+import { useActiveSchema } from '../../hooks/useActiveSchema';
 import { useCursor } from '../../store/useCursor';
 import { useFileDrop } from '../../hooks/useFileDrop';
 import { useWrapSelection } from '../../hooks/useWrapSelection';
@@ -37,7 +37,7 @@ export function XmlEditor() {
     editorViewRef,
     openFileAsTab,
   } = useEditor();
-  const { schema } = useSchema();
+  const schema = useActiveSchema();
   const { setLiveCursor } = useCursor();
   const wrapSelection = useWrapSelection();
   const { isDragOver, resetDragState, dragProps } = useFileDrop();

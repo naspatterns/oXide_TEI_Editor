@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useSchema } from '../../store/useSchema';
+import { useActiveSchema } from '../../hooks/useActiveSchema';
 import './QuickTagMenu.css';
 
 interface Props {
@@ -94,7 +94,7 @@ function getTagScore(tagName: string, usageData: UsageData): number {
 }
 
 export function QuickTagMenu({ position, selectedText, onSelectTag, onClose, onEscape }: Props) {
-  const { schema } = useSchema();
+  const schema = useActiveSchema();
   const menuRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);

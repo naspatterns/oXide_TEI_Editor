@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useEditor } from '../../store/useEditor';
-import { useSchema } from '../../store/useSchema';
+import { useActiveSchema } from '../../hooks/useActiveSchema';
 import { useCursor } from '../../store/useCursor';
 import type { ValidationError } from '../../types/schema';
 import './StatusBar.css';
 
 export function StatusBar() {
   const { state, scrollToLine } = useEditor();
-  const { schema } = useSchema();
+  const schema = useActiveSchema();
   // Cursor lives in its own context so typing/clicking does not re-render
   // every editor consumer. See C7 in CHANGELOG.
   const { line: cursorLine, column: cursorColumn } = useCursor();

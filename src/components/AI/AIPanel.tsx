@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAI } from '../../ai/useAI';
 import { useEditor } from '../../store/useEditor';
-import { useSchema } from '../../store/useSchema';
+import { useActiveSchema } from '../../hooks/useActiveSchema';
 import { useCursor } from '../../store/useCursor';
 import { useEditorActions } from '../../hooks/useEditorActions';
 import { buildXMLContext } from '../../ai/utils/contextBuilder';
@@ -22,7 +22,7 @@ import './AIPanel.css';
 export function AIPanel() {
   const { state: aiState, sendMessage, clearMessages, startMockMode, applyAction, setApplyActionHandler } = useAI();
   const { state: editorState, getSelection } = useEditor();
-  const { schema } = useSchema();
+  const schema = useActiveSchema();
   const { line: cursorLine, column: cursorColumn } = useCursor();
   const editorActions = useEditorActions();
 

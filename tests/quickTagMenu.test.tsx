@@ -12,19 +12,19 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, cleanup, fireEvent, screen } from '@testing-library/react';
 import { QuickTagMenu } from '../src/components/Editor/QuickTagMenu';
 
-vi.mock('../src/store/useSchema', () => ({
-  useSchema: () => ({
-    schema: {
-      id: 'test',
-      name: 'Test',
-      elements: [
-        { name: 'hi', documentation: 'Highlighted text', children: [], attributes: [] },
-        { name: 'name', documentation: 'Name', children: [], attributes: [] },
-        { name: 'persName', documentation: 'Personal name', children: [], attributes: [] },
-      ],
-      elementMap: new Map(),
-      hasSalveGrammar: false,
-    },
+// The component resolves the ACTIVE document's schema (M3) — mock the join
+// hook, since these tests render without Editor/Schema providers.
+vi.mock('../src/hooks/useActiveSchema', () => ({
+  useActiveSchema: () => ({
+    id: 'test',
+    name: 'Test',
+    elements: [
+      { name: 'hi', documentation: 'Highlighted text', children: [], attributes: [] },
+      { name: 'name', documentation: 'Name', children: [], attributes: [] },
+      { name: 'persName', documentation: 'Personal name', children: [], attributes: [] },
+    ],
+    elementMap: new Map(),
+    hasSalveGrammar: false,
   }),
 }));
 
