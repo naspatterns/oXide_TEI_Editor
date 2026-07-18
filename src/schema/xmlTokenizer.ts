@@ -275,6 +275,36 @@ export function getOpenElementStackWithChildren(xml: string, offset: number = xm
   return stack;
 }
 
+/**
+ * Locate the 1-based line of the nth (0-based) occurrence of `<tagName…`
+ * in the document, tolerating an optional namespace prefix.
+ *
+ * Returns 1 when the occurrence cannot be found (e.g. a tag spanning
+ * multiple lines defeats the per-line regex). Shared by the XPath toolbar
+ * search and the Schematron layer for node→line attribution.
+ */
+export function findNthTagLine(lines: string[], tagName: string, occurrenceIndex: number): number {
+  // Create pattern that matches the tag with or without namespace prefix
+  const tagPattern = new RegExp(`<([a-zA-Z_][\\w-]*:)?${tagName}(\\s|>|/)`, 'g');
+  let currentOccurrence = 0;
+
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    tagPattern.lastIndex = 0;
+
+    while (tagPattern.exec(lines[lineIdx]) !== null) {
+      if (currentOccurrence === occurrenceIndex) {
+        // Return immediately: an earlier version kept scanning here, so
+        // later occurrences overwrote the result and every match was
+        // attributed to (and navigated to) the LAST occurrence.
+        return lineIdx + 1;
+      }
+      currentOccurrence++;
+    }
+  }
+
+  return 1;
+}
+
 const ATTR_NAME_START = /[a-zA-Z_]/;
 const ATTR_NAME_BODY = /[\w.:-]/;
 const WHITESPACE = /\s/;

@@ -3,6 +3,12 @@
  * Split out of XPathSearch.tsx so the component file only exports a
  * component (Fast Refresh) and the pure logic is unit-testable.
  */
+import { findNthTagLine } from '../../schema/xmlTokenizer';
+
+// Re-exported for existing consumers/tests; the implementation moved to
+// xmlTokenizer so the Schematron layer (src/schema) can share it without
+// importing from src/components.
+export { findNthTagLine };
 
 export interface XPathMatch {
   nodeName: string;
@@ -19,7 +25,7 @@ export interface XPathMatch {
  * - //div[@type] → //*[local-name()='div'][@type]
  * - //tei:p → //tei:p (kept as-is for explicit namespace)
  */
-function convertToLocalNameXPath(expression: string): string {
+export function convertToLocalNameXPath(expression: string): string {
   // If user explicitly uses tei: prefix, don't convert
   if (expression.includes('tei:')) {
     return expression;
@@ -38,35 +44,6 @@ function convertToLocalNameXPath(expression: string): string {
       return `/*[local-name()='${tagName}']${suffix || ''}`;
     }
   );
-}
-
-/**
- * Locate the 1-based line of the nth (0-based) occurrence of `<tagName…`
- * in the document, tolerating an optional namespace prefix.
- *
- * Returns 1 when the occurrence cannot be found (e.g. a tag spanning
- * multiple lines defeats the per-line regex).
- */
-export function findNthTagLine(lines: string[], tagName: string, occurrenceIndex: number): number {
-  // Create pattern that matches the tag with or without namespace prefix
-  const tagPattern = new RegExp(`<([a-zA-Z_][\\w-]*:)?${tagName}(\\s|>|/)`, 'g');
-  let currentOccurrence = 0;
-
-  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-    tagPattern.lastIndex = 0;
-
-    while (tagPattern.exec(lines[lineIdx]) !== null) {
-      if (currentOccurrence === occurrenceIndex) {
-        // Return immediately: an earlier version kept scanning here, so
-        // later occurrences overwrote the result and every match was
-        // attributed to (and navigated to) the LAST occurrence.
-        return lineIdx + 1;
-      }
-      currentOccurrence++;
-    }
-  }
-
-  return 1;
 }
 
 export function evaluateXPath(xmlContent: string, expression: string): { matches: XPathMatch[]; error: string | null } {

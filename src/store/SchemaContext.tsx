@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import type { SchemaInfo } from '../types/schema';
 import { schemaEngine } from '../schema/SchemaEngine';
+import { parseSchematron, type SchematronSchema } from '../schema/schematron';
 import { SchemaContext } from './useSchema';
 
 const BUILTIN_SCHEMAS = ['tei_lite', 'tei_all'];
@@ -63,6 +64,19 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
     [schemasById],
   );
 
+  // ─── Schematron project rules (app-level, applied on top of any schema) ───
+
+  const [schematron, setSchematron] = useState<SchematronSchema | null>(null);
+
+  /** Parse + activate a Schematron ruleset. Throws on unusable input. */
+  const loadSchematron = useCallback((schXml: string, name: string): SchematronSchema => {
+    const parsed = parseSchematron(schXml, name);
+    setSchematron(parsed);
+    return parsed;
+  }, []);
+
+  const clearSchematron = useCallback(() => setSchematron(null), []);
+
   // ─── Legacy single-schema API (backward compatibility) ───
 
   const [legacySchemaId, setLegacySchemaId] = useState<string>(DEFAULT_SCHEMA_ID);
@@ -97,8 +111,11 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
       ensureSchema,
       resolveSchema,
       registerCustomSchema,
+      schematron,
+      loadSchematron,
+      clearSchematron,
     }),
-    [schema, schemasById, isLoading, loadSchema, setSchema, ensureSchema, resolveSchema, registerCustomSchema],
+    [schema, schemasById, isLoading, loadSchema, setSchema, ensureSchema, resolveSchema, registerCustomSchema, schematron, loadSchematron, clearSchematron],
   );
 
   return <SchemaContext.Provider value={value}>{children}</SchemaContext.Provider>;

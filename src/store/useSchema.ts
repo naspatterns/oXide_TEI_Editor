@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { SchemaInfo } from '../types/schema';
+import type { SchematronSchema } from '../schema/schematron';
 
 export interface SchemaContextValue {
   /** Legacy app-level schema (the default). Prefer useActiveSchema(). */
@@ -20,6 +21,12 @@ export interface SchemaContextValue {
   resolveSchema: (id: string | undefined) => SchemaInfo | null;
   /** Put an uploaded custom schema into the registry */
   registerCustomSchema: (info: SchemaInfo) => void;
+  /** Active Schematron project rules (app-level second validation layer) */
+  schematron: SchematronSchema | null;
+  /** Parse + activate a Schematron ruleset; throws on unusable input */
+  loadSchematron: (schXml: string, name: string) => SchematronSchema;
+  /** Deactivate the Schematron ruleset */
+  clearSchematron: () => void;
 }
 
 export const SchemaContext = createContext<SchemaContextValue | null>(null);

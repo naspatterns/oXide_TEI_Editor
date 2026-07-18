@@ -13,6 +13,41 @@ plus the first slice of P2 (editor hot-path performance + the
 QuickTagMenu IME hole). All were reproduced live in the browser before
 fixing and re-verified after.
 
+### Added — Schematron project-rules layer (P2)
+
+- **Second validation layer for team "house rules"** — the capability the
+  audit's oXygen comparison flagged as the biggest team-workflow gap. A
+  new lightweight engine (`src/schema/schematron.ts`) interprets ISO
+  Schematron directly with the browser-native DOMParser +
+  `document.evaluate` (XPath 1.0): zero dependencies, no XSLT skeleton
+  bundle, nothing the production CSP objects to.
+  - Supported: `<ns>`, `<pattern>`, `<rule context>`, `<assert>`,
+    `<report>`, `@role` severity mapping, `<name/>` substitution in
+    messages, first-matching-rule-wins per pattern (ISO semantics),
+    legacy-namespace and no-namespace .sch files. Unsupported
+    (documented): phases, abstract patterns, `<let>`, `<value-of>`.
+  - Namespace handling: expressions run against a resolver built from
+    the schema's own `<ns>` declarations; if a .sch declares no
+    namespaces but the document uses one, unprefixed name steps are
+    rewritten to `local-name()` comparisons so quick prefix-less rules
+    still work on TEI documents.
+  - Diagnostics reuse the ValidationError pipeline (status bar,
+    underlines, lint gutter, scrollbar markers, outline badges) with a
+    `[Schematron]` prefix; node→line attribution shares
+    `findNthTagLine` (moved to `xmlTokenizer.ts`; re-exported from
+    `xpathEvaluator.ts` for compatibility). Unevaluable XPath in a rule
+    degrades to a single warning instead of breaking validation.
+  - UI: a "Rules…" control next to the schema selector loads a `.sch`
+    (shows name + check count, ✕ clears). App-level by design — one
+    project, one ruleset, all documents, on top of each document's own
+    schema (M3).
+  - Verified live: a `tei:div`-requires-`@type` house rule fired on the
+    default template at the correct line, cleared in real time when the
+    attribute was typed, returned on undo, and disappeared on rules
+    removal. jsdom cannot evaluate prefixed/`local-name()` XPath, so
+    unit tests (12) cover parsing + no-namespace evaluation and the
+    TEI-namespaced path is browser-verified.
+
 ### Added — per-document schema association (P2 / audit M3)
 
 - **Each document now validates, completes, and wraps against its OWN
@@ -211,7 +246,7 @@ fixing and re-verified after.
 
 ### Tests
 
-- 331 → **409 passing**. Merged from the extension investigation:
+- 331 → **421 passing**. Merged from the extension investigation:
   `tests/editorExtensions.test.ts` (pins single-instance CM extensions
   across schema switches — `reconfigure` replaces, never appends).
   New suites: `tests/autoSave.test.ts`
@@ -229,10 +264,11 @@ fixing and re-verified after.
 
 ### Known limitations (tracked for P2+)
 
-- No Schematron layer yet (feasible via native XSLTProcessor; its
-  per-doc-schema precondition is now met); no corpus-wide batch
-  validation (self-contained but its FSA directory flow can't be
-  end-to-end verified in the headless preview).
+- No corpus-wide batch validation yet (self-contained but its FSA
+  directory flow can't be end-to-end verified in the headless preview).
+- Schematron subset: no phases/abstract patterns/<let>/<value-of>;
+  rules are app-level (not per-document); jsdom cannot test the
+  namespaced evaluation path (browser-verified instead).
 - A per-document schema is auto-detected only at open/create/recovery;
   editing the xml-model PI in an open document does not re-associate
   (use the schema selector). A manual selector override is not written

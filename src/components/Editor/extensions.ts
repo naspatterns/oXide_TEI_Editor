@@ -8,6 +8,7 @@ import type { SchemaInfo } from '../../types/schema';
 import type { ValidationError } from '../../types/schema';
 import { createSchemaCompletionSource } from './completionSource';
 import { createValidationLinter } from './validationLinter';
+import type { SchematronSchema } from '../../schema/schematron';
 import { teiEditorTheme, teiEditorThemeLight } from './theme';
 import { lineNumbers } from '@codemirror/view';
 import { paragraphIndentation } from './paragraphIndent';
@@ -148,6 +149,7 @@ export function createEditorExtensions(
   schema: SchemaInfo | null,
   onValidationErrors?: (errors: ValidationError[]) => void,
   isDarkMode?: boolean,
+  schematron?: SchematronSchema | null,
 ): Extension[] {
   // Determine theme: check parameter first, then DOM attribute
   const dark = isDarkMode ?? document.documentElement.getAttribute('data-theme') === 'dark';
@@ -168,8 +170,8 @@ export function createEditorExtensions(
       maxRenderedOptions: 50,
       override: [createSchemaCompletionSource(schema)],
     }),
-    // Real-time validation linter
-    createValidationLinter(schema, onValidationErrors),
+    // Real-time validation linter (schema + optional Schematron layer)
+    createValidationLinter(schema, onValidationErrors, schematron),
     // Lint gutter for error markers
     lintGutter(),
     // Tab indentation

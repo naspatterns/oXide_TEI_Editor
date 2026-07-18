@@ -3,6 +3,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import type { EditorView, ViewUpdate } from '@codemirror/view';
 import { useEditor } from '../../store/useEditor';
 import { useActiveSchema } from '../../hooks/useActiveSchema';
+import { useSchema } from '../../store/useSchema';
 import { useCursor } from '../../store/useCursor';
 import { useFileDrop } from '../../hooks/useFileDrop';
 import { useWrapSelection } from '../../hooks/useWrapSelection';
@@ -38,6 +39,7 @@ export function XmlEditor() {
     openFileAsTab,
   } = useEditor();
   const schema = useActiveSchema();
+  const { schematron } = useSchema();
   const { setLiveCursor } = useCursor();
   const wrapSelection = useWrapSelection();
   const { isDragOver, resetDragState, dragProps } = useFileDrop();
@@ -248,11 +250,12 @@ export function XmlEditor() {
     return () => document.removeEventListener(FILE_DROP_EVENT, handleFileDrop);
   }, [openFileAsTab, toast, resetDragState]);
 
-  // Extensions는 schema, isDarkMode 변경 시에만 재생성
+  // Extensions는 schema, schematron, isDarkMode 변경 시에만 재생성
+  // (reconfigure는 교체 방식 — tests/editorExtensions.test.ts가 고정)
   // 에러 업데이트는 useEffect에서 Compartment.reconfigure()로 처리
   const extensions = useMemo(
-    () => createEditorExtensions(schema, setErrors, isDarkMode),
-    [schema, setErrors, isDarkMode],
+    () => createEditorExtensions(schema, setErrors, isDarkMode, schematron),
+    [schema, setErrors, isDarkMode, schematron],
   );
 
   // ═══════════════════════════════════════════════════════════════════════════

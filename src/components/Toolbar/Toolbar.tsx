@@ -4,6 +4,7 @@ import { useWrapSelection } from '../../hooks/useWrapSelection';
 import type { ViewMode } from '../../types/editor';
 import { MenuBar, type MenuDefinition } from './MenuBar';
 import { SchemaSelector } from './SchemaSelector';
+import { SchematronSelector } from './SchematronSelector';
 import { WrapTagDialog } from './WrapTagDialog';
 import { SearchPanel } from './SearchPanel';
 import { XPathSearch } from './XPathSearch';
@@ -134,6 +135,7 @@ export function Toolbar({
         <div className="toolbar-group schema-group">
           <span className="schema-label">Schema</span>
           <SchemaSelector />
+          <SchematronSelector />
         </div>
         <div className="toolbar-separator" />
         <div className="toolbar-group">

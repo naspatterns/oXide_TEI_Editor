@@ -3,10 +3,13 @@ import type { Extension } from '@codemirror/state';
 import type { SchemaInfo } from '../../types/schema';
 import type { ValidationError } from '../../types/schema';
 import { validateXml } from '../../schema/xmlValidator';
+import { validateSchematron, type SchematronSchema } from '../../schema/schematron';
 
 /**
  * Creates a CodeMirror 6 linter extension that validates XML against
- * the loaded TEI schema.
+ * the loaded TEI schema, plus the optional Schematron project-rules
+ * layer (its diagnostics are simply concatenated — same ValidationError
+ * shape, same StatusBar/scrollbar plumbing).
  *
  * CM6's linter API provides:
  * - Debouncing (delay option)
@@ -17,11 +20,15 @@ import { validateXml } from '../../schema/xmlValidator';
 export function createValidationLinter(
   schema: SchemaInfo | null,
   onErrors?: (errors: ValidationError[]) => void,
+  schematron?: SchematronSchema | null,
 ): Extension {
   return linter(
     (view) => {
       const doc = view.state.doc.toString();
       const errors = validateXml(doc, schema);
+      if (schematron) {
+        errors.push(...validateSchematron(doc, schematron));
+      }
 
       // Report errors to parent (for StatusBar)
       onErrors?.(errors);
