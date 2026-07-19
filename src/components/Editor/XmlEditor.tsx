@@ -295,12 +295,16 @@ export function XmlEditor() {
   // - React 재렌더링 1회 감소 → 타이핑 반응성 향상
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // onChange: contentRef만 업데이트 (React state 업데이트 없음)
+  // onChange: fires on every real doc change (not @uiw's own value-sync). The
+  // `value` string was ALREADY materialized from the doc by @uiw, so reuse it
+  // here for both contentRef and the React-state dispatch instead of calling
+  // doc.toString() a second time in handleUpdate.
   const handleChange = useCallback(
     (value: string) => {
       contentRef.current = value;
+      setContent(value);
     },
-    [],
+    [setContent],
   );
 
   // handleUpdate: docChanged + selectionSet을 분리 처리.
@@ -322,11 +326,8 @@ export function XmlEditor() {
         persistCursorDebounced();
       }
 
-      if (update.docChanged) {
-        const content = update.state.doc.toString();
-        contentRef.current = content;
-        setContent(content);
-      }
+      // Content is persisted in handleChange (onChange) — no doc.toString()
+      // here. handleUpdate only handles cursor + selection UI below.
 
       // Toggle 'has-selection' class based on selection state.
       // Only update DOM class when selection actually changes (perf).
@@ -343,7 +344,7 @@ export function XmlEditor() {
         setSelectedText('');
       }
     },
-    [setLiveCursor, persistCursorDebounced, setContent],
+    [setLiveCursor, persistCursorDebounced],
   );
 
   // Handle tag selection from quick menu
@@ -370,6 +371,19 @@ export function XmlEditor() {
     setSelectedText('');
   }, [editorViewRef]);
 
+  // Remount CodeMirror only on tab switch / doc reload (id or documentVersion
+  // change), never on a keystroke.
+  const editorKey = activeDoc ? `editor-${activeDoc.id}-${activeDoc.documentVersion}` : 'editor-empty';
+  // The value passed to CodeMirror is the doc content captured at MOUNT (keyed
+  // on editorKey), NOT the live content. Feeding live content back made @uiw's
+  // value-sync effect run on every keystroke — re-materializing the whole doc
+  // via toString() and doing an O(n) string compare. CodeMirror now owns the
+  // live text; React state stays current via handleChange's setContent for
+  // other consumers. INVARIANT: any external reset of the active doc's content
+  // must bump documentVersion (→ new editorKey → remount) to reach the editor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- recapture only when editorKey changes, not on content edits
+  const initialContent = useMemo(() => (activeDoc?.content ?? ''), [editorKey]);
+
   // No active document - show empty state
   if (!activeDoc) {
     return (
@@ -394,9 +408,6 @@ export function XmlEditor() {
     );
   }
 
-  // Key includes document ID and version - remount on tab switch or document reload
-  const editorKey = `editor-${activeDoc.id}-${activeDoc.documentVersion}`;
-
   return (
     <div
       className={`xml-editor ${isDragOver ? 'drag-over' : ''}`}
@@ -405,7 +416,7 @@ export function XmlEditor() {
     >
       <CodeMirror
         key={editorKey}
-        value={activeDoc.content}
+        value={initialContent}
         height="100%"
         extensions={extensions}
         onChange={handleChange}
