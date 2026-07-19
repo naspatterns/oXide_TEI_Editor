@@ -396,13 +396,19 @@ function EditorLayout() {
     // deliberately does not persist it (a manual override without a PI is
     // lost across recovery — acceptable).
     recoveryData.documents.forEach(saved => {
-      const doc = createNewDocument(
-        saved.fileName ?? 'Recovered.xml',
-        saved.content,
-        detectSchemaIdFromContent(saved.content) ?? 'tei_lite',
-      );
-      doc.isDirty = true;
-      openTab(doc);
+      // Guard each document so one that can't be processed can't abort recovery
+      // of the rest (defense in depth alongside the schemaDetector fix — audit #11).
+      try {
+        const doc = createNewDocument(
+          saved.fileName ?? 'Recovered.xml',
+          saved.content,
+          detectSchemaIdFromContent(saved.content) ?? 'tei_lite',
+        );
+        doc.isDirty = true;
+        openTab(doc);
+      } catch (err) {
+        console.error('Failed to recover a document:', err);
+      }
     });
     toast.success(
       recoveryData.documents.length === 1

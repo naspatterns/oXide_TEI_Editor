@@ -37,7 +37,17 @@ export function detectSchemaDeclarations(xmlContent: string): SchemaDeclaration[
   // Match <!DOCTYPE ... SYSTEM "..."> declarations
   const doctypeRegex = /<!DOCTYPE\s+\w+\s+SYSTEM\s+["']([^"']+)["']\s*>/gi;
   while ((match = doctypeRegex.exec(xmlContent)) !== null) {
-    const href = decodeURIComponent(match[1]);
+    // The SYSTEM literal is a URI reference; decode percent-escapes for cleaner
+    // matching, but fall back to the raw literal if it contains a bare '%'
+    // (e.g. "100%.dtd") — decodeURIComponent throws URIError on that, which
+    // without this guard propagated out of every open/recovery/batch path and
+    // made such a document impossible to open (audit #11).
+    let href = match[1];
+    try {
+      href = decodeURIComponent(href);
+    } catch {
+      // keep the raw literal
+    }
     declarations.push({
       type: 'doctype',
       href,
