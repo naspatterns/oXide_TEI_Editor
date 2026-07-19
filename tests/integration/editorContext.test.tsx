@@ -128,3 +128,35 @@ describe('EditorProvider', () => {
     expect(renderCount).toBeLessThanOrEqual(3);
   });
 });
+
+describe('setTabCursor — id-targeted cursor persist (#13)', () => {
+  it('writes the cursor to the named doc, not the active one', () => {
+    const { result } = renderEditorHook();
+    const idA = result.current.multiTabState.activeDocumentId!;
+
+    const docB = createNewDocument('b.xml', '<b/>');
+    act(() => result.current.openTab(docB)); // docB is now active
+
+    // Flush a pending cursor for the NON-active tab A (as the unmount/tab-
+    // switch cleanup does). The old code wrote to the ACTIVE doc, corrupting B.
+    act(() => result.current.setTabCursor(idA, 42, 7));
+
+    const docs = result.current.multiTabState.openDocuments;
+    const a = docs.find(d => d.id === idA)!;
+    const b = docs.find(d => d.id === docB.id)!;
+    expect(a.cursorLine).toBe(42);
+    expect(a.cursorColumn).toBe(7);
+    // The active tab B must be untouched.
+    expect(b.cursorLine).toBe(1);
+    expect(b.cursorColumn).toBe(1);
+    expect(result.current.multiTabState.activeDocumentId).toBe(docB.id);
+  });
+
+  it('is a no-op (same state) when the cursor already matches', () => {
+    const { result } = renderEditorHook();
+    const id = result.current.multiTabState.activeDocumentId!;
+    const before = result.current.multiTabState;
+    act(() => result.current.setTabCursor(id, 1, 1)); // initial cursor is 1/1
+    expect(result.current.multiTabState).toBe(before);
+  });
+});

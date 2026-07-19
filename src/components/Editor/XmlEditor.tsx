@@ -34,6 +34,7 @@ export function XmlEditor() {
     getActiveDocument,
     setContent,
     setCursor,
+    setTabCursor,
     setErrors,
     editorViewRef,
     openFileAsTab,
@@ -60,18 +61,6 @@ export function XmlEditor() {
       setCursor(lastCursorRef.current.line, lastCursorRef.current.column);
     }, 500);
   }, [setCursor]);
-  // Flush any pending cursor write on unmount so tab switches don't lose
-  // the last <500 ms of cursor position. The pending write targets whichever
-  // document was active when the timer was scheduled — that's what we want
-  // because activeDocumentId changes only after this XmlEditor unmounts.
-  useEffect(() => {
-    return () => {
-      if (cursorPersistTimerRef.current !== null) {
-        window.clearTimeout(cursorPersistTimerRef.current);
-        cursorPersistTimerRef.current = null;
-      }
-    };
-  }, []);
 
   // Subscribe to theme changes to update syntax highlighting
   const isDarkMode = useSyncExternalStore(subscribeToTheme, getThemeSnapshot);
@@ -112,6 +101,22 @@ export function XmlEditor() {
         column: activeDoc.cursorColumn,
       };
     }
+    // On tab switch (or unmount) this cleanup runs BEFORE the effect re-runs
+    // for the new doc — while lastCursorRef still holds THIS doc's latest
+    // cursor. Flush any pending debounced write to THIS doc by id, then clear
+    // the timer. XmlEditor stays mounted across tab switches (only the inner
+    // CodeMirror is re-keyed), so without this the pending 500 ms write either
+    // never fires or fires against the already-switched active tab — losing
+    // the last <500 ms of cursor position for the tab being left (#13).
+    return () => {
+      if (cursorPersistTimerRef.current !== null) {
+        window.clearTimeout(cursorPersistTimerRef.current);
+        cursorPersistTimerRef.current = null;
+        if (activeDocId) {
+          setTabCursor(activeDocId, lastCursorRef.current.line, lastCursorRef.current.column);
+        }
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDocId]);
 

@@ -75,6 +75,7 @@ type Action =
   | { type: 'UPDATE_TAB_CONTENT'; id: string; content: string }
   | { type: 'MARK_TAB_SAVED'; id: string }
   | { type: 'SET_TAB_ERRORS'; id: string; errors: ValidationError[] }
+  | { type: 'SET_TAB_CURSOR'; id: string; line: number; column: number }
   | { type: 'SET_TAB_SCHEMA'; id: string; schemaId: string }
   // Global settings
   | { type: 'SET_EDITOR_FONT_SIZE'; size: number }
@@ -282,6 +283,23 @@ function reducer(state: MultiTabEditorState, action: Action): MultiTabEditorStat
       };
     }
 
+    // Persist a cursor to a SPECIFIC document by id (not the active one).
+    // Used to flush the pending debounced cursor of the tab being LEFT — the
+    // active tab has already changed by the time the flush runs (#13).
+    case 'SET_TAB_CURSOR': {
+      const target = state.openDocuments.find(d => d.id === action.id);
+      if (target && target.cursorLine === action.line && target.cursorColumn === action.column) {
+        return state;
+      }
+      return {
+        ...state,
+        openDocuments: updateDocument(state.openDocuments, action.id, {
+          cursorLine: action.line,
+          cursorColumn: action.column,
+        }),
+      };
+    }
+
     case 'SET_TAB_SCHEMA':
       return {
         ...state,
@@ -432,6 +450,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const updateTabContent = useCallback((id: string, content: string) => dispatch({ type: 'UPDATE_TAB_CONTENT', id, content }), []);
   const markTabSaved = useCallback((id: string) => dispatch({ type: 'MARK_TAB_SAVED', id }), []);
   const setTabErrors = useCallback((id: string, errors: ValidationError[]) => dispatch({ type: 'SET_TAB_ERRORS', id, errors }), []);
+  const setTabCursor = useCallback((id: string, line: number, column: number) => dispatch({ type: 'SET_TAB_CURSOR', id, line, column }), []);
   const setDocumentSchemaId = useCallback((id: string, schemaId: string) => dispatch({ type: 'SET_TAB_SCHEMA', id, schemaId }), []);
 
   // ─── Global settings ───
@@ -477,6 +496,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       updateTabContent,
       markTabSaved,
       setTabErrors,
+      setTabCursor,
       setDocumentSchemaId,
       setEditorFontSize,
       setOutlineFontSize,
@@ -506,6 +526,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       updateTabContent,
       markTabSaved,
       setTabErrors,
+      setTabCursor,
       setDocumentSchemaId,
       setEditorFontSize,
       setOutlineFontSize,
