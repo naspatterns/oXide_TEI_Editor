@@ -192,4 +192,32 @@ describe('validateSchematron (no-namespace documents)', () => {
     expect(errors[0].severity).toBe('warning');
     expect(errors[0].message).toContain('could not be evaluated');
   });
+
+  it('attributes lines from parsed elements, not commented-out same-name markup (#4/#29)', () => {
+    const sch = `<schema xmlns="${ISO_NS}"><pattern>
+      <rule context="chapter"><assert test="@title">needs title</assert></rule>
+    </pattern></schema>`;
+    const xml = `<book>
+  <!-- <chapter title="old"/> -->
+  <chapter/>
+</book>`;
+    const errors = validateSchematron(xml, parseSchematron(sch, 'comment'));
+    expect(errors).toHaveLength(1);
+    // The real <chapter/> is on line 3; the commented-out one must not shift it.
+    expect(errors[0].line).toBe(3);
+  });
+
+  it('attributes lines for tags whose start spans multiple lines (#4/#29)', () => {
+    const sch = `<schema xmlns="${ISO_NS}"><pattern>
+      <rule context="chapter"><report test="@draft">draft</report></rule>
+    </pattern></schema>`;
+    const xml = `<book>
+  <chapter
+    draft="yes"/>
+</book>`;
+    const errors = validateSchematron(xml, parseSchematron(sch, 'multiline'));
+    expect(errors).toHaveLength(1);
+    // The <chapter tag opens on line 2 even though its '>' is on line 3.
+    expect(errors[0].line).toBe(2);
+  });
 });

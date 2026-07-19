@@ -26,7 +26,7 @@
  */
 
 import type { ValidationError } from '../types/schema';
-import { findNthTagLine } from './xmlTokenizer';
+import { tokenizeXmlTags } from './xmlTokenizer';
 import { rewriteUnprefixedNamesToLocalName, splitTopLevelUnion } from './xpathLocalName';
 
 /** One assert/report inside a rule. */
@@ -207,17 +207,6 @@ export function validateSchematron(xmlContent: string, schema: SchematronSchema)
     return errors;
   }
 
-  const lines = xmlContent.split('\n');
-
-  // Document-order occurrence index per localName, for node→line attribution.
-  const occurrence = new Map<Element, number>();
-  const counters = new Map<string, number>();
-  for (const el of Array.from(doc.getElementsByTagName('*'))) {
-    const n = counters.get(el.localName) ?? 0;
-    occurrence.set(el, n);
-    counters.set(el.localName, n + 1);
-  }
-
   const hasNs = Object.keys(schema.nsMap).length > 0;
   const resolver = (prefix: string | null): string | null => {
     if (!prefix) return null;
@@ -232,7 +221,38 @@ export function validateSchematron(xmlContent: string, schema: SchematronSchema)
   const needsRewrite = !hasNs && !!doc.documentElement.namespaceURI;
   const prep = (expr: string): string => (needsRewrite ? rewriteUnprefixedNamesToLocalName(expr) : expr);
 
-  const lineOf = (el: Element): number => findNthTagLine(lines, el.localName, occurrence.get(el) ?? 0);
+  // Node→line attribution, built lazily on the first fired diagnostic (most
+  // lint passes fire nothing, so a clean document never pays for this). ONE
+  // tokenizer pass yields, per local name, the line of each occurrence in
+  // document order; the DOM gives each element's occurrence index. Both skip
+  // comments/CDATA and the tokenizer spans multi-line tags, so the two agree.
+  // This replaces the old per-error findNthTagLine, which re-compiled a RegExp
+  // and rescanned every line for EACH fired error — O(errors × lines) — and
+  // miscounted commented-out/multi-line markup (audit #4, also fixes #29 here).
+  let attribution: { line: Map<string, number[]>; occ: Map<Element, number> } | null = null;
+  const lineOf = (el: Element): number => {
+    if (!attribution) {
+      const occ = new Map<Element, number>();
+      const counters = new Map<string, number>();
+      for (const e of Array.from(doc.getElementsByTagName('*'))) {
+        const n = counters.get(e.localName) ?? 0;
+        occ.set(e, n);
+        counters.set(e.localName, n + 1);
+      }
+      const line = new Map<string, number[]>();
+      for (const tok of tokenizeXmlTags(xmlContent)) {
+        if (tok.kind !== 'open' && tok.kind !== 'self-close') continue;
+        const colon = tok.name.indexOf(':');
+        const local = colon === -1 ? tok.name : tok.name.slice(colon + 1);
+        const arr = line.get(local);
+        if (arr) arr.push(tok.line);
+        else line.set(local, [tok.line]);
+      }
+      attribution = { line, occ };
+    }
+    const idx = attribution.occ.get(el) ?? 0;
+    return attribution.line.get(el.localName)?.[idx] ?? 1;
+  };
 
   const ruleErrorReported = new Set<string>();
   const reportRuleError = (expr: string, err: unknown) => {
