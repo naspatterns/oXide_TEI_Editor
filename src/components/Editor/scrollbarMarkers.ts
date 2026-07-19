@@ -30,24 +30,39 @@ export const validationErrorsFacet = Facet.define<ValidationError[], ValidationE
 class ScrollbarMarkerPlugin {
   private container: HTMLDivElement | null = null;
   private lastErrors: ValidationError[] = [];
+  private markers: HTMLDivElement[] = [];
   private updateScheduled = false;
+  private needsRebuild = false;
+  // Last geometry the markers were positioned for, so a keystroke that changes
+  // neither the line count nor the viewport height is a true no-op.
+  private lastTotalLines = -1;
+  private lastClientHeight = -1;
 
   constructor(readonly view: EditorView) {
     this.createContainer();
-    this.updateMarkers();
+    this.needsRebuild = true;
+    this.render();
   }
 
   update(update: ViewUpdate) {
     const newErrors = update.state.facet(validationErrorsFacet);
-    const errorsChanged = !this.errorsEqual(newErrors, this.lastErrors);
-
-    if (errorsChanged || update.geometryChanged || update.heightChanged) {
+    if (!this.errorsEqual(newErrors, this.lastErrors)) {
+      // The set of markers (which lines, which severity) changed — rebuild.
       this.lastErrors = newErrors;
+      this.needsRebuild = true;
+      this.scheduleUpdate();
+    } else if (update.geometryChanged || update.heightChanged) {
+      // geometryChanged is true for EVERY docChanged, so this fires on every
+      // keystroke. Marker POSITIONS depend only on line count + viewport
+      // height, so reposition existing nodes — never tear down and recreate
+      // the DOM (audit #32). positionMarkers() itself no-ops when neither
+      // changed (typing within a line).
       this.scheduleUpdate();
     }
   }
 
   destroy() {
+    this.container?.removeEventListener('click', this.onContainerClick);
     this.container?.remove();
     this.container = null;
   }
@@ -64,9 +79,28 @@ class ScrollbarMarkerPlugin {
       scrollDOM.style.position = 'relative';
     }
 
+    // One delegated click listener instead of one per marker; it reads the
+    // CURRENT doc at click time, so repositioned (not recreated) markers still
+    // navigate correctly.
+    container.addEventListener('click', this.onContainerClick);
     scrollDOM.appendChild(container);
     this.container = container;
   }
+
+  private onContainerClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    const lineAttr = target?.dataset?.line;
+    if (!lineAttr) return;
+    e.stopPropagation();
+    const doc = this.view.state.doc;
+    const targetLine = Math.max(1, Math.min(Number(lineAttr), doc.lines));
+    const lineInfo = doc.line(targetLine);
+    this.view.dispatch({
+      selection: { anchor: lineInfo.from },
+      scrollIntoView: true,
+    });
+    this.view.focus();
+  };
 
   private scheduleUpdate() {
     if (this.updateScheduled) return;
@@ -74,22 +108,26 @@ class ScrollbarMarkerPlugin {
 
     requestAnimationFrame(() => {
       this.updateScheduled = false;
-      this.updateMarkers();
+      this.render();
     });
   }
 
-  private updateMarkers() {
+  private render() {
+    const rebuilt = this.needsRebuild;
+    if (this.needsRebuild) {
+      this.rebuildMarkers();
+      this.needsRebuild = false;
+    }
+    this.positionMarkers(rebuilt);
+  }
+
+  /** Recreate the marker DOM — only when the error set changed. */
+  private rebuildMarkers() {
     const container = this.container;
     if (!container) return;
 
-    const doc = this.view.state.doc;
-    const totalLines = doc.lines;
-    const clientHeight = this.view.scrollDOM.clientHeight;
-
-    // Clear existing markers
     container.innerHTML = '';
-
-    if (totalLines === 0 || clientHeight === 0) return;
+    this.markers = [];
 
     // Group errors by line (prioritize 'error' over 'warning')
     const lineErrors = new Map<number, ValidationError>();
@@ -100,37 +138,38 @@ class ScrollbarMarkerPlugin {
       }
     }
 
-    // Create markers
     const fragment = document.createDocumentFragment();
-
     for (const [line, error] of lineErrors) {
       const marker = document.createElement('div');
-
-      // Position calculation: line proportion * visible height
-      const proportion = Math.max(0, Math.min(1, (line - 1) / Math.max(1, totalLines - 1)));
-      const top = proportion * (clientHeight - 4); // -4 for marker height
-
       marker.className = `cm-scrollbar-marker cm-scrollbar-marker-${error.severity}`;
-      marker.style.top = `${top}px`;
       marker.title = `Line ${line}: ${error.message}`;
       marker.dataset.line = String(line);
-
-      // Click handler for navigation
-      marker.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const targetLine = Math.min(line, totalLines);
-        const lineInfo = doc.line(targetLine);
-        this.view.dispatch({
-          selection: { anchor: lineInfo.from },
-          scrollIntoView: true,
-        });
-        this.view.focus();
-      });
-
+      this.markers.push(marker);
       fragment.appendChild(marker);
     }
-
     container.appendChild(fragment);
+    // Force a reposition of the freshly-created nodes.
+    this.lastTotalLines = -1;
+    this.lastClientHeight = -1;
+  }
+
+  /** Set each marker's vertical position. Cheap: O(markers) style writes, no
+   * DOM churn. No-ops when the line count and viewport height are unchanged. */
+  private positionMarkers(force: boolean) {
+    const totalLines = this.view.state.doc.lines;
+    const clientHeight = this.view.scrollDOM.clientHeight;
+    if (!force && totalLines === this.lastTotalLines && clientHeight === this.lastClientHeight) {
+      return;
+    }
+    this.lastTotalLines = totalLines;
+    this.lastClientHeight = clientHeight;
+    if (totalLines === 0 || clientHeight === 0) return;
+
+    for (const marker of this.markers) {
+      const line = Number(marker.dataset.line);
+      const proportion = Math.max(0, Math.min(1, (line - 1) / Math.max(1, totalLines - 1)));
+      marker.style.top = `${proportion * (clientHeight - 4)}px`; // -4 for marker height
+    }
   }
 
   private errorsEqual(a: ValidationError[], b: ValidationError[]): boolean {
