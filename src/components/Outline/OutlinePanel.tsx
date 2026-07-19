@@ -116,20 +116,19 @@ export function OutlinePanel() {
   const deferredContent = useDeferredValue(state.content);
   const deferredErrors = useDeferredValue(state.errors);
 
-  // Parse XML and annotate with errors
-  const { tree, parseIssues } = useMemo(() => {
-    const result = parseXmlToTreeTolerant(deferredContent);
+  // Parse keyed on CONTENT only — an error-only change (which happens on every
+  // lint pass) must not trigger a full O(doc) re-parse.
+  const parsed = useMemo(() => parseXmlToTreeTolerant(deferredContent), [deferredContent]);
 
-    // Annotate tree nodes with ValidationError info
-    const annotatedTree = result.root
-      ? annotateTreeWithErrors(result.root, deferredErrors)
-      : null;
-
-    return {
-      tree: annotatedTree,
-      parseIssues: result.parseErrors,
-    };
-  }, [deferredContent, deferredErrors]);
+  // Annotate keyed on the parse result + errors. annotateTreeWithErrors walks
+  // iteratively (O(nodes)), so re-annotating on an error change is cheap.
+  const { tree, parseIssues } = useMemo(
+    () => ({
+      tree: parsed.root ? annotateTreeWithErrors(parsed.root, deferredErrors) : null,
+      parseIssues: parsed.parseErrors,
+    }),
+    [parsed, deferredErrors],
+  );
 
   const handleNodeClick = useCallback((line: number) => {
     scrollToLine(line);

@@ -8,6 +8,7 @@ import { generateDocumentId, createNewDocument } from '../types/workspace';
 // SchemaContext — the A1 boundary): every open/create path stamps the
 // document's schemaId here, and useActiveSchema resolves it later.
 import { detectSchemaIdFromContent } from '../utils/schemaDetector';
+import { validationErrorsEqual } from '../utils/validationErrors';
 import { EditorContext, type LegacyEditorState } from './useEditor';
 
 const DEFAULT_CONTENT = `<?xml version="1.0" encoding="UTF-8"?>
@@ -219,6 +220,13 @@ function reducer(state: MultiTabEditorState, action: Action): MultiTabEditorStat
 
     case 'SET_ERRORS': {
       if (!state.activeDocumentId) return state;
+      // The linter re-runs on a debounce and rebuilds the array each pass —
+      // skip the update (and the whole downstream re-render / Outline reparse)
+      // when the diagnostics are unchanged.
+      const active = state.openDocuments.find(d => d.id === state.activeDocumentId);
+      if (active && !active.isValidating && validationErrorsEqual(active.errors, action.errors)) {
+        return state;
+      }
       return {
         ...state,
         openDocuments: updateDocument(state.openDocuments, state.activeDocumentId, {
@@ -277,7 +285,11 @@ function reducer(state: MultiTabEditorState, action: Action): MultiTabEditorStat
         }),
       };
 
-    case 'SET_TAB_ERRORS':
+    case 'SET_TAB_ERRORS': {
+      const target = state.openDocuments.find(d => d.id === action.id);
+      if (target && !target.isValidating && validationErrorsEqual(target.errors, action.errors)) {
+        return state;
+      }
       return {
         ...state,
         openDocuments: updateDocument(state.openDocuments, action.id, {
@@ -285,6 +297,7 @@ function reducer(state: MultiTabEditorState, action: Action): MultiTabEditorStat
           isValidating: false,
         }),
       };
+    }
 
     case 'SET_TAB_SCHEMA':
       return {
