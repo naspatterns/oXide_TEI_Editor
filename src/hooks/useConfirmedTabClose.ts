@@ -32,11 +32,14 @@ export function useConfirmedTabClose() {
   );
 
   const confirm = useCallback(() => {
-    setPending(current => {
-      if (current) closeTab(current.id);
-      return null;
-    });
-  }, [closeTab]);
+    // Dispatch OUTSIDE the state updater. A setState updater must be pure, but
+    // this dispatched closeTab from inside it, so React StrictMode's dev
+    // double-invocation of updaters fired CLOSE_TAB twice (harmless only
+    // because the reducer filters by id — but a purity violation). `pending`
+    // is fresh here: confirm is recreated whenever it changes (audit #15).
+    if (pending) closeTab(pending.id);
+    setPending(null);
+  }, [pending, closeTab]);
 
   const cancel = useCallback(() => setPending(null), []);
 
