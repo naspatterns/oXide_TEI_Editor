@@ -164,4 +164,32 @@ describe('validateSchematron (no-namespace documents)', () => {
     expect(errors).toHaveLength(1);
     expect(errors[0].line).toBe(1);
   });
+
+  it('applies the descendant prefix to EVERY branch of a union context (#20)', () => {
+    const sch = `<schema xmlns="${ISO_NS}"><pattern>
+      <rule context="chapter | appendix"><assert test="@title">needs a title</assert></rule>
+    </pattern></schema>`;
+    const xml = `<book>
+  <chapter/>
+  <appendix/>
+</book>`;
+    const errors = validateSchematron(xml, parseSchematron(sch, 'union'));
+    // Before the fix "//chapter | appendix" left the second branch relative to
+    // the root, so <appendix> was silently never checked — only 1 error fired.
+    expect(errors).toHaveLength(2);
+    expect(errors.map(e => e.line).sort()).toEqual([2, 3]);
+  });
+
+  it('surfaces an attribute/non-element context instead of a false clean (#28)', () => {
+    const sch = `<schema xmlns="${ISO_NS}"><pattern>
+      <rule context="chapter/@n"><assert test="number(.) &gt; 0">n must be positive</assert></rule>
+    </pattern></schema>`;
+    const xml = `<book><chapter n="1"/></book>`;
+    const errors = validateSchematron(xml, parseSchematron(sch, 'attr'));
+    // The context resolves to an attribute node, which this element-only engine
+    // cannot check — it must warn rather than report the corpus clean.
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('warning');
+    expect(errors[0].message).toContain('could not be evaluated');
+  });
 });

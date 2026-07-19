@@ -4,6 +4,7 @@
  * component (Fast Refresh) and the pure logic is unit-testable.
  */
 import { findNthTagLine } from '../../schema/xmlTokenizer';
+import { rewriteUnprefixedNamesToLocalName } from '../../schema/xpathLocalName';
 
 // Re-exported for existing consumers/tests; the implementation moved to
 // xmlTokenizer so the Schematron layer (src/schema) can share it without
@@ -17,33 +18,20 @@ export interface XPathMatch {
 }
 
 /**
- * Convert simple element names to local-name() based XPath
- * This handles the default namespace issue in TEI documents
+ * Convert unprefixed element names to local-name()-based XPath so prefix-less
+ * queries match default-namespaced TEI documents. Delegates to the shared
+ * scanner (src/schema/xpathLocalName) so this and the Schematron layer stay in
+ * sync — the scanner rewrites EVERY name step (not just the last), skips string
+ * literals, axes, prefixed names, attributes, and functions.
  *
  * Examples:
  * - //p → //*[local-name()='p']
+ * - //div/head → //*[local-name()='div']/*[local-name()='head']
  * - //div[@type] → //*[local-name()='div'][@type]
- * - //tei:p → //tei:p (kept as-is for explicit namespace)
+ * - //tei:p → //tei:p (prefixed name kept as-is)
  */
 export function convertToLocalNameXPath(expression: string): string {
-  // If user explicitly uses tei: prefix, don't convert
-  if (expression.includes('tei:')) {
-    return expression;
-  }
-
-  // Convert //tagname to //*[local-name()='tagname']
-  // Also handle /tagname, //tagname[@attr], etc.
-  return expression.replace(
-    /\/\/([a-zA-Z_][\w-]*)([[@]|$)/g,
-    (_, tagName, suffix) => `//*[local-name()='${tagName}']${suffix || ''}`
-  ).replace(
-    /\/([a-zA-Z_][\w-]*)([[@]|$)/g,
-    (match, tagName, suffix) => {
-      // Don't convert if it's already converted or part of a predicate
-      if (match.includes('local-name')) return match;
-      return `/*[local-name()='${tagName}']${suffix || ''}`;
-    }
-  );
+  return rewriteUnprefixedNamesToLocalName(expression);
 }
 
 export function evaluateXPath(xmlContent: string, expression: string): { matches: XPathMatch[]; error: string | null } {
