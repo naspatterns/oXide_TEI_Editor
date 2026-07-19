@@ -3826,6 +3826,67 @@ describe('DOCTYPE is not validated as an element (#22)', () => {
 });
 
 // ============================================================================
+// Attribute value extraction is name-boundary aware (audit fix #24)
+// ============================================================================
+
+describe('Attribute value extraction does not match a name as a suffix (#24)', () => {
+  // `type` carries an enum; `subtype` is a distinct open attribute whose name
+  // ends with "type". extractAttributeValue used an unanchored regex, so it
+  // matched `type=` inside `subtype=` and validated the wrong value.
+  const schema = buildTestSchema([
+    {
+      name: 'x',
+      attributes: [
+        { name: 'type', values: ['a', 'b'] },
+        { name: 'subtype' },
+      ],
+    },
+  ] as ElementSpec[]);
+
+  it('does not flag a valid @type when @subtype precedes it (no false positive)', () => {
+    const xml = `<x subtype="zzz" type="a"/>`;
+    const errors = validateXml(xml, schema);
+    const typeEnum = errors.filter(
+      e => e.message.includes('Invalid value') && e.message.includes('@type'),
+    );
+    expect(typeEnum).toEqual([]);
+  });
+
+  it('still catches an invalid @type when @subtype precedes it (no false negative)', () => {
+    const xml = `<x subtype="a" type="zzz"/>`;
+    const errors = validateXml(xml, schema);
+    const typeEnum = errors.filter(
+      e => e.message.includes('Invalid value') && e.message.includes('@type'),
+    );
+    expect(typeEnum).toHaveLength(1);
+    expect(typeEnum[0].message).toContain('"zzz"');
+  });
+
+  it('reads the correct value regardless of attribute order', () => {
+    // @type first, @subtype second — the value read must be @type's own.
+    const xml = `<x type="b" subtype="zzz"/>`;
+    const errors = validateXml(xml, schema);
+    expect(
+      errors.filter(e => e.message.includes('Invalid value') && e.message.includes('@type')),
+    ).toEqual([]);
+  });
+
+  it('does not read a namespaced xml:id as a bare id attribute', () => {
+    // The ':' boundary keeps `id` from matching the suffix of `xml:id`.
+    const nsSchema = buildTestSchema([
+      { name: 'y', attributes: [{ name: 'id', values: ['ok'] }] },
+    ] as ElementSpec[]);
+    // Only xml:id present (unknown attr), no bare id — the enum for id must not
+    // fire off xml:id's value.
+    const xml = `<y xml:id="nope"/>`;
+    const errors = validateXml(xml, nsSchema);
+    expect(
+      errors.filter(e => e.message.includes('Invalid value') && e.message.includes('@id')),
+    ).toEqual([]);
+  });
+});
+
+// ============================================================================
 // Tag parsing is quote-aware for '>' inside attribute values (audit fix #23)
 // ============================================================================
 

@@ -811,8 +811,15 @@ export function getRequiredChildren(model: ContentModel): string[] {
  * Handles both single and double quoted values.
  */
 function extractAttributeValue(attrString: string, attrName: string): string | null {
-  // Match attrName="value" or attrName='value'
-  const regex = new RegExp(`${attrName}\\s*=\\s*["']([^"']*)["']`);
+  // Escape regex metacharacters — XML attribute names may contain '.'/'-', and
+  // a custom schema could carry others; the old code interpolated the name raw.
+  const escaped = attrName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Require an XML name boundary before the attribute name so a shorter name
+  // (e.g. "type") is not matched as the suffix of a longer one ("subtype") —
+  // that read @subtype's value as @type's (audit #24). XML NameChar set:
+  // letters/digits plus '-', '.', ':', '_' — the char before the name must be
+  // none of these (or the string start).
+  const regex = new RegExp(`(?:^|[^-\\w.:])${escaped}\\s*=\\s*["']([^"']*)["']`);
   const match = attrString.match(regex);
   return match ? match[1] : null;
 }
