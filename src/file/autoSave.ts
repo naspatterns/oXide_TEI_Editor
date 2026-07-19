@@ -20,7 +20,9 @@ import { get, set, del, keys } from 'idb-keyval';
 
 const AUTOSAVE_PREFIX = 'tei-editor-autosave'; // also the pre-P2 single key
 const LIVENESS_CHANNEL = 'oxide-autosave-liveness';
-const LIVENESS_WAIT_MS = 250;
+// Only the BroadcastChannel FALLBACK waits this long (Web Locks is instant and
+// deterministic). Kept generous so a briefly-busy sibling still answers in time.
+const LIVENESS_WAIT_MS = 1000;
 const AUTOSAVE_INTERVAL = 30_000; // 30 seconds
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // records older than this are GC'd
 
@@ -121,15 +123,46 @@ export async function saveSnapshotToIDB(
 }
 
 // ─── Liveness (which instances are currently alive) ───
+//
+// Primary mechanism: the Web Locks API. Each instance holds an exclusive lock
+// named by its id for its whole lifetime, so a peer can tell — DETERMINISTICALLY
+// and with no timing window — whether we are alive by finding that lock
+// unavailable. This replaces the old fixed 250 ms BroadcastChannel ping window,
+// which misclassified a sibling whose main thread was busy (corpus validation,
+// a heavy Schematron pass) as crashed and then deleted its live recovery record
+// (audit P5). BroadcastChannel remains the fallback for browsers without locks.
+
+const LOCK_PREFIX = 'oxide-autosave-lock';
+const instanceLockName = (id: string): string => `${LOCK_PREFIX}:${id}`;
+
+function locksAvailable(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.locks?.request === 'function';
+}
 
 let responder: BroadcastChannel | null = null;
+let selfLockHeld = false;
 
 /**
- * Begin answering liveness pings from other instances. Call once on startup.
- * Without this, a live sibling would look dead and its open document would be
- * wrongly offered for recovery in a newly-opened tab.
+ * Begin advertising this instance as alive. Call once on startup. Without it, a
+ * live sibling would look dead and its open document would be wrongly offered
+ * for recovery — and its record deleted — in a newly-opened tab.
  */
 export function initAutosaveLiveness(): void {
+  // Hold a lifetime lock so peers can detect us via the Web Locks API. The
+  // callback returns a promise that never settles, so the lock stays held until
+  // this page is destroyed (which releases it automatically).
+  if (!selfLockHeld && locksAvailable()) {
+    selfLockHeld = true;
+    try {
+      void navigator.locks.request(instanceLockName(INSTANCE_ID), { mode: 'exclusive' }, () =>
+        new Promise<never>(() => { /* held until page unload */ }),
+      );
+    } catch {
+      selfLockHeld = false;
+    }
+  }
+
+  // Fallback liveness (no Web Locks): answer pings from other instances.
   if (responder || typeof BroadcastChannel === 'undefined') return;
   try {
     responder = new BroadcastChannel(LIVENESS_CHANNEL);
@@ -144,14 +177,45 @@ export function initAutosaveLiveness(): void {
 }
 
 /**
- * Ping the liveness channel and collect the ids of instances that answer
- * within `timeoutMs`. Returns an empty set when BroadcastChannel is
- * unavailable — meaning "can't tell who's live", so every candidate is
- * offered (crash-safe; may prompt for a doc open in another tab).
+ * Return the ids (among `candidateIds`) of instances that are currently alive.
+ *
+ * Prefers the Web Locks API: an instance is alive iff its lifetime lock is
+ * unavailable (held). Deterministic, no timing window — a busy-but-alive
+ * sibling can no longer be mistaken for crashed. Falls back to a
+ * BroadcastChannel ping when Web Locks is unavailable. An empty result means
+ * "none detected alive", so every candidate is offered (crash-safe).
  */
-async function getLiveInstanceIds(timeoutMs: number = LIVENESS_WAIT_MS): Promise<Set<string>> {
+async function getLiveInstanceIds(candidateIds: string[]): Promise<Set<string>> {
+  if (locksAvailable()) {
+    const live = new Set<string>();
+    await Promise.all(
+      candidateIds.map(async (id) => {
+        if (await isInstanceLockHeld(id)) live.add(id);
+      }),
+    );
+    return live;
+  }
+  return getLiveInstanceIdsViaChannel();
+}
+
+/**
+ * True when instance `id`'s lifetime lock is held (i.e. it is alive). `ifAvailable`
+ * makes this non-blocking: a held lock yields a null grant (→ alive); a free
+ * lock is granted momentarily (callback returns immediately, releasing it) → dead.
+ */
+function isInstanceLockHeld(id: string): Promise<boolean> {
+  return navigator.locks
+    .request(instanceLockName(id), { ifAvailable: true, mode: 'exclusive' }, (lock) => lock === null)
+    .catch(() => false);
+}
+
+/**
+ * BroadcastChannel fallback: ping and collect whoever answers within the
+ * window. Returns an empty set when BroadcastChannel is unavailable.
+ */
+function getLiveInstanceIdsViaChannel(timeoutMs: number = LIVENESS_WAIT_MS): Promise<Set<string>> {
   const live = new Set<string>();
-  if (typeof BroadcastChannel === 'undefined') return live;
+  if (typeof BroadcastChannel === 'undefined') return Promise.resolve(live);
 
   return new Promise((resolve) => {
     let ch: BroadcastChannel;
@@ -260,7 +324,12 @@ export function pickRecoverable(candidates: RecoverableSnapshot[], liveIds: Set<
 export async function loadRecoverableSnapshots(onError?: AutosaveErrorHandler): Promise<RecoverableSnapshot | null> {
   const candidates = await collectSnapshots(onError);
   if (candidates.length === 0) return null;
-  const liveIds = await getLiveInstanceIds();
+  // Only real (non-legacy) instance ids can be probed for liveness; legacy
+  // records (instanceId null) are always eligible via pickRecoverable.
+  const candidateIds = candidates
+    .map((c) => c.instanceId)
+    .filter((id): id is string => id !== null);
+  const liveIds = await getLiveInstanceIds(candidateIds);
   return pickRecoverable(candidates, liveIds);
 }
 
