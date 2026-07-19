@@ -98,6 +98,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     try {
       const { handle, name } = await openDirectory();
       dispatch({ type: 'SET_ROOT', handle, name });
+      // Corpus results from the previous workspace are stale — their file
+      // paths no longer resolve here, so a diagnostic click could open the
+      // wrong file (or nothing). Reset before the new tree loads (#2/#12).
+      clearBatch();
 
       // Build file tree
       const fileTree = await buildFileTree(handle);
@@ -107,11 +111,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       console.warn('Failed to open workspace:', error);
       dispatch({ type: 'SET_LOADING', isLoading: false });
     }
-  }, []);
+  }, [clearBatch]);
 
   const closeWorkspace = useCallback(() => {
     dispatch({ type: 'CLOSE_WORKSPACE' });
-  }, []);
+    // Drop the closed workspace's corpus results too (#2/#12).
+    clearBatch();
+  }, [clearBatch]);
 
   const refreshFileTree = useCallback(async () => {
     if (!state.rootHandle) return;
