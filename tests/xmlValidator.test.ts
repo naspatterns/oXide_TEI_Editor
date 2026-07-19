@@ -3771,3 +3771,56 @@ describe('Quote-aware attribute scanning', () => {
     expect(errors.filter(e => e.message.includes('Unknown attribute'))).toEqual([]);
   });
 });
+
+// ============================================================================
+// DOCTYPE / markup declarations are not elements (2026-07 audit fix #22)
+// ============================================================================
+
+describe('DOCTYPE is not validated as an element (#22)', () => {
+  let teiLite: SchemaInfo;
+
+  beforeAll(() => {
+    teiLite = buildTestSchema(getTeiLiteElements());
+  });
+
+  it('does not emit a phantom "Unknown element <!DOCTYPE>" warning', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TEI SYSTEM "tei_all.dtd">
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p>Hello</p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    const doctypeNoise = errors.filter(
+      e => e.message.includes('DOCTYPE') || e.message.includes('!DOCTYPE'),
+    );
+    expect(doctypeNoise).toEqual([]);
+  });
+
+  it('does not treat a public DOCTYPE with an internal subset as an element', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TEI [
+  <!ENTITY sig "signature">
+]>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p>x</p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    expect(
+      errors.filter(e => /DOCTYPE|ENTITY/.test(e.message)),
+    ).toEqual([]);
+  });
+
+  it('still validates real elements around a DOCTYPE', () => {
+    // A genuinely unknown element must still be reported — the DOCTYPE skip
+    // must not swallow the rest of the document.
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TEI SYSTEM "tei_all.dtd">
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><nosuchelement/></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    expect(
+      errors.some(e => e.message.includes('Unknown element <nosuchelement>')),
+    ).toBe(true);
+  });
+});

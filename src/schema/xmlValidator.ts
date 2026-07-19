@@ -287,8 +287,10 @@ function findTagMismatchErrors(xmlStr: string, firstErrorLine: number): Validati
     // Skip self-closing tags
     if (fullMatch.endsWith('/>')) continue;
 
-    // Skip processing instructions
-    if (fullMatch.startsWith('<?')) continue;
+    // Skip processing instructions and markup declarations (DOCTYPE etc.).
+    // Without the '<!' guard a DOCTYPE would be tracked as an opening tag
+    // "!DOCTYPE" and later reported as an unclosed tag (audit #22).
+    if (fullMatch.startsWith('<?') || fullMatch.startsWith('<!')) continue;
 
     const isClosing = tagWithSlash.startsWith('/');
     const tagName = isClosing ? tagWithSlash.slice(1) : tagWithSlash;
@@ -424,8 +426,13 @@ function checkSchemaConformance(
     const col = pos.column;
     const lineNum = pos.line;
 
-    // Skip processing instructions and XML declarations
-    if (fullTag.startsWith('<?')) continue;
+    // Skip processing instructions, XML declarations, and markup declarations.
+    // The tag regex captures the token after '<', so a DOCTYPE like
+    // `<!DOCTYPE TEI SYSTEM "...">` would otherwise be read as an element named
+    // "!DOCTYPE" and emit a phantom `Unknown element <!DOCTYPE>` warning
+    // (audit #22). Comments/CDATA are already blanked by stripCommentsAndCDATA;
+    // this also covers internal-subset declarations (<!ENTITY>, <!ELEMENT>, ...).
+    if (fullTag.startsWith('<?') || fullTag.startsWith('<!')) continue;
 
     // Determine if closing tag and extract clean tag name
     const isClosingTag = tagWithSlash.startsWith('/');
