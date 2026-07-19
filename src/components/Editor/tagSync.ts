@@ -92,6 +92,39 @@ function findTagEndAfter(doc: Text, pos: number): number {
 }
 
 /**
+ * Index of the next `ch` at or after `from`, or -1. Reads the CM Text in
+ * chunks so matching a distant tag costs O(distance), not O(document) — the
+ * plain forward analogue of String.indexOf without materializing the doc.
+ * (Single-character search, so it never straddles a chunk boundary.)
+ */
+function indexOfChar(doc: Text, ch: string, from: number): number {
+  const len = doc.length;
+  let lo = Math.max(0, from);
+  while (lo < len) {
+    const hi = Math.min(len, lo + SCAN_CHUNK);
+    const idx = doc.sliceString(lo, hi).indexOf(ch);
+    if (idx !== -1) return lo + idx;
+    lo = hi;
+  }
+  return -1;
+}
+
+/**
+ * Index of the previous `ch` at or before `from`, or -1. Chunked backward
+ * analogue of String.lastIndexOf.
+ */
+function lastIndexOfChar(doc: Text, ch: string, from: number): number {
+  let hi = Math.min(doc.length, from + 1);
+  while (hi > 0) {
+    const lo = Math.max(0, hi - SCAN_CHUNK);
+    const idx = doc.sliceString(lo, hi).lastIndexOf(ch);
+    if (idx !== -1) return lo + idx;
+    hi = lo;
+  }
+  return -1;
+}
+
+/**
  * Find the tag at the given cursor position.
  *
  * @param doc - CodeMirror Text object
@@ -192,12 +225,14 @@ export function findMatchingTag(doc: Text, tagInfo: TagInfo): TagInfo | null {
     return null;
   }
 
-  const text = doc.toString();
-
+  // Scan the CM Text directly in chunks — no doc.toString(). The rename
+  // listener calls this on every keystroke typed inside a tag name, so
+  // materializing the whole document here reintroduced the per-keystroke
+  // O(doc) allocation the H5 fix removed from findTagAtPosition (audit #16).
   if (tagInfo.type === 'opening') {
-    return findMatchingClosingTag(text, tagInfo);
+    return findMatchingClosingTag(doc, tagInfo);
   } else {
-    return findMatchingOpeningTag(text, tagInfo);
+    return findMatchingOpeningTag(doc, tagInfo);
   }
 }
 
@@ -205,21 +240,22 @@ export function findMatchingTag(doc: Text, tagInfo: TagInfo): TagInfo | null {
  * Find matching closing tag for an opening tag.
  * Handles nested same-name tags by counting depth.
  */
-function findMatchingClosingTag(text: string, openingTag: TagInfo): TagInfo | null {
+function findMatchingClosingTag(doc: Text, openingTag: TagInfo): TagInfo | null {
   const targetName = openingTag.name;
+  const len = doc.length;
   let depth = 1;
   let pos = openingTag.tagEnd;
 
-  while (pos < text.length && depth > 0) {
+  while (pos < len && depth > 0) {
     // Find next tag
-    const nextTagStart = text.indexOf('<', pos);
+    const nextTagStart = indexOfChar(doc, '<', pos);
     if (nextTagStart === -1) break;
 
     // Find end of this tag
-    const nextTagEnd = text.indexOf('>', nextTagStart);
+    const nextTagEnd = indexOfChar(doc, '>', nextTagStart);
     if (nextTagEnd === -1) break;
 
-    const tagContent = text.slice(nextTagStart, nextTagEnd + 1);
+    const tagContent = doc.sliceString(nextTagStart, nextTagEnd + 1);
 
     // Skip comments, CDATA, processing instructions
     if (tagContent.startsWith('<!--') || tagContent.startsWith('<![') || tagContent.startsWith('<?')) {
@@ -259,29 +295,21 @@ function findMatchingClosingTag(text: string, openingTag: TagInfo): TagInfo | nu
  * Find matching opening tag for a closing tag.
  * Scans backward and handles nested same-name tags.
  */
-function findMatchingOpeningTag(text: string, closingTag: TagInfo): TagInfo | null {
+function findMatchingOpeningTag(doc: Text, closingTag: TagInfo): TagInfo | null {
   const targetName = closingTag.name;
   let depth = 1;
   let pos = closingTag.tagStart - 1;
 
   while (pos >= 0 && depth > 0) {
     // Find previous tag end
-    const prevTagEnd = text.lastIndexOf('>', pos);
+    const prevTagEnd = lastIndexOfChar(doc, '>', pos);
     if (prevTagEnd === -1) break;
 
-    // Find the start of this tag
-    let prevTagStart = prevTagEnd;
-    while (prevTagStart > 0 && text[prevTagStart - 1] !== '<') {
-      prevTagStart--;
-    }
-    if (prevTagStart > 0) prevTagStart--;
+    // Find the start of this tag — the nearest '<' before that '>'.
+    const prevTagStart = lastIndexOfChar(doc, '<', prevTagEnd);
+    if (prevTagStart === -1) break;
 
-    if (text[prevTagStart] !== '<') {
-      pos = prevTagStart - 1;
-      continue;
-    }
-
-    const tagContent = text.slice(prevTagStart, prevTagEnd + 1);
+    const tagContent = doc.sliceString(prevTagStart, prevTagEnd + 1);
 
     // Skip comments, CDATA, processing instructions
     if (tagContent.startsWith('<!--') || tagContent.startsWith('<![') || tagContent.startsWith('<?')) {

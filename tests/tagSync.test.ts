@@ -409,3 +409,44 @@ describe('findTagAtPosition — chunk-boundary crossing', () => {
     expect(result!.type).toBe('opening');
   });
 });
+
+// ============================================================================
+// findMatchingTag across chunk boundaries (audit #16 — no doc.toString())
+// ============================================================================
+
+describe('findMatchingTag across chunk boundaries', () => {
+  it('matches an opening tag to a closing tag far beyond one scan chunk (forward)', () => {
+    const filler = 'x'.repeat(5000); // > SCAN_CHUNK (4096)
+    const doc = Text.of([`<root>${filler}</root>`]);
+    const opening = findTagAtPosition(doc, 3)!; // inside <root>
+    const match = findMatchingTag(doc, opening);
+    expect(match).not.toBeNull();
+    expect(match!.type).toBe('closing');
+    expect(match!.name).toBe('root');
+    expect(match!.tagStart).toBe(6 + 5000); // after "<root>" + filler
+  });
+
+  it('matches a closing tag to its opening far above (backward)', () => {
+    const filler = 'y'.repeat(5000);
+    const doc = Text.of([`<root>${filler}</root>`]);
+    const closingStart = doc.toString().indexOf('</root>');
+    const closing = findTagAtPosition(doc, closingStart + 3)!; // inside </root>
+    const match = findMatchingTag(doc, closing);
+    expect(match).not.toBeNull();
+    expect(match!.type).toBe('opening');
+    expect(match!.tagStart).toBe(0);
+  });
+
+  it('counts nested same-name depth correctly across a chunk boundary', () => {
+    // Outer <a> … <a>inner</a> … </a> with the nesting straddling the 4096-char
+    // chunk boundary, so depth counting must survive chunked scanning.
+    const pad = 'z'.repeat(4090);
+    const doc = Text.of([`<a>${pad}<a>inner</a>tail</a>`]);
+    const outerOpen = findTagAtPosition(doc, 1)!; // inside the FIRST <a>
+    const match = findMatchingTag(doc, outerOpen);
+    expect(match).not.toBeNull();
+    expect(match!.type).toBe('closing');
+    // The OUTER </a> (the last one), not the inner one.
+    expect(match!.tagStart).toBe(doc.toString().lastIndexOf('</a>'));
+  });
+});
