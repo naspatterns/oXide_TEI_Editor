@@ -46,6 +46,8 @@ export async function saveFile(
 ): Promise<{
   fileName: string;
   fileHandle: FileSystemFileHandle | null;
+  /** True when the save fell back to a browser download (no durable handle). */
+  downloaded?: boolean;
 }> {
   if (fileHandle && hasFileSystemAccess()) {
     return saveWithFSA(content, fileHandle);
@@ -60,6 +62,8 @@ export async function saveAsFile(
 ): Promise<{
   fileName: string;
   fileHandle: FileSystemFileHandle | null;
+  /** True when the save fell back to a browser download (no durable handle). */
+  downloaded?: boolean;
 }> {
   if (hasFileSystemAccess()) {
     return saveAsWithFSA(content, suggestedName);
@@ -139,7 +143,7 @@ function openWithInput(): Promise<{
 function saveWithDownload(
   content: string,
   suggestedName: string | null,
-): Promise<{ fileName: string; fileHandle: null }> {
+): Promise<{ fileName: string; fileHandle: null; downloaded: true }> {
   const fileName = suggestedName ?? 'document.xml';
   const blob = new Blob([content], { type: 'application/xml' });
   const url = URL.createObjectURL(blob);
@@ -149,8 +153,16 @@ function saveWithDownload(
   a.download = fileName;
   a.click();
 
-  URL.revokeObjectURL(url);
-  return Promise.resolve({ fileName, fileHandle: null });
+  // Revoke AFTER the browser has grabbed the blob for the download. Revoking
+  // synchronously in the same task races the queued download navigation and
+  // intermittently produces an empty / no-op download.
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+  // A browser download is best-effort: a.click() cannot report whether the
+  // file actually reached disk (it may be blocked, or the user may cancel a
+  // "save as" prompt). Flag it as `downloaded` so the caller keeps the
+  // document dirty instead of claiming a durable save (audit #14).
+  return Promise.resolve({ fileName, fileHandle: null, downloaded: true });
 }
 
 // ─── Directory operations ───

@@ -100,8 +100,16 @@ function EditorLayout() {
       if (!activeDoc) return;
       const result = await saveFile(activeDoc.content, activeDoc.fileHandle, activeDoc.fileName);
       setFile(result.fileName, result.fileHandle);
-      markSaved();
-      toast.success(`Saved ${result.fileName}`);
+      if (result.downloaded) {
+        // No File System Access API (Firefox/Safari): the only save is a
+        // best-effort download to the Downloads folder, which cannot be
+        // confirmed. Keep the document dirty so the unsaved-changes guard
+        // stays active, and don't claim it was durably saved (audit #14).
+        toast.success(`Downloaded ${result.fileName} — check your Downloads folder`);
+      } else {
+        markSaved();
+        toast.success(`Saved ${result.fileName}`);
+      }
     } catch (error) {
       if (!isUserCancelledError(error)) {
         // Real failure (revoked permission, locked/removed file, disk full):
@@ -118,8 +126,14 @@ function EditorLayout() {
       if (!activeDoc) return;
       const result = await saveAsFile(activeDoc.content, activeDoc.fileName);
       setFile(result.fileName, result.fileHandle);
-      markSaved();
-      toast.success(`Saved as ${result.fileName}`);
+      if (result.downloaded) {
+        // Download fallback (no File System Access API): keep the document
+        // dirty and report the download honestly (audit #14).
+        toast.success(`Downloaded ${result.fileName} — check your Downloads folder`);
+      } else {
+        markSaved();
+        toast.success(`Saved as ${result.fileName}`);
+      }
     } catch (error) {
       if (!isUserCancelledError(error)) {
         toast.error(`Save failed: ${error instanceof Error ? error.message : 'unknown error'}`, 8000);
