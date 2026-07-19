@@ -70,7 +70,6 @@ type Action =
   | { type: 'SET_ERRORS'; errors: ValidationError[] }
   | { type: 'SET_VALIDATING'; isValidating: boolean }
   | { type: 'SET_VIEW_MODE'; viewMode: ViewMode }
-  | { type: 'LOAD_DOCUMENT'; content: string; fileName: string | null; fileHandle: FileSystemFileHandle | null; filePath?: string | null }
   // Specific tab updates
   | { type: 'UPDATE_TAB_CONTENT'; id: string; content: string }
   | { type: 'MARK_TAB_SAVED'; id: string }
@@ -249,23 +248,6 @@ function reducer(state: MultiTabEditorState, action: Action): MultiTabEditorStat
     case 'SET_VIEW_MODE':
       return { ...state, viewMode: action.viewMode };
 
-    case 'LOAD_DOCUMENT': {
-      if (!state.activeDocumentId) return state;
-      const activeDoc = state.openDocuments.find(d => d.id === state.activeDocumentId);
-      return {
-        ...state,
-        openDocuments: updateDocument(state.openDocuments, state.activeDocumentId, {
-          content: action.content,
-          fileName: action.fileName ?? 'Untitled.xml',
-          fileHandle: action.fileHandle,
-          filePath: action.filePath ?? null,
-          isDirty: false,
-          errors: [],
-          documentVersion: (activeDoc?.documentVersion ?? 0) + 1,
-        }),
-      };
-    }
-
     // ─── Specific tab updates ───
 
     case 'UPDATE_TAB_CONTENT':
@@ -443,7 +425,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const setErrors = useCallback((errors: ValidationError[]) => dispatch({ type: 'SET_ERRORS', errors }), []);
   const setValidating = useCallback((isValidating: boolean) => dispatch({ type: 'SET_VALIDATING', isValidating }), []);
   const setViewMode = useCallback((viewMode: ViewMode) => dispatch({ type: 'SET_VIEW_MODE', viewMode }), []);
-  const loadDocument = useCallback((content: string, fileName: string | null, fileHandle: FileSystemFileHandle | null, filePath?: string | null) => dispatch({ type: 'LOAD_DOCUMENT', content, fileName, fileHandle, filePath }), []);
 
   // ─── Specific tab updates ───
 
@@ -506,7 +487,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       setErrors,
       setValidating,
       setViewMode,
-      loadDocument,
       updateTabContent,
       markTabSaved,
       setTabErrors,
@@ -536,7 +516,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       setErrors,
       setValidating,
       setViewMode,
-      loadDocument,
       updateTabContent,
       markTabSaved,
       setTabErrors,

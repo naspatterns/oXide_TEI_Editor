@@ -23,7 +23,8 @@ export interface EditorState {
   isValidating: boolean;
   /** Current view mode */
   viewMode: ViewMode;
-  /** Incremented on LOAD_DOCUMENT to force editor remount */
+  /** Incremented via INCREMENT_DOCUMENT_VERSION to force an editor remount
+   *  (tab switch / document reload) */
   documentVersion: number;
   /** Editor font size in pixels */
   editorFontSize: number;

@@ -61,12 +61,6 @@ export interface EditorContextValue {
   setErrors: (errors: ValidationError[]) => void;
   setValidating: (isValidating: boolean) => void;
   setViewMode: (viewMode: ViewMode) => void;
-  loadDocument: (
-    content: string,
-    fileName: string | null,
-    fileHandle: FileSystemFileHandle | null,
-    filePath?: string | null,
-  ) => void;
 
   // Specific tab updates
   updateTabContent: (id: string, content: string) => void;
