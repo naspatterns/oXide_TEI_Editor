@@ -9,6 +9,7 @@ import { generateDocumentId, createNewDocument } from '../types/workspace';
 // document's schemaId here, and useActiveSchema resolves it later.
 import { detectSchemaIdFromContent } from '../utils/schemaDetector';
 import { validationErrorsEqual } from '../utils/validationErrors';
+import { goToLineInView } from '../utils/goToLineInView';
 import { EditorContext, type LegacyEditorState } from './useEditor';
 
 const DEFAULT_CONTENT = `<?xml version="1.0" encoding="UTF-8"?>
@@ -443,21 +444,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const scrollToLine = useCallback((line: number) => {
     const view = editorViewRef.current;
     if (!view) return;
-
-    try {
-      const maxLine = view.state.doc.lines;
-      const targetLine = Math.max(1, Math.min(line, maxLine));
-      const lineInfo = view.state.doc.line(targetLine);
-
-      view.dispatch({
-        selection: { anchor: lineInfo.from },
-        scrollIntoView: true,
-      });
-
-      view.focus();
-    } catch (e) {
-      console.warn('scrollToLine failed:', e);
-    }
+    goToLineInView(view, line);
   }, []);
 
   const getSelection = useCallback(() => {

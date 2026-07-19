@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useEditor } from '../store/useEditor';
 import { useWrapSelection } from './useWrapSelection';
+import { goToLineInView } from '../utils/goToLineInView';
 
 /**
  * Imperative editor operations that need a live `EditorView` instance.
@@ -54,9 +55,9 @@ export function useEditorActions(): EditorActions {
     (line: number) => {
       const view = editorViewRef.current;
       if (!view) return;
-      const target = view.state.doc.line(line);
-      view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
-      view.focus();
+      // Shared clamped/guarded helper — the old inline `doc.line(line)` threw
+      // RangeError on an out-of-range line (e.g. an AI action past EOF) (#4).
+      goToLineInView(view, line);
     },
     [editorViewRef],
   );
