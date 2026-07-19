@@ -26,7 +26,7 @@ import { HelpDialog } from './components/Toolbar/HelpDialog';
 import logoUrl from '../imgs/logo-oxygen-style-transparent.svg';
 import type { Command } from './components/CommandPalette/CommandPalette';
 import { openFile, saveFile, saveAsFile, isUserCancelledError } from './file/fileSystemAccess';
-import { startAutoSave, stopAutoSave, loadRecoverableSnapshots, clearSnapshotByKey, initAutosaveLiveness, type RecoverableSnapshot } from './file/autoSave';
+import { startAutoSave, stopAutoSave, saveSnapshotToIDB, loadRecoverableSnapshots, clearSnapshotByKey, initAutosaveLiveness, type RecoverableSnapshot, type AutosavedDocument } from './file/autoSave';
 import { createNewDocument } from './types/workspace';
 import { useConfirmedTabClose } from './hooks/useConfirmedTabClose';
 import { detectSchemaDeclarations, analyzeSchemaDeclarations, buildSchemaAlertMessage, detectSchemaIdFromContent } from './utils/schemaDetector';
@@ -318,16 +318,40 @@ function EditorLayout() {
     openDocumentsRef.current = multiTabState.openDocuments;
   });
 
+  // The snapshot the interval AND the unload flush both write: the dirty docs.
+  const collectDirtySnapshot = useCallback(
+    (): AutosavedDocument[] =>
+      openDocumentsRef.current
+        .filter(doc => doc.isDirty)
+        .map(doc => ({ fileName: doc.fileName, content: doc.content })),
+    [],
+  );
+
   useEffect(() => {
-    startAutoSave(
-      () =>
-        openDocumentsRef.current
-          .filter(doc => doc.isDirty)
-          .map(doc => ({ fileName: doc.fileName, content: doc.content })),
-      handleAutosaveError,
-    );
+    startAutoSave(collectDirtySnapshot, handleAutosaveError);
     return stopAutoSave;
-  }, [handleAutosaveError]);
+  }, [collectDirtySnapshot, handleAutosaveError]);
+
+  // Reconcile the autosave record on the way out. saveSnapshotToIDB deletes the
+  // record when nothing is dirty, so this fixes two P4 failures the 30 s timer
+  // alone leaves open: (A) save-then-close within 30 s left a stale pre-save
+  // snapshot that triggered a phantom recovery prompt on next launch; (B) edits
+  // in the final <30 s before close were never captured. visibilitychange→hidden
+  // is the last reliably-fired event; pagehide is the close backstop.
+  useEffect(() => {
+    const flush = () => {
+      void saveSnapshotToIDB(collectDirtySnapshot(), handleAutosaveError);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [collectDirtySnapshot, handleAutosaveError]);
 
   // Ask the browser not to evict our origin's storage under pressure —
   // the autosave in IndexedDB is the only crash-recovery copy.
