@@ -3824,3 +3824,65 @@ describe('DOCTYPE is not validated as an element (#22)', () => {
     ).toBe(true);
   });
 });
+
+// ============================================================================
+// Tag parsing is quote-aware for '>' inside attribute values (audit fix #23)
+// ============================================================================
+
+describe("Tag parsing is quote-aware for '>' inside attribute values (#23)", () => {
+  let teiLite: SchemaInfo;
+
+  beforeAll(() => {
+    teiLite = buildTestSchema(getTeiLiteElements());
+  });
+
+  it("still scans attributes that follow a value containing '>'", () => {
+    // The old non-greedy [\s\S]*? stopped at the '>' inside "a>b", so the tag
+    // was truncated to `<ref target="a>` and `bogusattr` — plus every other
+    // check for the tag — was silently skipped. It must be caught now.
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target="a>b" bogusattr="x">y</ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    const unknown = errors.filter(e => e.message.includes('Unknown attribute'));
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].message).toContain('"bogusattr"');
+  });
+
+  it("handles '>' inside a single-quoted value too", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target='a>b' bogusattr='x'>y</ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    const unknown = errors.filter(e => e.message.includes('Unknown attribute'));
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].message).toContain('"bogusattr"');
+  });
+
+  it("does not emit spurious errors for a valid tag whose value contains '>'", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target="https://ex.org/?a=1>2">link</ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    expect(errors.filter(e => e.message.includes('Unknown attribute'))).toEqual([]);
+    // ref must still be recognized as an element (not read as a truncated name)
+    expect(errors.some(e => e.message.includes('Unknown element <ref'))).toBe(false);
+  });
+
+  it("does not lose a nested element after a '>'-bearing value", () => {
+    // Under the old regex the tag truncated at the inner '>', which could
+    // desynchronise the element stack for everything nested afterwards; the
+    // genuinely-unknown nested element must still be reported.
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text><body><p><ref target="a>b"><nosuchelement/></ref></p></body></text>
+</TEI>`;
+    const errors = validateXml(xml, teiLite);
+    expect(
+      errors.some(e => e.message.includes('Unknown element <nosuchelement>')),
+    ).toBe(true);
+  });
+});

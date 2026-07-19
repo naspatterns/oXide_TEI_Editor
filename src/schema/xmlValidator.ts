@@ -414,8 +414,16 @@ function checkSchemaConformance(
   // Regex to match tags on the full (stripped) text — handles multi-line tags
   // Use permissive pattern to match Unicode tag names (Korean, etc.)
   // Capture group 1: tag name (with optional leading /), group 2: attribute string
-  // [\s\S]*? so attributes spanning multiple lines are consumed
-  const tagRegex = /<(\/?[^\s/>][^\s/>]*)(\s[\s\S]*?)?\s*\/?>/g;
+  //
+  // The attribute segment is scanned QUOTE-AWARE: a literal '>' inside a quoted
+  // value (e.g. <ref target="a>b">, common in TEI links / regex patterns) must
+  // NOT terminate the tag. The previous non-greedy [\s\S]*? stopped at that
+  // inner '>', truncating the tag so its own remaining attributes AND the checks
+  // for everything nested after it were silently skipped (audit #23). This
+  // branch only runs after the well-formedness gate, so every quote is balanced
+  // and the "..." / '...' alternatives are safe; the greedy run also can't cross
+  // a real tag boundary because an unquoted '>' always stops it.
+  const tagRegex = /<(\/?[^\s/>][^\s/>]*)(\s(?:[^>"'/]|"[^"]*"|'[^']*')*)?\s*\/?>/g;
   let match: RegExpExecArray | null;
 
   while ((match = tagRegex.exec(stripped)) !== null) {
