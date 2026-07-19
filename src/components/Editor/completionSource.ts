@@ -50,6 +50,17 @@ export function createSchemaCompletionSource(schema: SchemaInfo | null) {
     // completions to the unfiltered element list in real-sized documents).
     // Computed lazily so keystrokes that trigger no completion — ordinary
     // text content — never pay for the full-document scan.
+    //
+    // Cost (audit #15): every complete* result below sets `validFor`, so CM
+    // filters as the user types the name and only RE-INVOKES this source once
+    // per tag opened (per `<`/`</`), not per keystroke — so the O(prefix)
+    // sliceString + tokenize runs once per tag, not per character. The proper
+    // O(depth) fix is to derive the ancestor chain from the incremental
+    // lang-xml syntax tree (syntaxTree(state).resolveInner(pos)); that is
+    // deferred as a dedicated task because the completion tests build plain
+    // EditorStates with no language (no tree), so switching would need a
+    // test-harness rewrite and risks semantic divergence on this
+    // correctness-critical path.
     let cachedStack: OpenElementFrame[] | null = null;
     const getStack = (): OpenElementFrame[] =>
       (cachedStack ??= getOpenElementStackWithChildren(state.doc.sliceString(0, pos)));
