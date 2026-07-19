@@ -15,6 +15,7 @@ import { EditorTabBar } from './components/Editor/EditorTabBar';
 import { BreadcrumbBar } from './components/Editor/BreadcrumbBar';
 import { XmlEditor } from './components/Editor/XmlEditor';
 import { RightPanel } from './components/Layout/RightPanel';
+import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import { NewDocumentDialog } from './components/FileDialog/NewDocumentDialog';
 
 // Lazy load PreviewPanel (only shown in preview mode)
@@ -426,11 +427,15 @@ function EditorLayout() {
               <XmlEditor />
             </div>
           }
-          right={state.viewMode === 'preview' ? (
-            <Suspense fallback={<div className="panel-loader"><span className="loader-spinner" /><span>Loading...</span></div>}>
-              <PreviewPanel />
-            </Suspense>
-          ) : <RightPanel />}
+          right={
+            <ErrorBoundary label="패널" resetKeys={[multiTabState.activeDocumentId, state.viewMode]}>
+              {state.viewMode === 'preview' ? (
+                <Suspense fallback={<div className="panel-loader"><span className="loader-spinner" /><span>Loading...</span></div>}>
+                  <PreviewPanel />
+                </Suspense>
+              ) : <RightPanel />}
+            </ErrorBoundary>
+          }
           showLeft={showExplorer}
         />
       </AppShell>
