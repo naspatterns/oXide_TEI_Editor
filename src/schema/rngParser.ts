@@ -17,6 +17,28 @@ import type { ElementSpec, AttrSpec, ContentModel, ContentItem } from '../types/
 const RNG_NS = 'http://relaxng.org/ns/structure/1.0';
 const TEI_NS = 'http://www.tei-c.org/ns/1.0';
 
+// `visited` cuts cycles along the CURRENT path but is deleted on the way back
+// out, so a define shared by two branches is re-expanded on each — a crafted
+// grammar (Di references Di+1 twice) expands 2^depth times and freezes the tab,
+// and a deep linear ref chain overflows the stack (audit #13). These bound the
+// per-element ref resolution: past either limit a <ref> degrades to the same
+// "unresolved" fallback it already uses for a missing define, so a hostile
+// schema loads partially instead of hanging. Both limits are far above any
+// legitimate schema, so real grammars resolve exactly as before.
+const MAX_REF_DEPTH = 500; // max <ref> nesting along one path (stack safety)
+const MAX_REF_STEPS = 200_000; // max <ref> resolutions per element (fan-out safety)
+
+// Reset per element in extractElementSpec. Safe as module state because parseRng
+// runs fully synchronously (no interleaved parses).
+let refBudget = 0;
+
+/** True (and consumes one budget step) when another <ref> may be resolved. */
+function refBudgetAllows(visited: Set<string>): boolean {
+  if (visited.size >= MAX_REF_DEPTH || refBudget <= 0) return false;
+  refBudget--;
+  return true;
+}
+
 interface DefineNode {
   name: string;
   node: Element;
@@ -68,6 +90,7 @@ function extractElementSpec(
   defines: Map<string, DefineNode>,
   visited: Set<string>,
 ): ElementSpec {
+  refBudget = MAX_REF_STEPS; // fresh ref-resolution budget for this element
   const attributes = extractAttributes(elementNode, defines, visited);
   const children = extractChildElements(elementNode, defines, visited);
   const documentation = extractDocumentation(elementNode);
@@ -208,7 +231,7 @@ function parseContentNode(
 
     case 'ref': {
       const refName = node.getAttribute('name');
-      if (refName && !visited.has(refName)) {
+      if (refName && !visited.has(refName) && refBudgetAllows(visited)) {
         const def = defines.get(refName);
         if (def) {
           visited.add(refName);
@@ -255,7 +278,7 @@ function contentNodeToItem(
 
     case 'ref': {
       const refName = node.getAttribute('name');
-      if (refName && !visited.has(refName)) {
+      if (refName && !visited.has(refName) && refBudgetAllows(visited)) {
         const def = defines.get(refName);
         if (def) {
           visited.add(refName);
@@ -347,7 +370,7 @@ function extractAttributes(
         walk(child, false);
       } else if (childNs === RNG_NS && localName === 'ref') {
         const refName = child.getAttribute('name');
-        if (refName && !visited.has(refName)) {
+        if (refName && !visited.has(refName) && refBudgetAllows(visited)) {
           const def = defines.get(refName);
           if (def) {
             visited.add(refName);
@@ -388,7 +411,7 @@ function extractChildElements(
         }
       } else if (childNs === RNG_NS && localName === 'ref') {
         const refName = child.getAttribute('name');
-        if (refName && !visited.has(refName)) {
+        if (refName && !visited.has(refName) && refBudgetAllows(visited)) {
           const def = defines.get(refName);
           if (def) {
             visited.add(refName);

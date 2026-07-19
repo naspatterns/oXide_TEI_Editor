@@ -900,3 +900,50 @@ describe('rngParser - Edge Cases', () => {
     expect(p!.children).toContain('placeName');
   });
 });
+
+// ============================================================================
+// Hostile / pathological input (audit #13): the parser must terminate quickly
+// instead of freezing (exponential fan-out) or overflowing the stack (deep
+// chain). It degrades gracefully — unresolved refs, not a crash.
+// ============================================================================
+
+describe('parseRng — pathological ref graphs terminate', () => {
+  it('does not blow up on an exponentially-shared define DAG', () => {
+    // Di references Di+1 TWICE → 2^N expansions without the budget guard.
+    const N = 60;
+    const defs = [];
+    for (let i = 0; i < N; i++) {
+      defs.push(`<define name="D${i}"><group><ref name="D${i + 1}"/><ref name="D${i + 1}"/></group></define>`);
+    }
+    defs.push(`<define name="D${N}"><text/></define>`);
+    const rng = `<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+      <element name="root"><ref name="D0"/></element>
+      ${defs.join('\n')}
+    </grammar>`;
+
+    const start = Date.now();
+    let elements: ReturnType<typeof parseRng> | undefined;
+    expect(() => { elements = parseRng(rng); }).not.toThrow();
+    // If the guard failed this would hang the test runner rather than finish.
+    expect(Date.now() - start).toBeLessThan(5000);
+    expect(elements!.some(e => e.name === 'root')).toBe(true);
+  });
+
+  it('does not overflow the stack on a deep linear ref chain', () => {
+    // Di references Di+1 once → recursion as deep as the chain without the depth guard.
+    const N = 8000;
+    const defs = [];
+    for (let i = 0; i < N; i++) {
+      defs.push(`<define name="D${i}"><ref name="D${i + 1}"/></define>`);
+    }
+    defs.push(`<define name="D${N}"><text/></define>`);
+    const rng = `<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+      <element name="root"><ref name="D0"/></element>
+      ${defs.join('\n')}
+    </grammar>`;
+
+    let elements: ReturnType<typeof parseRng> | undefined;
+    expect(() => { elements = parseRng(rng); }).not.toThrow();
+    expect(elements!.some(e => e.name === 'root')).toBe(true);
+  });
+});
