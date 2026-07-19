@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { injectCsp } from './vite-csp';
+import { buildPrecacheList, applySwBuildData } from './vite-sw';
 
 // Read package.json synchronously so the version is available at config-load
 // time. Avoids JSON-import attribute incompatibilities across Node versions.
@@ -11,22 +12,28 @@ const pkg = JSON.parse(
 ) as { version: string };
 
 /**
- * Replaces `__BUILD_HASH__` in the emitted `dist/sw.js` with a per-build
- * stamp (`<package version>-<build timestamp in base36>`). This forces the
- * service worker's `CACHE_NAME` to change every release, so the
- * `activate` handler evicts the previous cache and clients pick up the
- * new bundle on next navigation.
+ * Post-processes the emitted `dist/sw.js`:
+ *   - `__BUILD_HASH__` → a per-build stamp (`<version>-<base36 timestamp>`),
+ *     so the service worker's `CACHE_NAME` changes every release and the
+ *     `activate` handler evicts the previous cache.
+ *   - the precache marker → the list of hashed JS/CSS chunks emitted this
+ *     build, so the full app shell is precached at install and the first
+ *     offline start works (audit #9). The marker-missing case throws.
+ * Pure logic lives in ./vite-sw.ts (unit-tested); this hook does the IO.
  */
-function injectPwaCacheVersion(): Plugin {
+function injectServiceWorkerBuildData(): Plugin {
   const stamp = `${pkg.version}-${Date.now().toString(36)}`;
   return {
-    name: 'inject-pwa-cache-version',
+    name: 'inject-sw-build-data',
     apply: 'build',
     closeBundle() {
       const swPath = resolve(__dirname, 'dist/sw.js');
       if (!existsSync(swPath)) return;
-      const content = readFileSync(swPath, 'utf8');
-      writeFileSync(swPath, content.replace(/__BUILD_HASH__/g, stamp));
+      const assetsDir = resolve(__dirname, 'dist/assets');
+      const assetFiles = existsSync(assetsDir) ? readdirSync(assetsDir) : [];
+      const precache = buildPrecacheList(assetFiles);
+      const out = applySwBuildData(readFileSync(swPath, 'utf8'), { stamp, precache });
+      writeFileSync(swPath, out);
     },
   };
 }
@@ -36,7 +43,7 @@ function injectPwaCacheVersion(): Plugin {
 // index.html anchor is missing instead of silently shipping no CSP (audit #2).
 
 export default defineConfig({
-  plugins: [react(), injectPwaCacheVersion(), injectCsp()],
+  plugins: [react(), injectServiceWorkerBuildData(), injectCsp()],
   base: './',
   // Inject the package version as a build-time constant so user-visible
   // surfaces (About dialog, etc.) stay in lockstep with package.json.

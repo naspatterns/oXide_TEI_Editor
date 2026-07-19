@@ -8,10 +8,17 @@
 const CACHE_VERSION = '__BUILD_HASH__';
 const CACHE_NAME = `oxide-tei-v${CACHE_VERSION}`;
 
-// Assets to cache on install
+// Assets to cache on install. The hashed JS/CSS chunks are appended at build
+// time by the `inject-sw-build-data` plugin (vite.config.ts) in place of the
+// marker below — the SW can't name them literally because the hashes change
+// every build. Without them the first offline start white-screened, since the
+// chunks the page fetched before the SW took control were never cached
+// (audit #9). In dev the marker stays a no-op comment (the SW isn't
+// registered in dev anyway).
 const PRECACHE_URLS = [
   './',
   './index.html',
+  /*__PRECACHE_ASSETS__*/
 ];
 
 self.addEventListener('install', (event) => {
@@ -51,7 +58,10 @@ self.addEventListener('fetch', (event) => {
         cached || fetch(event.request).then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            // waitUntil keeps the SW alive until the write lands; otherwise the
+            // put is a detached promise the browser may abort when it
+            // terminates the worker after respondWith settles (audit #27).
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)));
           }
           return response;
         })
@@ -72,7 +82,9 @@ self.addEventListener('fetch', (event) => {
         cached || fetch(event.request).then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            // waitUntil so the write isn't aborted if the SW is terminated
+            // right after the response is returned (audit #27).
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)));
           }
           return response;
         })
