@@ -3,13 +3,8 @@
  * Split out of XPathSearch.tsx so the component file only exports a
  * component (Fast Refresh) and the pure logic is unit-testable.
  */
-import { findNthTagLine } from '../../schema/xmlTokenizer';
+import { createElementLineResolver } from '../../schema/xmlTokenizer';
 import { rewriteUnprefixedNamesToLocalName } from '../../schema/xpathLocalName';
-
-// Re-exported for existing consumers/tests; the implementation moved to
-// xmlTokenizer so the Schematron layer (src/schema) can share it without
-// importing from src/components.
-export { findNthTagLine };
 
 export interface XPathMatch {
   nodeName: string;
@@ -72,10 +67,14 @@ export function evaluateXPath(xmlContent: string, expression: string): { matches
     );
 
     const matches: XPathMatch[] = [];
-    const lines = xmlContent.split('\n');
 
-    // Track found occurrences to handle duplicates
-    const foundTags = new Map<string, number>();
+    // Resolve each matched node's source line DIRECTLY from the DOM element it
+    // is (or belongs to). The old code re-scanned raw text for the "nth <tag>"
+    // and indexed that by the match's position among matches — which broke on
+    // multi-line tags / commented markup AND whenever the query matched a
+    // SUBSET of a tag's occurrences (e.g. //rs[@type='view']), since the k-th
+    // match is then NOT the k-th <rs> in the file (audit #19/#20).
+    const lineOf = createElementLineResolver(xmlContent, doc);
 
     for (let i = 0; i < result.snapshotLength; i++) {
       const node = result.snapshotItem(i);
@@ -83,27 +82,24 @@ export function evaluateXPath(xmlContent: string, expression: string): { matches
 
       let nodeName = '';
       let textContent = '';
+      let line = 1;
 
       if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as Element;
         nodeName = element.localName || element.tagName;
         textContent = (element.textContent || '').slice(0, 60).trim().replace(/\s+/g, ' ');
+        line = lineOf(element);
       } else if (node.nodeType === Node.ATTRIBUTE_NODE) {
-        nodeName = `@${(node as Attr).name}`;
-        textContent = (node as Attr).value.slice(0, 60);
+        const attr = node as Attr;
+        nodeName = `@${attr.name}`;
+        textContent = attr.value.slice(0, 60);
+        // Attribute nodes live on their owner element's line.
+        line = attr.ownerElement ? lineOf(attr.ownerElement) : 1;
       } else if (node.nodeType === Node.TEXT_NODE) {
         nodeName = '#text';
         textContent = (node.textContent || '').slice(0, 60).trim();
-      }
-
-      // Find line number - search for the nth occurrence of this tag
-      let line = 1;
-      const occurrenceIndex = foundTags.get(nodeName) || 0;
-      foundTags.set(nodeName, occurrenceIndex + 1);
-
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const tagName = (node as Element).localName || (node as Element).tagName;
-        line = findNthTagLine(lines, tagName, occurrenceIndex);
+        // Attribute a text node to its containing element's line.
+        line = node.parentElement ? lineOf(node.parentElement) : 1;
       }
 
       matches.push({

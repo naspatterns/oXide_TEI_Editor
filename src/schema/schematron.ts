@@ -26,7 +26,7 @@
  */
 
 import type { ValidationError } from '../types/schema';
-import { tokenizeXmlTags } from './xmlTokenizer';
+import { createElementLineResolver } from './xmlTokenizer';
 import { rewriteUnprefixedNamesToLocalName, splitTopLevelUnion } from './xpathLocalName';
 
 /** One assert/report inside a rule. */
@@ -222,36 +222,18 @@ export function validateSchematron(xmlContent: string, schema: SchematronSchema)
   const prep = (expr: string): string => (needsRewrite ? rewriteUnprefixedNamesToLocalName(expr) : expr);
 
   // Node→line attribution, built lazily on the first fired diagnostic (most
-  // lint passes fire nothing, so a clean document never pays for this). ONE
-  // tokenizer pass yields, per local name, the line of each occurrence in
-  // document order; the DOM gives each element's occurrence index. Both skip
-  // comments/CDATA and the tokenizer spans multi-line tags, so the two agree.
+  // lint passes fire nothing, so a clean document never pays for this). The
+  // shared resolver does ONE tokenizer pass (skips comments/CDATA, spans
+  // multi-line tags) + a DOM walk, so it stays aligned with document order.
   // This replaces the old per-error findNthTagLine, which re-compiled a RegExp
   // and rescanned every line for EACH fired error — O(errors × lines) — and
   // miscounted commented-out/multi-line markup (audit #4, also fixes #29 here).
-  let attribution: { line: Map<string, number[]>; occ: Map<Element, number> } | null = null;
+  // The resolver is now shared with the XPath toolbar search so the two paths
+  // can't drift (that drift is exactly what regressed XPath — audit #19/#20).
+  let resolveLine: ((el: Element) => number) | null = null;
   const lineOf = (el: Element): number => {
-    if (!attribution) {
-      const occ = new Map<Element, number>();
-      const counters = new Map<string, number>();
-      for (const e of Array.from(doc.getElementsByTagName('*'))) {
-        const n = counters.get(e.localName) ?? 0;
-        occ.set(e, n);
-        counters.set(e.localName, n + 1);
-      }
-      const line = new Map<string, number[]>();
-      for (const tok of tokenizeXmlTags(xmlContent)) {
-        if (tok.kind !== 'open' && tok.kind !== 'self-close') continue;
-        const colon = tok.name.indexOf(':');
-        const local = colon === -1 ? tok.name : tok.name.slice(colon + 1);
-        const arr = line.get(local);
-        if (arr) arr.push(tok.line);
-        else line.set(local, [tok.line]);
-      }
-      attribution = { line, occ };
-    }
-    const idx = attribution.occ.get(el) ?? 0;
-    return attribution.line.get(el.localName)?.[idx] ?? 1;
+    if (!resolveLine) resolveLine = createElementLineResolver(xmlContent, doc);
+    return resolveLine(el);
   };
 
   const ruleErrorReported = new Set<string>();

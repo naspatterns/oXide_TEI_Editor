@@ -37,7 +37,11 @@ export interface XmlTagToken {
 }
 
 const NAME_START = 'a-zA-Z_\\u00C0-\\uFFFD';
-const NAME_BODY = `${NAME_START}0-9.:-`;
+// NameChar adds '-', '.', digits, ':', and the extender U+00B7. U+00B7 is the
+// one NameChar below the broad U+00C0-U+FFFD range NAME_START already covers;
+// without it the tokenizer's parsed name would differ from the DOM's localName
+// for a name containing U+00B7, desyncing line attribution.
+const NAME_BODY = `${NAME_START}0-9.:\\u00B7-`;
 const TAG_NAME_REGEX = new RegExp(`[${NAME_START}][${NAME_BODY}]*`);
 
 /**
@@ -140,6 +144,40 @@ export function* tokenizeXmlTags(xml: string): Generator<XmlTagToken> {
         }
       }
       i = closeAt;
+      continue;
+    }
+
+    // Markup declaration: <!DOCTYPE ...>, and its internal-subset <!ENTITY>/
+    // <!ELEMENT>/... (<!-- and <![CDATA[ were handled above). Skip the WHOLE
+    // declaration as a unit — XML lets an entity replacement value legally
+    // contain '<'/'>' (e.g. <!ENTITY g "<pb/>">), so char-by-char scanning
+    // would tokenize that as a phantom element and desync line attribution
+    // (audit adversarial-review finding). Scan to the closing '>' that is
+    // outside any quoted literal AND outside the internal subset '[ ... ]'.
+    if (xml.charCodeAt(i + 1) === 33 /* ! */) {
+      let j = i + 2;
+      let depth = 0;
+      let q: 0 | 34 | 39 = 0;
+      while (j < len) {
+        const c = xml.charCodeAt(j);
+        if (c === 10) {
+          line++;
+          lineStart = j + 1;
+        }
+        if (q) {
+          if (c === q) q = 0;
+        } else if (c === 34 /* " */ || c === 39 /* ' */) {
+          q = c;
+        } else if (c === 91 /* [ */) {
+          depth++;
+        } else if (c === 93 /* ] */) {
+          if (depth > 0) depth--;
+        } else if (c === 62 /* > */ && depth === 0) {
+          break;
+        }
+        j++;
+      }
+      i = j < len ? j + 1 : len;
       continue;
     }
 
@@ -276,33 +314,46 @@ export function getOpenElementStackWithChildren(xml: string, offset: number = xm
 }
 
 /**
- * Locate the 1-based line of the nth (0-based) occurrence of `<tagName…`
- * in the document, tolerating an optional namespace prefix.
+ * Build a node→line resolver: for each element of a parsed document, the
+ * 1-based line of its opening `<` in the raw source `xml`.
  *
- * Returns 1 when the occurrence cannot be found (e.g. a tag spanning
- * multiple lines defeats the per-line regex). Shared by the XPath toolbar
- * search and the Schematron layer for node→line attribution.
+ * A single tokenizer pass — which skips comments/CDATA and spans multi-line
+ * tags — yields, per local name, the source line of every element in document
+ * order. The DOM gives each element its document-order occurrence index among
+ * same-local-name elements. Indexing one by the other resolves ANY element
+ * directly, so it is correct for a filtered/subset match set (not just "the
+ * nth `<tag>` in the file") and robust where a naive per-line `<tag` regex
+ * under/over-counted (multi-line tags, tag-shaped text inside comments/CDATA).
+ * Returns 1 when a line can't be resolved.
+ *
+ * Shared by the XPath toolbar search and the Schematron layer so their line
+ * attribution cannot drift apart.
  */
-export function findNthTagLine(lines: string[], tagName: string, occurrenceIndex: number): number {
-  // Create pattern that matches the tag with or without namespace prefix
-  const tagPattern = new RegExp(`<([a-zA-Z_][\\w-]*:)?${tagName}(\\s|>|/)`, 'g');
-  let currentOccurrence = 0;
-
-  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-    tagPattern.lastIndex = 0;
-
-    while (tagPattern.exec(lines[lineIdx]) !== null) {
-      if (currentOccurrence === occurrenceIndex) {
-        // Return immediately: an earlier version kept scanning here, so
-        // later occurrences overwrote the result and every match was
-        // attributed to (and navigated to) the LAST occurrence.
-        return lineIdx + 1;
-      }
-      currentOccurrence++;
-    }
+export function createElementLineResolver(
+  xml: string,
+  doc: Document,
+): (el: Element) => number {
+  // occ: element → its 0-based index among same-local-name elements (doc order)
+  const occ = new Map<Element, number>();
+  const counters = new Map<string, number>();
+  for (const el of Array.from(doc.getElementsByTagName('*'))) {
+    const n = counters.get(el.localName) ?? 0;
+    occ.set(el, n);
+    counters.set(el.localName, n + 1);
   }
 
-  return 1;
+  // lines: local name → source lines of its open/self-close tokens (doc order)
+  const lines = new Map<string, number[]>();
+  for (const tok of tokenizeXmlTags(xml)) {
+    if (tok.kind !== 'open' && tok.kind !== 'self-close') continue;
+    const colon = tok.name.indexOf(':');
+    const local = colon === -1 ? tok.name : tok.name.slice(colon + 1);
+    const arr = lines.get(local);
+    if (arr) arr.push(tok.line);
+    else lines.set(local, [tok.line]);
+  }
+
+  return (el: Element) => lines.get(el.localName)?.[occ.get(el) ?? 0] ?? 1;
 }
 
 const ATTR_NAME_START = /[a-zA-Z_]/;
